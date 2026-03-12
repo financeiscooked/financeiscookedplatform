@@ -1,0 +1,217 @@
+{
+  "id": "ep1",
+  "title": "Episode 1 - Pilot",
+  "date": "2026-03-05",
+  "segments": [
+    {
+      "id": "cold-open",
+      "name": "Cold Open + Intro",
+      "status": "final",
+      "slides": [
+        {
+          "type": "link",
+          "title": "Intro Music",
+          "url": "https://suno.com/song/27bcaf6f-c0b2-410b-b510-2128ee6bb58e?sh=rVe1TBhVU9S78hfc",
+          "notes": "Play intro music locally while this slide is up"
+        },
+        {
+          "type": "gallery",
+          "title": "Finance Is Cooked!",
+          "images": [
+            { "src": "/episodes/ep1/logo-tagline.png", "alt": "Finance Is Cooked tagline" },
+            { "src": "/episodes/ep1/logo-chefs.png", "alt": "Let's make sure you're one of the chefs" },
+            { "src": "/episodes/ep1/logo-cooking.png", "alt": "Cooking it up" },
+            { "src": "/episodes/ep1/logo-steaks-labeled.png", "alt": "Steaks are high" }
+          ]
+        },
+        {
+          "type": "gallery",
+          "title": "The Vibe",
+          "images": [
+            { "src": "/episodes/ep1/logo-chaos-1.png", "alt": "Chaos in the kitchen" },
+            { "src": "/episodes/ep1/logo-chaos-2.png", "alt": "More chaos" },
+            { "src": "/episodes/ep1/logo-serving.png", "alt": "Serving it up" }
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Welcome to Finance Is Cooked!",
+          "bullets": [
+            "Finance is getting disrupted by AI - fast",
+            "This show helps you stay ahead",
+            "Hosted by Ore & Joe",
+            "Weekly: news, builds, takes, and AI in action"
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Meet Your Hosts",
+          "bullets": [
+            "Ore Phillips",
+            "Joe (co-host)",
+            "AI-powered finance & accounting nerds"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "app-of-the-show",
+      "name": "App of the Show",
+      "status": "final",
+      "slides": [
+        {
+          "type": "text",
+          "title": "App of the Show: financeiscooked.com",
+          "bullets": [
+            "Live build: building the show's own website",
+            "Tools: VS Code + GitHub + Netlify",
+            "From zero to deployed in one segment"
+          ]
+        },
+        {
+          "type": "text",
+          "title": "What You Need",
+          "bullets": [
+            "VS Code: code.visualstudio.com",
+            "Netlify account: app.netlify.com",
+            "GitHub account: github.com",
+            "That's it. Let's build."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quick-updates",
+      "name": "90 Seconds Quick Updates",
+      "status": "final",
+      "slides": [
+        {
+          "type": "link",
+          "title": "$100M Raise for getBasis",
+          "url": "https://www.getbasis.ai/blogs/basis-raises-100m-series-b-led-by-accel-and-google-ventures",
+          "notes": "AI agents for accounting. New era — more accounting models, not less. Series B led by Accel & Google Ventures."
+        },
+        {
+          "type": "link",
+          "title": "Pilot Launches Fully Autonomous AI Bookkeeper",
+          "url": "https://www.accountingtoday.com/news/pilot-launches-fully-autonomous-ai-bookkeeper",
+          "notes": "Pilot's new AI bookkeeper handles bookkeeping autonomously — major shift in the industry."
+        },
+        {
+          "type": "link",
+          "title": "Block Laying Off 40% — Replacing with AI",
+          "url": "https://www.cnn.com/2026/02/26/business/block-layoffs-ai-jack-dorsey",
+          "notes": "Jack Dorsey's Block cutting 40% of resources. AI-driven restructuring."
+        },
+        {
+          "type": "link",
+          "title": "Intuit Partners with Anthropic",
+          "url": "https://www.intuit.com/anthropic/",
+          "notes": "Intuit (TurboTax, QuickBooks) partnering with Anthropic for AI integration."
+        },
+        {
+          "type": "image",
+          "title": "PwC Hiring AI Engineers",
+          "src": "/episodes/ep1/pwc-linkedin.jpg",
+          "notes": "PwC posting for AI Engineers — LangGraph, LangChain, multi-agent systems. The Big 4 are going all in."
+        }
+      ]
+    },
+    {
+      "id": "take-of-the-show",
+      "name": "Take of the Show",
+      "status": "final",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Take of the Show - Joe",
+          "bullets": [
+            "(Joe's take — TBD)"
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Take of the Show - Ore",
+          "bullets": [
+            "The UI is Dead",
+            "Inspired by the shift to conversational AI interfaces",
+            "Traditional dashboards and forms are being replaced",
+            "The future is agents, not apps"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ai-thing",
+      "name": "One Thing I Did with AI",
+      "status": "final",
+      "slides": [
+        {
+          "type": "text",
+          "title": "One Thing I Did with AI This Week",
+          "bullets": [
+            "Impairment Analysis",
+            "Used AI to automate crypto impairment calculations",
+            "What used to take hours now takes minutes"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "app-checkin",
+      "name": "Check In on App of the Show",
+      "status": "final",
+      "slides": [
+        {
+          "type": "text",
+          "title": "App Check-In: financeiscooked.com",
+          "bullets": [
+            "How did the live build go?",
+            "What's working, what's next",
+            "Live demo"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "whats-coming",
+      "name": "What's Coming",
+      "status": "final",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Coming Up on Future Episodes",
+          "bullets": [
+            "Apps by Friends",
+            "Coding with AI",
+            "Claude Cowork deep dive",
+            "AI and Crypto",
+            "Our Favorite AI Tools"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "outtro",
+      "name": "Outtro",
+      "status": "final",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Thanks for Watching! See You Next Week!",
+          "bullets": [
+            "Subscribe & follow",
+            "ficsoundboard.netlify.app",
+            "Finance Is Cooked - let's make sure you're a chef"
+          ]
+        },
+        {
+          "type": "link",
+          "title": "Outtro Music",
+          "url": "https://suno.com/s/kaRqVok2hZaNQqM0",
+          "notes": "Play outtro music locally while closing out"
+        }
+      ]
+    }
+  ]
+}

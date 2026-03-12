@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  anonymous
+  basic
+  advanced
+  admin
+}
+
+enum ContentStatus {
+  proposed
+  final
+}
+
+enum SlideType {
+  text
+  link
+  image
+  gallery
+}
+
+enum VoteDirection {
+  up
+  down
+}
+
+model User {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email       String?  @unique @db.VarChar(255)
+  displayName String?  @map("display_name") @db.VarChar(100)
+  avatarUrl   String?  @map("avatar_url")
+  role        UserRole @default(anonymous)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  sessions Session[]
+  votes    Vote[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique @db.VarChar(255)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz()
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Episode {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug      String   @unique @db.VarChar(50)
+  title     String   @db.VarChar(255)
+  date      String?  @db.VarChar(50)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  segments Segment[]
+
+  @@map("episodes")
+}
+
+model Segment {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  episodeId String        @map("episode_id") @db.Uuid
+  slug      String        @db.VarChar(100)
+  name      String        @db.VarChar(255)
+  status    ContentStatus @default(proposed)
+  sortOrder Int           @default(0) @map("sort_order")
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  episode Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  slides  Slide[]
+
+  @@unique([episodeId, slug])
+  @@map("segments")
+}
+
+model Slide {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  segmentId String        @map("segment_id") @db.Uuid
+  type      SlideType
+  title     String        @db.VarChar(500)
+  url       String?
+  notes     String?
+  details   String?
+  status    ContentStatus @default(proposed)
+  bullets   Json          @default("[]")
+  sortOrder Int           @default(0) @map("sort_order")
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  segment Segment      @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+  images  SlideImage[]
+  votes   Vote[]
+
+  @@map("slides")
+}
+
+model SlideImage {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slideId   String  @map("slide_id") @db.Uuid
+  src       String
+  alt       String? @db.VarChar(255)
+  sortOrder Int     @default(0) @map("sort_order")
+
+  slide Slide @relation(fields: [slideId], references: [id], onDelete: Cascade)
+
+  @@map("slide_images")
+}
+
+model Vote {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slideId   String        @map("slide_id") @db.Uuid
+  userId    String?       @map("user_id") @db.Uuid
+  direction VoteDirection
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+
+  slide Slide @relation(fields: [slideId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id])
+
+  @@index([slideId])
+  @@map("votes")
+}

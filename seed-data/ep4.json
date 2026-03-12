@@ -1,0 +1,55 @@
+{
+  "id": "ep4",
+  "title": "Episode 4",
+  "date": "",
+  "segments": [
+    {
+      "id": "open-intro",
+      "name": "Open / Intro",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "app-of-the-show",
+      "name": "App of the Show",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "in-the-news",
+      "name": "In the News Updates",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "take-of-the-show",
+      "name": "Take of the Show",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "one-thing-ai",
+      "name": "One Thing I Did with AI",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "app-checkin",
+      "name": "App of the Show Check",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "outtro",
+      "name": "Outtro",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "coming-soon",
+      "name": "Coming Soon",
+      "status": "proposed",
+      "slides": []
+    }
+  ]
+}
