@@ -27,7 +27,7 @@ export const tools: ToolDef[] = [
   },
   {
     name: 'episode_create',
-    description: 'Create a new episode',
+    description: '[Admin] Create a new episode',
     inputSchema: z.object({
       slug: z.string().describe('URL-friendly slug'),
       title: z.string().describe('episode title'),
@@ -39,7 +39,7 @@ export const tools: ToolDef[] = [
   },
   {
     name: 'episode_update',
-    description: 'Update an existing episode',
+    description: '[Admin] Update an existing episode',
     inputSchema: z.object({
       slug: z.string().describe('episode slug'),
       title: z.string().optional().describe('new title'),
@@ -53,7 +53,7 @@ export const tools: ToolDef[] = [
   },
   {
     name: 'episode_delete',
-    description: 'Delete an episode and all its content',
+    description: '[Admin] Delete an episode and all its content',
     inputSchema: z.object({
       slug: z.string().describe('episode slug'),
     }),
@@ -64,7 +64,7 @@ export const tools: ToolDef[] = [
 
   {
     name: 'segment_create',
-    description: 'Create a segment within an episode',
+    description: '[Admin] Create a segment within an episode',
     inputSchema: z.object({
       episodeSlug: z.string().describe('parent episode slug'),
       slug: z.string().describe('segment slug'),
@@ -79,7 +79,7 @@ export const tools: ToolDef[] = [
   },
   {
     name: 'segment_update',
-    description: 'Update a segment',
+    description: '[Admin] Update a segment',
     inputSchema: z.object({
       id: z.string().describe('segment ID'),
       name: z.string().optional().describe('new name'),
@@ -93,7 +93,7 @@ export const tools: ToolDef[] = [
   },
   {
     name: 'segment_delete',
-    description: 'Delete a segment and its slides',
+    description: '[Admin] Delete a segment and its slides',
     inputSchema: z.object({
       id: z.string().describe('segment ID'),
     }),
@@ -104,7 +104,7 @@ export const tools: ToolDef[] = [
 
   {
     name: 'slide_create',
-    description: 'Create a slide within a segment',
+    description: '[Admin] Create a slide within a segment',
     inputSchema: z.object({
       segmentId: z.string().describe('parent segment ID'),
       type: z.enum(['text', 'link', 'image', 'gallery']).describe('slide type'),
@@ -123,7 +123,7 @@ export const tools: ToolDef[] = [
   },
   {
     name: 'slide_update',
-    description: 'Update an existing slide',
+    description: '[Admin] Update an existing slide',
     inputSchema: z.object({
       id: z.string().describe('slide ID'),
       type: z.enum(['text', 'link', 'image', 'gallery']).optional().describe('slide type'),
@@ -142,7 +142,7 @@ export const tools: ToolDef[] = [
   },
   {
     name: 'slide_delete',
-    description: 'Delete a slide',
+    description: '[Admin] Delete a slide',
     inputSchema: z.object({
       id: z.string().describe('slide ID'),
     }),
@@ -150,7 +150,7 @@ export const tools: ToolDef[] = [
   },
   {
     name: 'slide_move',
-    description: 'Move a slide to another segment',
+    description: '[Admin] Move a slide to another segment',
     inputSchema: z.object({
       id: z.string().describe('slide ID'),
       targetSegmentId: z.string().optional().describe('target segment ID'),
@@ -164,7 +164,7 @@ export const tools: ToolDef[] = [
   },
   {
     name: 'slide_finalize',
-    description: 'Finalize a slide and its parent segment',
+    description: '[Admin] Finalize a slide and its parent segment',
     inputSchema: z.object({
       id: z.string().describe('slide ID'),
     }),
@@ -197,7 +197,7 @@ export const tools: ToolDef[] = [
 
   {
     name: 'admin_seed',
-    description: 'Seed database from JSON files',
+    description: '[Admin] Seed database from JSON files',
     inputSchema: z.object({}),
     handler: async (client) => client.seedDatabase(),
   },

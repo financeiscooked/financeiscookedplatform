@@ -4,10 +4,12 @@
  * Segments API Test Suite
  * Tests: POST create, PUT update, DELETE, and error cases
  * Sets up a temporary episode, then cleans up after.
+ * Write operations require X-Admin-Key header.
  */
 
 const CONFIG = {
   BASE_URL: process.env.BASE_URL || 'https://backend-production-0e40.up.railway.app',
+  ADMIN_KEY: process.env.ADMIN_KEY || 'admin123',
 };
 
 const COLORS = {
@@ -37,12 +39,11 @@ function assert(condition, testName, detail) {
   }
 }
 
-async function makeRequest(method, path, body) {
+async function makeRequest(method, path, body, { admin = false } = {}) {
   const url = `${CONFIG.BASE_URL}${path}`;
-  const options = {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-  };
+  const headers = { 'Content-Type': 'application/json' };
+  if (admin) headers['X-Admin-Key'] = CONFIG.ADMIN_KEY;
+  const options = { method, headers };
   if (body) {
     options.body = JSON.stringify(body);
   }
@@ -70,21 +71,30 @@ async function runTests() {
       slug: EP_SLUG,
       title: 'Segment Test Episode',
       sortOrder: 9998,
-    });
+    }, { admin: true });
     if (!res.ok) {
       console.error(`${COLORS.red}  Setup failed: ${res.error}${COLORS.reset}`);
       process.exit(1);
     }
   }
 
-  // ── 1. Create first segment ──
+  // ── 1. Auth: POST segment without admin key returns 401 ──
+  {
+    const res = await makeRequest('POST', `/api/episodes/${EP_SLUG}/segments`, {
+      slug: 'seg-noauth',
+      name: 'No Auth Segment',
+    });
+    assert(res.status === 401, 'POST segment without admin key returns 401');
+  }
+
+  // ── 2. Create first segment ──
   {
     const res = await makeRequest('POST', `/api/episodes/${EP_SLUG}/segments`, {
       slug: 'seg-alpha',
       name: 'Alpha Segment',
       status: 'proposed',
       sortOrder: 1,
-    });
+    }, { admin: true });
     assert(res.ok === true, 'POST create segment returns ok:true', res.error);
     if (res.data) {
       segmentId1 = res.data.id;
@@ -93,13 +103,13 @@ async function runTests() {
     }
   }
 
-  // ── 2. Create second segment ──
+  // ── 3. Create second segment ──
   {
     const res = await makeRequest('POST', `/api/episodes/${EP_SLUG}/segments`, {
       slug: 'seg-beta',
       name: 'Beta Segment',
       sortOrder: 2,
-    });
+    }, { admin: true });
     assert(res.ok === true, 'POST create second segment returns ok:true', res.error);
     if (res.data) {
       segmentId2 = res.data.id;
@@ -107,7 +117,7 @@ async function runTests() {
     }
   }
 
-  // ── 3. Verify segments appear in episode ──
+  // ── 4. Verify segments appear in episode ──
   {
     const res = await makeRequest('GET', `/api/episodes/${EP_SLUG}`);
     assert(res.ok === true, 'GET episode after segment creation returns ok:true');
@@ -116,19 +126,27 @@ async function runTests() {
     }
   }
 
-  // ── 4. Update segment ──
+  // ── 5. Auth: PUT segment without admin key returns 401 ──
+  if (segmentId1) {
+    const res = await makeRequest('PUT', `/api/segments/${segmentId1}`, {
+      name: 'Should Fail',
+    });
+    assert(res.status === 401, 'PUT segment without admin key returns 401');
+  }
+
+  // ── 6. Update segment ──
   if (segmentId1) {
     const res = await makeRequest('PUT', `/api/segments/${segmentId1}`, {
       name: 'Alpha Segment Updated',
       status: 'final',
-    });
+    }, { admin: true });
     assert(res.ok === true, 'PUT /api/segments/:id updates segment', res.error);
     if (res.data) {
       assert(res.data.name === 'Alpha Segment Updated', 'Updated segment name is correct');
     }
   }
 
-  // ── 5. Verify update persisted ──
+  // ── 7. Verify update persisted ──
   {
     const res = await makeRequest('GET', `/api/episodes/${EP_SLUG}`);
     if (res.data && Array.isArray(res.data.segments)) {
@@ -139,13 +157,19 @@ async function runTests() {
     }
   }
 
-  // ── 6. Delete second segment ──
+  // ── 8. Auth: DELETE segment without admin key returns 401 ──
   if (segmentId2) {
     const res = await makeRequest('DELETE', `/api/segments/${segmentId2}`);
+    assert(res.status === 401, 'DELETE segment without admin key returns 401');
+  }
+
+  // ── 9. Delete second segment ──
+  if (segmentId2) {
+    const res = await makeRequest('DELETE', `/api/segments/${segmentId2}`, null, { admin: true });
     assert(res.ok === true, 'DELETE /api/segments/:id deletes segment', res.error);
   }
 
-  // ── 7. Verify deletion ──
+  // ── 10. Verify deletion ──
   {
     const res = await makeRequest('GET', `/api/episodes/${EP_SLUG}`);
     if (res.data && Array.isArray(res.data.segments)) {
@@ -154,41 +178,41 @@ async function runTests() {
     }
   }
 
-  // ── 8. Error: missing slug field ──
+  // ── 11. Error: missing slug field ──
   {
     const res = await makeRequest('POST', `/api/episodes/${EP_SLUG}/segments`, {
       name: 'No Slug Segment',
-    });
+    }, { admin: true });
     assert(res.ok === false, 'POST segment with missing slug returns ok:false');
   }
 
-  // ── 9. Error: update non-existent segment ──
+  // ── 12. Error: update non-existent segment ──
   {
     const res = await makeRequest('PUT', '/api/segments/99999999', {
       name: 'Ghost',
-    });
+    }, { admin: true });
     assert(res.ok === false, 'PUT non-existent segment returns ok:false');
   }
 
-  // ── 10. Error: delete non-existent segment ──
+  // ── 13. Error: delete non-existent segment ──
   {
-    const res = await makeRequest('DELETE', '/api/segments/99999999');
+    const res = await makeRequest('DELETE', '/api/segments/99999999', null, { admin: true });
     assert(res.ok === false, 'DELETE non-existent segment returns ok:false');
   }
 
-  // ── 11. Error: create segment on non-existent episode ──
+  // ── 14. Error: create segment on non-existent episode ──
   {
     const res = await makeRequest('POST', '/api/episodes/nonexistent-ep-xyz/segments', {
       slug: 'orphan-seg',
       name: 'Orphan',
-    });
+    }, { admin: true });
     assert(res.ok === false, 'POST segment on non-existent episode returns ok:false');
   }
 
   // ── Cleanup ──
   {
     console.log(`${COLORS.dim}  [cleanup] Deleting temporary episode: ${EP_SLUG}${COLORS.reset}`);
-    await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`);
+    await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`, null, { admin: true });
   }
 
   // ── Summary ──
@@ -199,7 +223,7 @@ async function runTests() {
 
 runTests().catch((err) => {
   // Attempt cleanup even on error
-  makeRequest('DELETE', `/api/episodes/${EP_SLUG}`).finally(() => {
+  makeRequest('DELETE', `/api/episodes/${EP_SLUG}`, null, { admin: true }).finally(() => {
     console.error(`${COLORS.red}Unexpected error: ${err.message}${COLORS.reset}`);
     process.exit(1);
   });

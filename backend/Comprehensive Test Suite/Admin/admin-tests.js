@@ -4,10 +4,12 @@
  * Admin API Test Suite
  * Tests: GET /api/health, GET /api/admin/stats
  * NOTE: POST /api/admin/seed is intentionally NOT tested (destructive operation)
+ * Admin key is included for admin endpoints.
  */
 
 const CONFIG = {
   BASE_URL: process.env.BASE_URL || 'https://backend-production-0e40.up.railway.app',
+  ADMIN_KEY: process.env.ADMIN_KEY || 'admin123',
 };
 
 const COLORS = {
@@ -37,12 +39,11 @@ function assert(condition, testName, detail) {
   }
 }
 
-async function makeRequest(method, path, body) {
+async function makeRequest(method, path, body, { admin = false } = {}) {
   const url = `${CONFIG.BASE_URL}${path}`;
-  const options = {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-  };
+  const headers = { 'Content-Type': 'application/json' };
+  if (admin) headers['X-Admin-Key'] = CONFIG.ADMIN_KEY;
+  const options = { method, headers };
   if (body) {
     options.body = JSON.stringify(body);
   }
@@ -76,7 +77,7 @@ async function runTests() {
 
   // ── 3. Stats endpoint ──
   {
-    const res = await makeRequest('GET', '/api/admin/stats');
+    const res = await makeRequest('GET', '/api/admin/stats', null, { admin: true });
     assert(res.ok === true, 'GET /api/admin/stats returns ok:true', res.error);
     if (res.data) {
       assert(typeof res.data === 'object', 'Stats returns an object');
@@ -93,7 +94,7 @@ async function runTests() {
 
   // ── 4. Stats response structure ──
   {
-    const res = await makeRequest('GET', '/api/admin/stats');
+    const res = await makeRequest('GET', '/api/admin/stats', null, { admin: true });
     if (res.ok && res.data) {
       const keys = Object.keys(res.data);
       assert(keys.length > 0, `Stats has ${keys.length} field(s): ${keys.join(', ')}`);

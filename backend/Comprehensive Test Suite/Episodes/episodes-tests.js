@@ -3,10 +3,12 @@
 /**
  * Episodes API Test Suite
  * Tests: GET list, POST create, GET by slug, PUT update, DELETE, and error cases
+ * Write operations require X-Admin-Key header.
  */
 
 const CONFIG = {
   BASE_URL: process.env.BASE_URL || 'https://backend-production-0e40.up.railway.app',
+  ADMIN_KEY: process.env.ADMIN_KEY || 'admin123',
 };
 
 const COLORS = {
@@ -39,12 +41,11 @@ function assert(condition, testName, detail) {
   }
 }
 
-async function makeRequest(method, path, body) {
+async function makeRequest(method, path, body, { admin = false } = {}) {
   const url = `${CONFIG.BASE_URL}${path}`;
-  const options = {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-  };
+  const headers = { 'Content-Type': 'application/json' };
+  if (admin) headers['X-Admin-Key'] = CONFIG.ADMIN_KEY;
+  const options = { method, headers };
   if (body) {
     options.body = JSON.stringify(body);
   }
@@ -75,14 +76,23 @@ async function runTests() {
     }
   }
 
-  // ── 2. Create episode ──
+  // ── 2. Auth: POST without admin key returns 401 ──
+  {
+    const res = await makeRequest('POST', '/api/episodes', {
+      slug: TEST_SLUG,
+      title: 'Should Fail',
+    });
+    assert(res.status === 401, 'POST /api/episodes without admin key returns 401');
+  }
+
+  // ── 3. Create episode ──
   {
     const res = await makeRequest('POST', '/api/episodes', {
       slug: TEST_SLUG,
       title: 'Test Episode for Suite',
       date: '2025-01-15',
       sortOrder: 9999,
-    });
+    }, { admin: true });
     assert(res.ok === true, 'POST /api/episodes creates episode', res.error);
     if (res.data) {
       assert(res.data.title === 'Test Episode for Suite', 'Created episode has correct title');
@@ -90,7 +100,7 @@ async function runTests() {
     }
   }
 
-  // ── 3. Get episode by slug ──
+  // ── 4. Get episode by slug ──
   {
     const res = await makeRequest('GET', `/api/episodes/${TEST_SLUG}`);
     assert(res.ok === true, 'GET /api/episodes/:slug returns ok:true', res.error);
@@ -101,19 +111,27 @@ async function runTests() {
     }
   }
 
-  // ── 4. Update episode ──
+  // ── 5. Auth: PUT without admin key returns 401 ──
+  {
+    const res = await makeRequest('PUT', `/api/episodes/${TEST_SLUG}`, {
+      title: 'Should Fail',
+    });
+    assert(res.status === 401, 'PUT /api/episodes/:slug without admin key returns 401');
+  }
+
+  // ── 6. Update episode ──
   {
     const res = await makeRequest('PUT', `/api/episodes/${TEST_SLUG}`, {
       title: 'Updated Test Episode',
       date: '2025-06-01',
-    });
+    }, { admin: true });
     assert(res.ok === true, 'PUT /api/episodes/:slug updates episode', res.error);
     if (res.data) {
       assert(res.data.title === 'Updated Test Episode', 'Updated title is correct');
     }
   }
 
-  // ── 5. Verify update persisted ──
+  // ── 7. Verify update persisted ──
   {
     const res = await makeRequest('GET', `/api/episodes/${TEST_SLUG}`);
     if (res.data) {
@@ -121,51 +139,57 @@ async function runTests() {
     }
   }
 
-  // ── 6. Error: duplicate slug ──
+  // ── 8. Error: duplicate slug ──
   {
     const res = await makeRequest('POST', '/api/episodes', {
       slug: TEST_SLUG,
       title: 'Duplicate',
-    });
+    }, { admin: true });
     assert(res.ok === false, 'POST duplicate slug returns ok:false');
     assert(typeof res.error === 'string' && res.error.length > 0, 'Duplicate slug returns error message');
   }
 
-  // ── 7. Error: get non-existent slug ──
+  // ── 9. Error: get non-existent slug ──
   {
     const res = await makeRequest('GET', '/api/episodes/nonexistent-slug-xyz-999');
     assert(res.ok === false, 'GET non-existent slug returns ok:false');
   }
 
-  // ── 8. Error: update non-existent slug ──
+  // ── 10. Error: update non-existent slug ──
   {
     const res = await makeRequest('PUT', '/api/episodes/nonexistent-slug-xyz-999', {
       title: 'Nope',
-    });
+    }, { admin: true });
     assert(res.ok === false, 'PUT non-existent slug returns ok:false');
   }
 
-  // ── 9. Error: create with missing required fields ──
+  // ── 11. Error: create with missing required fields ──
   {
-    const res = await makeRequest('POST', '/api/episodes', {});
+    const res = await makeRequest('POST', '/api/episodes', {}, { admin: true });
     assert(res.ok === false, 'POST with missing fields returns ok:false');
   }
 
-  // ── 10. Delete episode ──
+  // ── 12. Auth: DELETE without admin key returns 401 ──
   {
     const res = await makeRequest('DELETE', `/api/episodes/${TEST_SLUG}`);
+    assert(res.status === 401, 'DELETE /api/episodes/:slug without admin key returns 401');
+  }
+
+  // ── 13. Delete episode ──
+  {
+    const res = await makeRequest('DELETE', `/api/episodes/${TEST_SLUG}`, null, { admin: true });
     assert(res.ok === true, 'DELETE /api/episodes/:slug deletes episode', res.error);
   }
 
-  // ── 11. Verify deletion ──
+  // ── 14. Verify deletion ──
   {
     const res = await makeRequest('GET', `/api/episodes/${TEST_SLUG}`);
     assert(res.ok === false, 'GET deleted episode returns ok:false (confirmed deletion)');
   }
 
-  // ── 12. Error: delete non-existent slug ──
+  // ── 15. Error: delete non-existent slug ──
   {
-    const res = await makeRequest('DELETE', '/api/episodes/nonexistent-slug-xyz-999');
+    const res = await makeRequest('DELETE', '/api/episodes/nonexistent-slug-xyz-999', null, { admin: true });
     assert(res.ok === false, 'DELETE non-existent slug returns ok:false');
   }
 

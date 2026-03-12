@@ -13,8 +13,6 @@ import AdminPanel from './components/admin/AdminPanel'
 const MAIN_TABS = [
   { id: 'home', label: 'Home', icon: HomeIcon },
   { id: 'show', label: 'The Show', icon: Tv },
-  { id: 'docs', label: 'Documentation', icon: BookOpen },
-  { id: 'admin', label: 'Admin', icon: Shield },
 ]
 
 const SHOW_TABS = [
@@ -146,14 +144,30 @@ export default function App() {
           )}
         </div>
 
-        {/* Theme toggle */}
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-        >
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
+        {/* Right-side icon buttons */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setMainTab('docs')}
+            className={`p-2 rounded-lg transition-all ${mainTab === 'docs' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg' : 'bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+            title="Documentation"
+          >
+            <BookOpen size={18} />
+          </button>
+          <button
+            onClick={() => setMainTab('admin')}
+            className={`p-2 rounded-lg transition-all ${mainTab === 'admin' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg' : 'bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+            title="Admin"
+          >
+            <Shield size={18} />
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-all"
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
       </header>
 
       {/* Content */}

@@ -12,6 +12,8 @@ import chatRouter from './routes/chat.js';
 import llmConfigRouter from './routes/llmConfig.js';
 import agentDocumentsRouter from './routes/agentDocuments.js';
 import agentMemoryRouter from './routes/agentMemory.js';
+import capabilitiesRouter from './routes/capabilities.js';
+import agentCapabilitiesRouter from './routes/agentCapabilities.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -38,6 +40,8 @@ app.use('/api/chat', chatRouter);
 app.use('/api/llm-config', llmConfigRouter);
 app.use('/api/agents', agentDocumentsRouter);
 app.use('/api/agents', agentMemoryRouter);
+app.use('/api/capabilities', capabilitiesRouter);
+app.use('/api/agents', agentCapabilitiesRouter);
 
 // Error handler
 app.use(errorHandler);

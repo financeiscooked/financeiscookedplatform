@@ -14,19 +14,19 @@ const TOOL_DOCS = [
       { name: 'episode_get', description: 'Get full episode with nested segments and slides.', params: [
         { name: 'slug', type: 'string', required: true, description: 'Episode slug (e.g. "ep1")' },
       ], example: 'await callTool("episode_get", {\n  slug: "ep1"\n})' },
-      { name: 'episode_create', description: 'Create a new episode.', params: [
+      { name: 'episode_create', description: '[Admin] Create a new episode. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
         { name: 'slug', type: 'string', required: true, description: 'URL-friendly slug' },
         { name: 'title', type: 'string', required: true, description: 'Episode title' },
         { name: 'date', type: 'string', required: false, description: 'Air date (ISO format)' },
         { name: 'sortOrder', type: 'number', required: false, description: 'Display order' },
       ], example: 'await callTool("episode_create", {\n  slug: "ep-pilot",\n  title: "The Pilot Episode",\n  date: "2026-03-15"\n})' },
-      { name: 'episode_update', description: 'Update an existing episode.', params: [
+      { name: 'episode_update', description: '[Admin] Update an existing episode. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
         { name: 'slug', type: 'string', required: true, description: 'Episode slug to update' },
         { name: 'title', type: 'string', required: false, description: 'New title' },
         { name: 'date', type: 'string', required: false, description: 'New air date (ISO)' },
         { name: 'sortOrder', type: 'number', required: false, description: 'New display order' },
       ] },
-      { name: 'episode_delete', description: 'Delete an episode and all its content (segments, slides, votes).', params: [
+      { name: 'episode_delete', description: '[Admin] Delete an episode and all its content (segments, slides, votes). Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
         { name: 'slug', type: 'string', required: true, description: 'Episode slug to delete' },
       ] },
     ],
@@ -35,20 +35,20 @@ const TOOL_DOCS = [
     label: 'Segments',
     id: 'segments',
     tools: [
-      { name: 'segment_create', description: 'Create a segment within an episode.', params: [
+      { name: 'segment_create', description: '[Admin] Create a segment within an episode. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
         { name: 'episodeSlug', type: 'string', required: true, description: 'Parent episode slug' },
         { name: 'slug', type: 'string', required: true, description: 'Segment slug' },
         { name: 'name', type: 'string', required: true, description: 'Segment name' },
         { name: 'status', type: 'enum', required: false, description: '"proposed" | "final"' },
         { name: 'sortOrder', type: 'number', required: false, description: 'Display order' },
       ], example: 'await callTool("segment_create", {\n  episodeSlug: "ep1",\n  slug: "cold-open",\n  name: "Cold Open"\n})' },
-      { name: 'segment_update', description: 'Update a segment.', params: [
+      { name: 'segment_update', description: '[Admin] Update a segment. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
         { name: 'id', type: 'string', required: true, description: 'Segment ID (UUID)' },
         { name: 'name', type: 'string', required: false, description: 'New name' },
         { name: 'status', type: 'enum', required: false, description: '"proposed" | "final"' },
         { name: 'sortOrder', type: 'number', required: false, description: 'New display order' },
       ] },
-      { name: 'segment_delete', description: 'Delete a segment and its slides.', params: [
+      { name: 'segment_delete', description: '[Admin] Delete a segment and its slides. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
         { name: 'id', type: 'string', required: true, description: 'Segment ID (UUID)' },
       ] },
     ],
@@ -57,7 +57,7 @@ const TOOL_DOCS = [
     label: 'Slides',
     id: 'slides',
     tools: [
-      { name: 'slide_create', description: 'Create a slide within a segment.', params: [
+      { name: 'slide_create', description: '[Admin] Create a slide within a segment. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
         { name: 'segmentId', type: 'string', required: true, description: 'Parent segment ID (UUID)' },
         { name: 'type', type: 'enum', required: true, description: '"text" | "link" | "image" | "gallery"' },
         { name: 'title', type: 'string', required: true, description: 'Slide title' },
@@ -68,7 +68,7 @@ const TOOL_DOCS = [
         { name: 'bullets', type: 'string[]', required: false, description: 'Bullet point list' },
         { name: 'sortOrder', type: 'number', required: false, description: 'Display order' },
       ], example: 'await callTool("slide_create", {\n  segmentId: "uuid-here",\n  type: "text",\n  title: "Key Takeaway",\n  bullets: ["Point 1", "Point 2"]\n})' },
-      { name: 'slide_update', description: 'Update an existing slide.', params: [
+      { name: 'slide_update', description: '[Admin] Update an existing slide. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
         { name: 'id', type: 'string', required: true, description: 'Slide ID (UUID)' },
         { name: 'type', type: 'enum', required: false, description: '"text" | "link" | "image" | "gallery"' },
         { name: 'title', type: 'string', required: false, description: 'New title' },
@@ -79,16 +79,16 @@ const TOOL_DOCS = [
         { name: 'bullets', type: 'string[]', required: false, description: 'Bullet points' },
         { name: 'sortOrder', type: 'number', required: false, description: 'Display order' },
       ] },
-      { name: 'slide_delete', description: 'Delete a slide.', params: [
+      { name: 'slide_delete', description: '[Admin] Delete a slide. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
         { name: 'id', type: 'string', required: true, description: 'Slide ID (UUID)' },
       ] },
-      { name: 'slide_move', description: 'Move a slide to another segment. Provide either targetSegmentId OR targetEpisodeSlug+targetSegmentSlug (auto-creates segment if needed).', params: [
+      { name: 'slide_move', description: '[Admin] Move a slide to another segment. Provide either targetSegmentId OR targetEpisodeSlug+targetSegmentSlug (auto-creates segment if needed). Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
         { name: 'id', type: 'string', required: true, description: 'Slide ID (UUID)' },
         { name: 'targetSegmentId', type: 'string', required: false, description: 'Target segment ID' },
         { name: 'targetEpisodeSlug', type: 'string', required: false, description: 'Target episode slug' },
         { name: 'targetSegmentSlug', type: 'string', required: false, description: 'Target segment slug' },
       ], example: 'await callTool("slide_move", {\n  id: "slide-uuid",\n  targetEpisodeSlug: "ep2",\n  targetSegmentSlug: "main-topic"\n})' },
-      { name: 'slide_finalize', description: 'Finalize a slide and its parent segment (sets status to "final").', params: [
+      { name: 'slide_finalize', description: '[Admin] Finalize a slide and its parent segment (sets status to "final"). Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
         { name: 'id', type: 'string', required: true, description: 'Slide ID (UUID)' },
       ] },
     ],
@@ -107,10 +107,81 @@ const TOOL_DOCS = [
     ],
   },
   {
+    label: 'Agents',
+    id: 'agents',
+    tools: [
+      { name: 'agents_list', description: 'List all active agents.', params: [], example: 'await callTool("agents_list", {})' },
+      { name: 'agent_get', description: 'Get agent details by ID.', params: [
+        { name: 'id', type: 'string', required: true, description: 'Agent ID (UUID)' },
+      ], example: 'await callTool("agent_get", {\n  id: "agent-uuid"\n})' },
+      { name: 'agent_create', description: '[Admin] Create a new agent. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'name', type: 'string', required: true, description: 'Agent display name' },
+        { name: 'description', type: 'string', required: true, description: 'Short description' },
+        { name: 'instructions', type: 'string', required: true, description: 'System prompt / instructions' },
+        { name: 'defaultModel', type: 'string', required: false, description: 'Override default LLM model' },
+        { name: 'features', type: 'object', required: false, description: 'Feature flags' },
+      ], example: 'await callTool("agent_create", {\n  name: "Research Agent",\n  description: "Helps with research",\n  instructions: "You are a helpful research agent."\n})' },
+      { name: 'agent_update', description: '[Admin] Update an agent. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'id', type: 'string', required: true, description: 'Agent ID (UUID)' },
+        { name: 'name', type: 'string', required: false, description: 'New name' },
+        { name: 'description', type: 'string', required: false, description: 'New description' },
+        { name: 'instructions', type: 'string', required: false, description: 'New instructions' },
+        { name: 'defaultModel', type: 'string', required: false, description: 'New default model' },
+      ] },
+      { name: 'agent_delete', description: '[Admin] Soft-delete an agent. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'id', type: 'string', required: true, description: 'Agent ID (UUID)' },
+      ] },
+    ],
+  },
+  {
+    label: 'Capabilities',
+    id: 'capabilities',
+    tools: [
+      { name: 'capabilities_list', description: '[Admin] List all capabilities with agent counts. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [], example: 'await callTool("capabilities_list", {})' },
+      { name: 'capability_create', description: '[Admin] Register a new MCP server capability. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'name', type: 'string', required: true, description: 'Capability name' },
+        { name: 'description', type: 'string', required: false, description: 'Description' },
+        { name: 'type', type: 'string', required: false, description: '"external" or "internal"' },
+        { name: 'serverUrl', type: 'string', required: false, description: 'MCP server URL' },
+      ] },
+      { name: 'capability_update', description: '[Admin] Update a capability. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'id', type: 'string', required: true, description: 'Capability ID (UUID)' },
+        { name: 'name', type: 'string', required: false, description: 'New name' },
+        { name: 'description', type: 'string', required: false, description: 'New description' },
+        { name: 'serverUrl', type: 'string', required: false, description: 'New server URL' },
+      ] },
+      { name: 'capability_delete', description: '[Admin] Soft-delete a capability. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'id', type: 'string', required: true, description: 'Capability ID (UUID)' },
+      ] },
+      { name: 'capability_test', description: '[Admin] Test connection to external MCP server. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'id', type: 'string', required: true, description: 'Capability ID (UUID)' },
+      ] },
+    ],
+  },
+  {
+    label: 'LLM Config',
+    id: 'llm-config',
+    tools: [
+      { name: 'llm_config_get', description: '[Admin] Get current LLM configuration. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [], example: 'await callTool("llm_config_get", {})' },
+      { name: 'llm_config_providers', description: '[Admin] List available LLM providers and models. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [] },
+      { name: 'llm_config_set', description: '[Admin] Set LLM provider and model. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'provider', type: 'enum', required: true, description: '"openai" | "anthropic" | "google"' },
+        { name: 'model', type: 'string', required: true, description: 'Model ID (e.g. "gpt-4o-mini")' },
+      ] },
+      { name: 'llm_config_set_key', description: '[Admin] Save encrypted API key for a provider. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'provider', type: 'enum', required: true, description: '"openai" | "anthropic" | "google"' },
+        { name: 'apiKey', type: 'string', required: true, description: 'API key (stored encrypted)' },
+      ] },
+      { name: 'llm_config_delete_key', description: '[Admin] Delete stored API key for a provider. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'provider', type: 'string', required: true, description: 'Provider name' },
+      ] },
+    ],
+  },
+  {
     label: 'Admin',
     id: 'admin',
     tools: [
-      { name: 'admin_seed', description: 'Seed database from JSON files. Clears existing data and reloads from seed files.', params: [] },
+      { name: 'admin_seed', description: '[Admin] Seed database from JSON files. Clears existing data and reloads from seed files. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [] },
       { name: 'admin_stats', description: 'Get database statistics (episode, segment, slide, vote counts).', params: [], example: 'await callTool("admin_stats", {})\n// Returns: { episodes: 22, segments: 189, slides: 62, votes: 0 }' },
       { name: 'health_check', description: 'Check API health status.', params: [], example: 'await callTool("health_check", {})\n// Returns: { status: "healthy", timestamp: "..." }' },
     ],

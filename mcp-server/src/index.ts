@@ -14,7 +14,7 @@ function zodToJsonSchema(schema: any): any {
   return _zodToJsonSchema(schema);
 }
 
-// No auth — public API
+// Admin key is read from FINANCEISCOOKED_ADMIN_KEY env var (optional — needed for write tools)
 const client = new FinanceIsCookedClient();
 
 const server = new Server(

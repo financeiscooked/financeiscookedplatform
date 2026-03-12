@@ -23,11 +23,14 @@ const COLORS = {
 };
 
 const SUITES = [
-  { name: 'Admin',    file: 'Admin/admin-tests.js' },
-  { name: 'Episodes', file: 'Episodes/episodes-tests.js' },
-  { name: 'Segments', file: 'Segments/segments-tests.js' },
-  { name: 'Slides',   file: 'Slides/slides-tests.js' },
-  { name: 'Votes',    file: 'Votes/votes-tests.js' },
+  { name: 'Admin',        file: 'Admin/admin-tests.js' },
+  { name: 'Episodes',     file: 'Episodes/episodes-tests.js' },
+  { name: 'Segments',     file: 'Segments/segments-tests.js' },
+  { name: 'Slides',       file: 'Slides/slides-tests.js' },
+  { name: 'Votes',        file: 'Votes/votes-tests.js' },
+  { name: 'Agents',       file: 'Agents/agents-tests.js' },
+  { name: 'Capabilities', file: 'Capabilities/capabilities-tests.js' },
+  { name: 'LLM Config',   file: 'LlmConfig/llm-config-tests.js' },
 ];
 
 function runSuite(suite) {

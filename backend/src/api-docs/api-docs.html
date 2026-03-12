@@ -42,6 +42,9 @@
     .method-post-border { border-color: #3b82f633; background: #3b82f60d; }
     .method-put-border { border-color: #f59e0b33; background: #f59e0b0d; }
     .method-delete-border { border-color: #ef444433; background: #ef44440d; }
+    .method-patch { background: #a855f7; }
+    .method-patch-text { color: #a855f7; }
+    .method-patch-border { border-color: #a855f733; background: #a855f70d; }
     .status-2xx { color: #22c55e; }
     .status-4xx { color: #f59e0b; }
     .status-5xx { color: #ef4444; }
@@ -122,6 +125,13 @@
     <div class="bg-card border border-border rounded-xl p-5 mb-6">
       <h3 class="text-sm font-semibold text-textSecondary uppercase tracking-wider mb-2">Base URL</h3>
       <code id="baseUrlDisplay" class="text-lg font-mono" style="color:#F0A030"></code>
+    </div>
+
+    <!-- Auth Info -->
+    <div class="bg-card border border-border rounded-xl p-5 mb-6">
+      <h3 class="text-sm font-semibold text-textSecondary uppercase tracking-wider mb-3">Authentication</h3>
+      <p class="text-sm text-textSecondary mb-3">Endpoints marked <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400">[Admin]</span> require the <code class="text-amber-400 text-xs">X-Admin-Key</code> header. Read endpoints are public.</p>
+      <pre class="bg-bg rounded-lg p-4 text-sm font-mono overflow-x-auto"><span class="json-key">X-Admin-Key</span>: <span class="json-string">your-admin-key</span></pre>
     </div>
 
     <!-- Response Format -->
@@ -258,27 +268,27 @@ const CATEGORIES = [
     endpoints: [
       { method: 'GET', path: '/api/episodes', summary: 'List all episodes with segment/slide counts', auth: false, params: [], body: null },
       { method: 'GET', path: '/api/episodes/:slug', summary: 'Get full episode with nested segments and slides', auth: false, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep2', description: 'Episode slug (e.g. ep1, ep2, backlog)' }], body: null },
-      { method: 'POST', path: '/api/episodes', summary: 'Create a new episode', auth: false, params: [], body: { schema: { slug: { type: 'string', required: true, example: 'ep99', description: 'Unique episode slug' }, title: { type: 'string', required: true, example: 'Episode 99', description: 'Episode title' }, date: { type: 'string', required: false, example: '2026-04-01', description: 'Episode date' }, sortOrder: { type: 'number', required: false, example: 99, description: 'Sort position' } }, example: { slug: 'ep99', title: 'Episode 99', date: '2026-04-01', sortOrder: 99 } } },
-      { method: 'PUT', path: '/api/episodes/:slug', summary: 'Update episode metadata', auth: false, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep2' }], body: { schema: { title: { type: 'string', required: false, example: 'Updated Title' }, date: { type: 'string', required: false, example: '2026-04-01' }, sortOrder: { type: 'number', required: false, example: 2 } }, example: { title: 'Updated Title' } } },
-      { method: 'DELETE', path: '/api/episodes/:slug', summary: 'Delete episode and all children', auth: false, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep99' }], body: null },
+      { method: 'POST', path: '/api/episodes', summary: '[Admin] Create a new episode', auth: true, params: [], body: { schema: { slug: { type: 'string', required: true, example: 'ep99', description: 'Unique episode slug' }, title: { type: 'string', required: true, example: 'Episode 99', description: 'Episode title' }, date: { type: 'string', required: false, example: '2026-04-01', description: 'Episode date' }, sortOrder: { type: 'number', required: false, example: 99, description: 'Sort position' } }, example: { slug: 'ep99', title: 'Episode 99', date: '2026-04-01', sortOrder: 99 } } },
+      { method: 'PUT', path: '/api/episodes/:slug', summary: '[Admin] Update episode metadata', auth: true, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep2' }], body: { schema: { title: { type: 'string', required: false, example: 'Updated Title' }, date: { type: 'string', required: false, example: '2026-04-01' }, sortOrder: { type: 'number', required: false, example: 2 } }, example: { title: 'Updated Title' } } },
+      { method: 'DELETE', path: '/api/episodes/:slug', summary: '[Admin] Delete episode and all children', auth: true, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep99' }], body: null },
     ]
   },
   {
     name: 'Segments', slug: 'segments', description: 'Manage segments within episodes',
     endpoints: [
-      { method: 'POST', path: '/api/episodes/:slug/segments', summary: 'Create segment in episode', auth: false, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep2', description: 'Episode slug' }], body: { schema: { slug: { type: 'string', required: true, example: 'new-segment', description: 'Segment slug' }, name: { type: 'string', required: true, example: 'New Segment', description: 'Segment display name' }, status: { type: 'string', required: false, enum: ['proposed','final'], example: 'proposed', description: 'Content status' }, sortOrder: { type: 'number', required: false, example: 0 } }, example: { slug: 'new-segment', name: 'New Segment', status: 'proposed', sortOrder: 0 } } },
-      { method: 'PUT', path: '/api/segments/:id', summary: 'Update segment', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Segment UUID' }], body: { schema: { name: { type: 'string', required: false, example: 'Updated Name' }, status: { type: 'string', required: false, enum: ['proposed','final'] }, sortOrder: { type: 'number', required: false } }, example: { name: 'Updated Name', status: 'final' } } },
-      { method: 'DELETE', path: '/api/segments/:id', summary: 'Delete segment and all slides', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: null },
+      { method: 'POST', path: '/api/episodes/:slug/segments', summary: '[Admin] Create segment in episode', auth: true, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep2', description: 'Episode slug' }], body: { schema: { slug: { type: 'string', required: true, example: 'new-segment', description: 'Segment slug' }, name: { type: 'string', required: true, example: 'New Segment', description: 'Segment display name' }, status: { type: 'string', required: false, enum: ['proposed','final'], example: 'proposed', description: 'Content status' }, sortOrder: { type: 'number', required: false, example: 0 } }, example: { slug: 'new-segment', name: 'New Segment', status: 'proposed', sortOrder: 0 } } },
+      { method: 'PUT', path: '/api/segments/:id', summary: '[Admin] Update segment', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Segment UUID' }], body: { schema: { name: { type: 'string', required: false, example: 'Updated Name' }, status: { type: 'string', required: false, enum: ['proposed','final'] }, sortOrder: { type: 'number', required: false } }, example: { name: 'Updated Name', status: 'final' } } },
+      { method: 'DELETE', path: '/api/segments/:id', summary: '[Admin] Delete segment and all slides', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: null },
     ]
   },
   {
     name: 'Slides', slug: 'slides', description: 'Manage slides within segments, including move and finalize operations',
     endpoints: [
-      { method: 'POST', path: '/api/segments/:id/slides', summary: 'Create slide in segment', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Segment UUID' }], body: { schema: { type: { type: 'string', required: true, enum: ['text','link','image','gallery'], example: 'link', description: 'Slide type' }, title: { type: 'string', required: true, example: 'New Article Title', description: 'Slide title' }, url: { type: 'string', required: false, example: 'https://example.com/article' }, notes: { type: 'string', required: false, example: 'Some notes about this slide' }, details: { type: 'string', required: false }, status: { type: 'string', required: false, enum: ['proposed','final'], example: 'proposed' }, bullets: { type: 'array', required: false, example: ['Point 1','Point 2'] }, sortOrder: { type: 'number', required: false, example: 0 } }, example: { type: 'link', title: 'New Article Title', url: 'https://example.com/article', notes: 'Some notes', status: 'proposed', bullets: [], sortOrder: 0 } } },
-      { method: 'PUT', path: '/api/slides/:id', summary: 'Update slide', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: { schema: { type: { type: 'string', required: false, enum: ['text','link','image','gallery'] }, title: { type: 'string', required: false }, url: { type: 'string', required: false }, notes: { type: 'string', required: false }, details: { type: 'string', required: false }, status: { type: 'string', required: false, enum: ['proposed','final'] }, bullets: { type: 'array', required: false }, sortOrder: { type: 'number', required: false } }, example: { title: 'Updated Title', status: 'final' } } },
-      { method: 'DELETE', path: '/api/slides/:id', summary: 'Delete slide', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: null },
-      { method: 'POST', path: '/api/slides/:id/move', summary: 'Move slide to different segment/episode', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Slide UUID to move' }], body: { schema: { targetSegmentId: { type: 'uuid', required: false, description: 'Direct segment UUID target' }, targetEpisodeSlug: { type: 'string', required: false, example: 'backlog', description: 'Target episode slug (use with targetSegmentSlug)' }, targetSegmentSlug: { type: 'string', required: false, example: 'in-the-news', description: 'Target segment slug (use with targetEpisodeSlug)' } }, example: { targetEpisodeSlug: 'backlog', targetSegmentSlug: 'in-the-news' } } },
-      { method: 'POST', path: '/api/slides/:id/finalize', summary: 'Set slide + parent segment status to final', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: null },
+      { method: 'POST', path: '/api/segments/:id/slides', summary: '[Admin] Create slide in segment', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Segment UUID' }], body: { schema: { type: { type: 'string', required: true, enum: ['text','link','image','gallery'], example: 'link', description: 'Slide type' }, title: { type: 'string', required: true, example: 'New Article Title', description: 'Slide title' }, url: { type: 'string', required: false, example: 'https://example.com/article' }, notes: { type: 'string', required: false, example: 'Some notes about this slide' }, details: { type: 'string', required: false }, status: { type: 'string', required: false, enum: ['proposed','final'], example: 'proposed' }, bullets: { type: 'array', required: false, example: ['Point 1','Point 2'] }, sortOrder: { type: 'number', required: false, example: 0 } }, example: { type: 'link', title: 'New Article Title', url: 'https://example.com/article', notes: 'Some notes', status: 'proposed', bullets: [], sortOrder: 0 } } },
+      { method: 'PUT', path: '/api/slides/:id', summary: '[Admin] Update slide', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: { schema: { type: { type: 'string', required: false, enum: ['text','link','image','gallery'] }, title: { type: 'string', required: false }, url: { type: 'string', required: false }, notes: { type: 'string', required: false }, details: { type: 'string', required: false }, status: { type: 'string', required: false, enum: ['proposed','final'] }, bullets: { type: 'array', required: false }, sortOrder: { type: 'number', required: false } }, example: { title: 'Updated Title', status: 'final' } } },
+      { method: 'DELETE', path: '/api/slides/:id', summary: '[Admin] Delete slide', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: null },
+      { method: 'POST', path: '/api/slides/:id/move', summary: '[Admin] Move slide to different segment/episode', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Slide UUID to move' }], body: { schema: { targetSegmentId: { type: 'uuid', required: false, description: 'Direct segment UUID target' }, targetEpisodeSlug: { type: 'string', required: false, example: 'backlog', description: 'Target episode slug (use with targetSegmentSlug)' }, targetSegmentSlug: { type: 'string', required: false, example: 'in-the-news', description: 'Target segment slug (use with targetEpisodeSlug)' } }, example: { targetEpisodeSlug: 'backlog', targetSegmentSlug: 'in-the-news' } } },
+      { method: 'POST', path: '/api/slides/:id/finalize', summary: '[Admin] Set slide + parent segment status to final', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: null },
     ]
   },
   {
@@ -289,9 +299,58 @@ const CATEGORIES = [
     ]
   },
   {
+    name: 'Agents', slug: 'agents', description: 'Manage AI agents for the chat platform',
+    endpoints: [
+      { method: 'GET', path: '/api/agents', summary: 'List all active agents', auth: false, params: [], body: null },
+      { method: 'GET', path: '/api/agents/:id', summary: 'Get agent by ID with details', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'string', example: 'agent-uuid', description: 'Agent UUID' }], body: null },
+      { method: 'POST', path: '/api/agents', summary: '[Admin] Create a new agent', auth: true, params: [], body: { schema: { name: { type: 'string', required: true, example: 'Research Agent', description: 'Agent display name' }, description: { type: 'string', required: true, example: 'Helps with research', description: 'Short description' }, instructions: { type: 'string', required: true, example: 'You are a helpful research agent.', description: 'System prompt / instructions' }, defaultModel: { type: 'string', required: false, example: 'gpt-4o', description: 'Override default LLM model' }, features: { type: 'object', required: false, example: {}, description: 'Feature flags' } }, example: { name: 'Research Agent', description: 'Helps with research tasks', instructions: 'You are a helpful research agent.' } } },
+      { method: 'PATCH', path: '/api/agents/:id', summary: '[Admin] Update agent', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'string', example: 'agent-uuid' }], body: { schema: { name: { type: 'string', required: false }, description: { type: 'string', required: false }, instructions: { type: 'string', required: false }, defaultModel: { type: 'string', required: false }, features: { type: 'object', required: false }, branding: { type: 'object', required: false } }, example: { description: 'Updated description', instructions: 'Updated instructions.' } } },
+      { method: 'DELETE', path: '/api/agents/:id', summary: '[Admin] Soft-delete agent', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'string', example: 'agent-uuid' }], body: null },
+    ]
+  },
+  {
+    name: 'Capabilities', slug: 'capabilities', description: 'Register and manage MCP server capabilities',
+    endpoints: [
+      { method: 'GET', path: '/api/capabilities', summary: '[Admin] List all capabilities with agent counts', auth: true, params: [], body: null },
+      { method: 'POST', path: '/api/capabilities', summary: '[Admin] Register new MCP server capability', auth: true, params: [], body: { schema: { name: { type: 'string', required: true, example: 'Web Search', description: 'Capability name' }, description: { type: 'string', required: false, example: 'Search the web', description: 'Capability description' }, type: { type: 'string', required: false, example: 'external', description: 'Type (external, internal)' }, serverUrl: { type: 'string', required: false, example: 'https://mcp.example.com', description: 'MCP server URL' }, config: { type: 'object', required: false, example: {}, description: 'Additional configuration' } }, example: { name: 'Web Search', description: 'Search the web via MCP', type: 'external', serverUrl: 'https://mcp.example.com' } } },
+      { method: 'PATCH', path: '/api/capabilities/:id', summary: '[Admin] Update capability', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'string', example: 'cap-uuid' }], body: { schema: { name: { type: 'string', required: false }, description: { type: 'string', required: false }, serverUrl: { type: 'string', required: false }, config: { type: 'object', required: false }, isActive: { type: 'boolean', required: false } }, example: { description: 'Updated capability', serverUrl: 'https://mcp.example.com/v2' } } },
+      { method: 'DELETE', path: '/api/capabilities/:id', summary: '[Admin] Soft-delete capability', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'string', example: 'cap-uuid' }], body: null },
+      { method: 'POST', path: '/api/capabilities/:id/test', summary: '[Admin] Test connection to external MCP server', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'string', example: 'cap-uuid' }], body: null },
+    ]
+  },
+  {
+    name: 'Agent Capabilities', slug: 'agent-capabilities', description: 'Link/unlink capabilities to agents',
+    endpoints: [
+      { method: 'GET', path: '/api/agents/:agentId/capabilities', summary: '[Admin] List capabilities enabled for agent', auth: true, params: [{ name: 'agentId', in: 'path', required: true, type: 'string', example: 'agent-uuid', description: 'Agent UUID' }], body: null },
+      { method: 'PUT', path: '/api/agents/:agentId/capabilities/:capId', summary: '[Admin] Enable capability for agent', auth: true, params: [{ name: 'agentId', in: 'path', required: true, type: 'string', example: 'agent-uuid' }, { name: 'capId', in: 'path', required: true, type: 'string', example: 'cap-uuid' }], body: { schema: { config: { type: 'object', required: false, example: {}, description: 'Per-agent capability config overrides' } }, example: { config: {} } } },
+      { method: 'DELETE', path: '/api/agents/:agentId/capabilities/:capId', summary: '[Admin] Disable capability for agent', auth: true, params: [{ name: 'agentId', in: 'path', required: true, type: 'string', example: 'agent-uuid' }, { name: 'capId', in: 'path', required: true, type: 'string', example: 'cap-uuid' }], body: null },
+    ]
+  },
+  {
+    name: 'Chat', slug: 'chat', description: 'Conversation and messaging endpoints for AI agents',
+    endpoints: [
+      { method: 'POST', path: '/api/chat/start', summary: 'Start a new conversation with an agent', auth: false, params: [], body: { schema: { agentId: { type: 'string', required: true, example: 'agent-uuid', description: 'Agent ID to chat with' } }, example: { agentId: 'agent-uuid' } } },
+      { method: 'GET', path: '/api/chat/conversations', summary: 'List recent conversations', auth: false, params: [{ name: 'agentId', in: 'query', required: false, type: 'string', example: 'agent-uuid', description: 'Filter by agent' }, { name: 'limit', in: 'query', required: false, type: 'number', example: '50', description: 'Max results' }], body: null },
+      { method: 'GET', path: '/api/chat/:conversationId', summary: 'Get conversation with messages', auth: false, params: [{ name: 'conversationId', in: 'path', required: true, type: 'string', example: 'conv-public-id', description: 'Conversation public ID' }], body: null },
+      { method: 'POST', path: '/api/chat/:conversationId/stream', summary: 'Send message with SSE streaming response', auth: false, params: [{ name: 'conversationId', in: 'path', required: true, type: 'string', example: 'conv-public-id' }], body: { schema: { content: { type: 'string', required: true, example: 'Hello, how are you?', description: 'User message content' } }, example: { content: 'Hello, how are you?' } } },
+      { method: 'POST', path: '/api/chat/:conversationId/message', summary: 'Send message with non-streaming response', auth: false, params: [{ name: 'conversationId', in: 'path', required: true, type: 'string', example: 'conv-public-id' }], body: { schema: { content: { type: 'string', required: true, example: 'Hello', description: 'User message content' } }, example: { content: 'Hello' } } },
+      { method: 'DELETE', path: '/api/chat/:conversationId', summary: 'Archive a conversation', auth: false, params: [{ name: 'conversationId', in: 'path', required: true, type: 'string', example: 'conv-public-id' }], body: null },
+    ]
+  },
+  {
+    name: 'LLM Config', slug: 'llm-config', description: 'Configure LLM provider, model, and API keys',
+    endpoints: [
+      { method: 'GET', path: '/api/llm-config', summary: '[Admin] Get current LLM configuration', auth: true, params: [], body: null },
+      { method: 'GET', path: '/api/llm-config/providers', summary: '[Admin] List available LLM providers and models', auth: true, params: [], body: null },
+      { method: 'PUT', path: '/api/llm-config', summary: '[Admin] Set LLM provider and model', auth: true, params: [], body: { schema: { provider: { type: 'string', required: true, enum: ['openai','anthropic','google'], example: 'openai', description: 'LLM provider' }, model: { type: 'string', required: true, example: 'gpt-4o-mini', description: 'Model ID' } }, example: { provider: 'openai', model: 'gpt-4o-mini' } } },
+      { method: 'PUT', path: '/api/llm-config/api-key', summary: '[Admin] Save encrypted API key for a provider', auth: true, params: [], body: { schema: { provider: { type: 'string', required: true, enum: ['openai','anthropic','google'], example: 'openai', description: 'Provider' }, apiKey: { type: 'string', required: true, example: 'sk-...', description: 'API key (stored encrypted)' } }, example: { provider: 'openai', apiKey: 'sk-your-api-key' } } },
+      { method: 'DELETE', path: '/api/llm-config/api-key/:provider', summary: '[Admin] Delete stored API key for a provider', auth: true, params: [{ name: 'provider', in: 'path', required: true, type: 'string', example: 'openai', description: 'Provider name' }], body: null },
+    ]
+  },
+  {
     name: 'Admin', slug: 'admin', description: 'Administrative and utility endpoints',
     endpoints: [
-      { method: 'POST', path: '/api/admin/seed', summary: 'Seed database from JSON files in /seed-data', auth: false, params: [], body: null },
+      { method: 'POST', path: '/api/admin/seed', summary: '[Admin] Seed database from JSON files in /seed-data', auth: true, params: [], body: null },
       { method: 'GET', path: '/api/admin/stats', summary: 'Get database statistics', auth: false, params: [], body: null },
       { method: 'GET', path: '/api/health', summary: 'Health check', auth: false, params: [], body: null },
     ]
@@ -451,7 +510,22 @@ function selectEndpoint(catSlug, epIndex) {
   methodEl.textContent = ep.method;
   methodEl.className = `method-${ep.method.toLowerCase()} px-3 py-1 rounded-md text-xs font-bold text-white uppercase tracking-wider`;
   document.getElementById('epPath').textContent = ep.path;
-  document.getElementById('epSummary').textContent = ep.summary;
+  document.getElementById('epSummary').textContent = ep.summary + (ep.auth ? '' : '');
+
+  // Auth badge
+  let authBadge = document.getElementById('epAuthBadge');
+  if (!authBadge) {
+    authBadge = document.createElement('span');
+    authBadge.id = 'epAuthBadge';
+    methodEl.parentElement.appendChild(authBadge);
+  }
+  if (ep.auth) {
+    authBadge.className = 'text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400';
+    authBadge.textContent = 'Admin';
+  } else {
+    authBadge.className = 'text-xs font-bold px-2 py-0.5 rounded bg-green-500/20 text-green-400';
+    authBadge.textContent = 'Public';
+  }
 
   // Request URL bar
   const reqBadge = document.getElementById('reqMethodBadge');
@@ -573,6 +647,14 @@ async function executeRequest() {
   const url = BASE_URL + buildPath();
   const method = currentEndpoint.method;
   const options = { method, headers: {} };
+
+  // Add admin key for authenticated endpoints
+  if (currentEndpoint.auth) {
+    const adminKey = prompt('This endpoint requires an admin key. Enter X-Admin-Key:', '');
+    if (adminKey) {
+      options.headers['X-Admin-Key'] = adminKey;
+    }
+  }
 
   if (currentEndpoint.body) {
     const bodyText = document.getElementById('bodyEditor').value.trim();

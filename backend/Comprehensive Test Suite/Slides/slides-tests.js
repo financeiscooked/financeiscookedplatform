@@ -4,10 +4,12 @@
  * Slides API Test Suite
  * Tests: POST create, PUT update, DELETE, POST move, POST finalize, and error cases
  * Sets up a temporary episode with two segments, then cleans up after.
+ * Write operations require X-Admin-Key header.
  */
 
 const CONFIG = {
   BASE_URL: process.env.BASE_URL || 'https://backend-production-0e40.up.railway.app',
+  ADMIN_KEY: process.env.ADMIN_KEY || 'admin123',
 };
 
 const COLORS = {
@@ -37,12 +39,11 @@ function assert(condition, testName, detail) {
   }
 }
 
-async function makeRequest(method, path, body) {
+async function makeRequest(method, path, body, { admin = false } = {}) {
   const url = `${CONFIG.BASE_URL}${path}`;
-  const options = {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-  };
+  const headers = { 'Content-Type': 'application/json' };
+  if (admin) headers['X-Admin-Key'] = CONFIG.ADMIN_KEY;
+  const options = { method, headers };
   if (body) {
     options.body = JSON.stringify(body);
   }
@@ -74,7 +75,7 @@ async function runTests() {
       slug: EP_SLUG,
       title: 'Slides Test Episode',
       sortOrder: 9997,
-    });
+    }, { admin: true });
     if (!epRes.ok) {
       console.error(`${COLORS.red}  Setup failed (episode): ${epRes.error}${COLORS.reset}`);
       process.exit(1);
@@ -85,7 +86,7 @@ async function runTests() {
       slug: SEG_SLUG_A,
       name: 'Segment A',
       sortOrder: 1,
-    });
+    }, { admin: true });
     if (segARes.ok && segARes.data) segIdA = segARes.data.id;
 
     console.log(`${COLORS.dim}  [setup] Creating segment B: ${SEG_SLUG_B}${COLORS.reset}`);
@@ -93,17 +94,26 @@ async function runTests() {
       slug: SEG_SLUG_B,
       name: 'Segment B',
       sortOrder: 2,
-    });
+    }, { admin: true });
     if (segBRes.ok && segBRes.data) segIdB = segBRes.data.id;
 
     if (!segIdA || !segIdB) {
       console.error(`${COLORS.red}  Setup failed (segments)${COLORS.reset}`);
-      await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`);
+      await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`, null, { admin: true });
       process.exit(1);
     }
   }
 
-  // ── 1. Create text slide ──
+  // ── 1. Auth: POST slide without admin key returns 401 ──
+  {
+    const res = await makeRequest('POST', `/api/segments/${segIdA}/slides`, {
+      type: 'text',
+      title: 'Should Fail',
+    });
+    assert(res.status === 401, 'POST slide without admin key returns 401');
+  }
+
+  // ── 2. Create text slide ──
   {
     const res = await makeRequest('POST', `/api/segments/${segIdA}/slides`, {
       type: 'text',
@@ -111,7 +121,7 @@ async function runTests() {
       notes: 'Some notes here',
       bullets: ['Point 1', 'Point 2'],
       sortOrder: 1,
-    });
+    }, { admin: true });
     assert(res.ok === true, 'POST create text slide returns ok:true', res.error);
     if (res.data) {
       slideId1 = res.data.id;
@@ -120,7 +130,7 @@ async function runTests() {
     }
   }
 
-  // ── 2. Create link slide ──
+  // ── 3. Create link slide ──
   {
     const res = await makeRequest('POST', `/api/segments/${segIdA}/slides`, {
       type: 'link',
@@ -128,7 +138,7 @@ async function runTests() {
       url: 'https://example.com/article',
       notes: 'An interesting link',
       sortOrder: 2,
-    });
+    }, { admin: true });
     assert(res.ok === true, 'POST create link slide returns ok:true', res.error);
     if (res.data) {
       slideId2 = res.data.id;
@@ -137,7 +147,7 @@ async function runTests() {
     }
   }
 
-  // ── 3. Verify slides appear in episode ──
+  // ── 4. Verify slides appear in episode ──
   {
     const res = await makeRequest('GET', `/api/episodes/${EP_SLUG}`);
     assert(res.ok === true, 'GET episode returns ok after slide creation');
@@ -149,28 +159,36 @@ async function runTests() {
     }
   }
 
-  // ── 4. Update slide ──
+  // ── 5. Auth: PUT slide without admin key returns 401 ──
+  if (slideId1) {
+    const res = await makeRequest('PUT', `/api/slides/${slideId1}`, {
+      title: 'Should Fail',
+    });
+    assert(res.status === 401, 'PUT slide without admin key returns 401');
+  }
+
+  // ── 6. Update slide ──
   if (slideId1) {
     const res = await makeRequest('PUT', `/api/slides/${slideId1}`, {
       title: 'Updated Text Slide',
       notes: 'Updated notes',
       details: 'Added details field',
-    });
+    }, { admin: true });
     assert(res.ok === true, 'PUT /api/slides/:id updates slide', res.error);
     if (res.data) {
       assert(res.data.title === 'Updated Text Slide', 'Updated slide title is correct');
     }
   }
 
-  // ── 5. Move slide to segment B ──
+  // ── 7. Move slide to segment B ──
   if (slideId1) {
     const res = await makeRequest('POST', `/api/slides/${slideId1}/move`, {
       targetSegmentId: segIdB,
-    });
+    }, { admin: true });
     assert(res.ok === true, 'POST /api/slides/:id/move moves slide (by targetSegmentId)', res.error);
   }
 
-  // ── 6. Verify slide moved ──
+  // ── 8. Verify slide moved ──
   {
     const res = await makeRequest('GET', `/api/episodes/${EP_SLUG}`);
     if (res.data && Array.isArray(res.data.segments)) {
@@ -182,22 +200,22 @@ async function runTests() {
     }
   }
 
-  // ── 7. Move slide using slug-based targeting ──
+  // ── 9. Move slide using slug-based targeting ──
   if (slideId1) {
     const res = await makeRequest('POST', `/api/slides/${slideId1}/move`, {
       targetEpisodeSlug: EP_SLUG,
       targetSegmentSlug: SEG_SLUG_A,
-    });
+    }, { admin: true });
     assert(res.ok === true, 'POST move slide using slug-based targeting', res.error);
   }
 
-  // ── 8. Finalize slide ──
+  // ── 10. Finalize slide ──
   if (slideId2) {
-    const res = await makeRequest('POST', `/api/slides/${slideId2}/finalize`);
+    const res = await makeRequest('POST', `/api/slides/${slideId2}/finalize`, null, { admin: true });
     assert(res.ok === true, 'POST /api/slides/:id/finalize returns ok:true', res.error);
   }
 
-  // ── 9. Verify finalize effect ──
+  // ── 11. Verify finalize effect ──
   {
     const res = await makeRequest('GET', `/api/episodes/${EP_SLUG}`);
     if (res.data && Array.isArray(res.data.segments)) {
@@ -211,13 +229,19 @@ async function runTests() {
     }
   }
 
-  // ── 10. Delete slide ──
+  // ── 12. Auth: DELETE slide without admin key returns 401 ──
   if (slideId1) {
     const res = await makeRequest('DELETE', `/api/slides/${slideId1}`);
+    assert(res.status === 401, 'DELETE slide without admin key returns 401');
+  }
+
+  // ── 13. Delete slide ──
+  if (slideId1) {
+    const res = await makeRequest('DELETE', `/api/slides/${slideId1}`, null, { admin: true });
     assert(res.ok === true, 'DELETE /api/slides/:id deletes slide', res.error);
   }
 
-  // ── 11. Verify deletion ──
+  // ── 14. Verify deletion ──
   {
     const res = await makeRequest('GET', `/api/episodes/${EP_SLUG}`);
     if (res.data && Array.isArray(res.data.segments)) {
@@ -233,49 +257,49 @@ async function runTests() {
 
   // ── Error Cases ──
 
-  // ── 12. Error: create slide with missing type ──
+  // ── 15. Error: create slide with missing type ──
   {
     const res = await makeRequest('POST', `/api/segments/${segIdA}/slides`, {
       title: 'No Type',
-    });
+    }, { admin: true });
     assert(res.ok === false, 'POST slide with missing type returns ok:false');
   }
 
-  // ── 13. Error: update non-existent slide ──
+  // ── 16. Error: update non-existent slide ──
   {
     const res = await makeRequest('PUT', '/api/slides/99999999', {
       title: 'Ghost',
-    });
+    }, { admin: true });
     assert(res.ok === false, 'PUT non-existent slide returns ok:false');
   }
 
-  // ── 14. Error: delete non-existent slide ──
+  // ── 17. Error: delete non-existent slide ──
   {
-    const res = await makeRequest('DELETE', '/api/slides/99999999');
+    const res = await makeRequest('DELETE', '/api/slides/99999999', null, { admin: true });
     assert(res.ok === false, 'DELETE non-existent slide returns ok:false');
   }
 
-  // ── 15. Error: move non-existent slide ──
+  // ── 18. Error: move non-existent slide ──
   {
     const res = await makeRequest('POST', '/api/slides/99999999/move', {
       targetSegmentId: segIdA,
-    });
+    }, { admin: true });
     assert(res.ok === false, 'POST move non-existent slide returns ok:false');
   }
 
-  // ── 16. Error: create slide on non-existent segment ──
+  // ── 19. Error: create slide on non-existent segment ──
   {
     const res = await makeRequest('POST', '/api/segments/99999999/slides', {
       type: 'text',
       title: 'Orphan',
-    });
+    }, { admin: true });
     assert(res.ok === false, 'POST slide on non-existent segment returns ok:false');
   }
 
   // ── Cleanup ──
   {
     console.log(`${COLORS.dim}  [cleanup] Deleting temporary episode: ${EP_SLUG}${COLORS.reset}`);
-    await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`);
+    await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`, null, { admin: true });
   }
 
   // ── Summary ──
@@ -285,7 +309,7 @@ async function runTests() {
 }
 
 runTests().catch((err) => {
-  makeRequest('DELETE', `/api/episodes/${EP_SLUG}`).finally(() => {
+  makeRequest('DELETE', `/api/episodes/${EP_SLUG}`, null, { admin: true }).finally(() => {
     console.error(`${COLORS.red}Unexpected error: ${err.message}${COLORS.reset}`);
     process.exit(1);
   });

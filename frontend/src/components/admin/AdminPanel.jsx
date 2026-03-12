@@ -1,7 +1,58 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Shield, Bot, Settings, Database, Brain, LogOut, Plus, Pencil, Trash2, Search, Upload, Eye, RefreshCw, Key, Check, X, ChevronDown } from 'lucide-react'
+import {
+  Shield, Bot, Settings, Database, Brain, LogOut, Plus, Pencil, Trash2,
+  Search, Upload, Eye, RefreshCw, Key, Check, X, ChevronDown, ChevronRight,
+  Plug, ToggleLeft, ToggleRight, Cpu, Globe, Package, Zap, TestTube2,
+  FileText, AlertCircle, Loader2,
+} from 'lucide-react'
 import { createAdminApi } from '../../lib/api'
 import { toast } from '../Toast'
+
+// ─── Constants ──────────────────────────────────────────────────────
+const AVAILABLE_MODELS = {
+  openai: [
+    { id: 'gpt-4o', label: 'GPT-4o' },
+    { id: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+    { id: 'o1', label: 'O1' },
+    { id: 'o3-mini', label: 'O3 Mini' },
+  ],
+  anthropic: [
+    { id: 'claude-opus-4-6', label: 'Claude Opus 4.6' },
+    { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
+    { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5' },
+  ],
+  google: [
+    { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+    { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+  ],
+}
+
+const PROVIDER_COLORS = {
+  openai: { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/40', accent: '#10b981' },
+  anthropic: { bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/40', accent: '#f97316' },
+  google: { bg: 'bg-blue-500/15', text: 'text-blue-400', border: 'border-blue-500/40', accent: '#3b82f6' },
+}
+
+const ALL_MODELS_FLAT = Object.entries(AVAILABLE_MODELS).flatMap(([provider, models]) =>
+  models.map((m) => ({ ...m, provider }))
+)
+
+function getProviderForModel(modelId) {
+  for (const [provider, models] of Object.entries(AVAILABLE_MODELS)) {
+    if (models.some((m) => m.id === modelId)) return provider
+  }
+  return null
+}
+
+function getProviderColor(provider) {
+  return PROVIDER_COLORS[provider] || { bg: 'bg-gray-500/15', text: 'text-gray-400', border: 'border-gray-500/40', accent: '#6b7280' }
+}
+
+const ADMIN_TABS = [
+  { id: 'agents', label: 'Agents', icon: Bot },
+  { id: 'mcp', label: 'MCP Hub', icon: Plug },
+  { id: 'llm', label: 'LLM Config', icon: Cpu },
+]
 
 // ─── Auth Gate ───────────────────────────────────────────────────────
 function AdminLogin({ onLogin }) {
@@ -54,20 +105,504 @@ function AdminLogin({ onLogin }) {
   )
 }
 
-// ─── Sub-tab Definitions ─────────────────────────────────────────────
-const ADMIN_TABS = [
-  { id: 'agents', label: 'Agents', icon: Bot },
-  { id: 'llm', label: 'LLM Config', icon: Settings },
-  { id: 'knowledge', label: 'Knowledge Base', icon: Database },
-  { id: 'memory', label: 'Agent Memory', icon: Brain },
-]
+// ─── Shared Components ───────────────────────────────────────────────
+function Field({ label, value, onChange, multiline, placeholder, rows, disabled }) {
+  const cls = "w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A] placeholder:text-[var(--text-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed"
+  return (
+    <div>
+      <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">{label}</label>
+      {multiline ? (
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows || 5} className={cls + " resize-y"} placeholder={placeholder} disabled={disabled} />
+      ) : (
+        <input value={value} onChange={(e) => onChange(e.target.value)} className={cls} placeholder={placeholder} disabled={disabled} />
+      )}
+    </div>
+  )
+}
 
-// ─── Agent Manager ───────────────────────────────────────────────────
-function AgentManager({ api }) {
+function ModelBadge({ modelId }) {
+  const provider = getProviderForModel(modelId)
+  const colors = getProviderColor(provider)
+  const model = ALL_MODELS_FLAT.find((m) => m.id === modelId)
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${colors.bg} ${colors.text}`}>
+      {model?.label || modelId || 'No model'}
+    </span>
+  )
+}
+
+function ModelDropdown({ value, onChange }) {
+  return (
+    <div>
+      <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">Model</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]"
+      >
+        <option value="">Select a model...</option>
+        {Object.entries(AVAILABLE_MODELS).map(([provider, models]) => (
+          <optgroup key={provider} label={provider.charAt(0).toUpperCase() + provider.slice(1)}>
+            {models.map((m) => (
+              <option key={m.id} value={m.id}>{m.label}</option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+function TabButton({ active, onClick, children, disabled }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
+        ${disabled ? 'opacity-40 cursor-not-allowed text-[var(--text-tertiary)]' :
+          active ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg' :
+          'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+        }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function DisabledTabMessage({ tabName }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <AlertCircle size={32} className="text-[var(--text-tertiary)] mb-3" />
+      <p className="text-sm text-[var(--text-tertiary)]">Save the agent first to configure {tabName}.</p>
+    </div>
+  )
+}
+
+function Spinner() {
+  return <Loader2 size={16} className="animate-spin text-[var(--text-tertiary)]" />
+}
+
+// ─── Agent Config Modal ──────────────────────────────────────────────
+function AgentConfigModal({ api, agent, onClose, onSaved }) {
+  const isNew = !agent
+  const [modalTab, setModalTab] = useState('general')
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState({
+    name: agent?.name || '',
+    slug: agent?.slug || '',
+    description: agent?.description || '',
+    instructions: agent?.instructions || '',
+    defaultModel: agent?.defaultModel || '',
+  })
+
+  // Knowledge Base state
+  const [docs, setDocs] = useState([])
+  const [docsLoading, setDocsLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadForm, setUploadForm] = useState({ name: '', content: '' })
+
+  // Memory state
+  const [memDocs, setMemDocs] = useState([])
+  const [memLoading, setMemLoading] = useState(false)
+  const [memEditing, setMemEditing] = useState(false)
+  const [memForm, setMemForm] = useState({ docKey: '', content: '' })
+  const [memViewing, setMemViewing] = useState(null)
+  const [memViewContent, setMemViewContent] = useState('')
+
+  // MCP Capabilities state
+  const [allCaps, setAllCaps] = useState([])
+  const [agentCaps, setAgentCaps] = useState([])
+  const [capsLoading, setCapsLoading] = useState(false)
+
+  const agentId = agent?.id
+
+  // Load knowledge base docs
+  const loadDocs = useCallback(async () => {
+    if (!agentId) return
+    setDocsLoading(true)
+    try {
+      const res = await api.get(`/agents/${agentId}/documents`)
+      setDocs(res.data || [])
+      setSearchResults(null)
+    } catch (e) { toast('Failed to load documents: ' + e.message) }
+    finally { setDocsLoading(false) }
+  }, [api, agentId])
+
+  // Load memory docs
+  const loadMemory = useCallback(async () => {
+    if (!agentId) return
+    setMemLoading(true)
+    try {
+      const res = await api.get(`/agents/${agentId}/memory`)
+      setMemDocs(res.data || [])
+    } catch (e) { toast('Failed to load memory: ' + e.message) }
+    finally { setMemLoading(false) }
+  }, [api, agentId])
+
+  // Load capabilities
+  const loadCaps = useCallback(async () => {
+    if (!agentId) return
+    setCapsLoading(true)
+    try {
+      const [allRes, agentRes] = await Promise.all([
+        api.get('/capabilities'),
+        api.get(`/agents/${agentId}/capabilities`),
+      ])
+      setAllCaps(allRes.data || [])
+      setAgentCaps(agentRes.data || [])
+    } catch (e) { toast('Failed to load capabilities: ' + e.message) }
+    finally { setCapsLoading(false) }
+  }, [api, agentId])
+
+  // Load tab data on switch
+  useEffect(() => {
+    if (!agentId) return
+    if (modalTab === 'knowledge') loadDocs()
+    if (modalTab === 'memory') loadMemory()
+    if (modalTab === 'mcphub') loadCaps()
+  }, [modalTab, agentId, loadDocs, loadMemory, loadCaps])
+
+  const handleSave = async () => {
+    if (!form.name.trim()) {
+      toast('Agent name is required')
+      return
+    }
+    setSaving(true)
+    try {
+      if (isNew) {
+        const res = await api.post('/agents', form)
+        toast('Agent created')
+        onSaved(res.data || res)
+      } else {
+        await api.patch(`/agents/${agentId}`, form)
+        toast('Agent updated')
+        onSaved(null)
+      }
+    } catch (e) { toast('Error: ' + e.message) }
+    finally { setSaving(false) }
+  }
+
+  // Knowledge Base actions
+  const searchDocs = async () => {
+    if (!agentId || !searchQuery) return
+    try {
+      const res = await api.get(`/agents/${agentId}/documents/search?q=${encodeURIComponent(searchQuery)}`)
+      setSearchResults(res.data || [])
+    } catch (e) { toast('Search failed: ' + e.message) }
+  }
+
+  const uploadDoc = async () => {
+    if (!agentId || !uploadForm.name || !uploadForm.content) return
+    try {
+      await api.post(`/agents/${agentId}/documents`, uploadForm)
+      toast('Document uploaded')
+      setUploadForm({ name: '', content: '' })
+      setUploading(false)
+      loadDocs()
+    } catch (e) { toast('Error: ' + e.message) }
+  }
+
+  const deleteDoc = async (docId) => {
+    if (!confirm('Delete this document?')) return
+    try {
+      await api.del(`/agents/${agentId}/documents/${docId}`)
+      toast('Document deleted')
+      loadDocs()
+    } catch (e) { toast('Error: ' + e.message) }
+  }
+
+  // Memory actions
+  const viewMemory = async (docKey) => {
+    try {
+      const res = await api.get(`/agents/${agentId}/memory/${encodeURIComponent(docKey)}`)
+      setMemViewing(docKey)
+      setMemViewContent(typeof res.data === 'string' ? res.data : (res.data?.content || JSON.stringify(res.data, null, 2)))
+    } catch (e) { toast('Error: ' + e.message) }
+  }
+
+  const saveMemory = async () => {
+    if (!agentId || !memForm.docKey || !memForm.content) return
+    try {
+      await api.put(`/agents/${agentId}/memory/${encodeURIComponent(memForm.docKey)}`, { content: memForm.content })
+      toast('Memory saved')
+      setMemEditing(false)
+      setMemForm({ docKey: '', content: '' })
+      loadMemory()
+    } catch (e) { toast('Error: ' + e.message) }
+  }
+
+  const deleteMemory = async (docKey) => {
+    if (!confirm(`Delete memory "${docKey}"?`)) return
+    try {
+      await api.del(`/agents/${agentId}/memory/${encodeURIComponent(docKey)}`)
+      toast('Memory deleted')
+      loadMemory()
+    } catch (e) { toast('Error: ' + e.message) }
+  }
+
+  // MCP Hub actions
+  const isCapEnabled = (capId) => agentCaps.some((c) => (c.capabilityId || c.id) === capId)
+
+  const toggleCap = async (capId) => {
+    try {
+      if (isCapEnabled(capId)) {
+        await api.del(`/agents/${agentId}/capabilities/${capId}`)
+        toast('Capability disabled')
+      } else {
+        await api.put(`/agents/${agentId}/capabilities/${capId}`, {})
+        toast('Capability enabled')
+      }
+      loadCaps()
+    } catch (e) { toast('Error: ' + e.message) }
+  }
+
+  const MODAL_TABS = [
+    { id: 'general', label: 'General', icon: Settings },
+    { id: 'knowledge', label: 'Knowledge Base', icon: Database },
+    { id: 'memory', label: 'Memory', icon: Brain },
+    { id: 'mcphub', label: 'MCP Hub', icon: Plug },
+  ]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+      {/* Modal */}
+      <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] shadow-2xl overflow-hidden">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)] shrink-0">
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">
+            {isNew ? 'Create Agent' : `Edit: ${agent.name}`}
+          </h2>
+          <button onClick={onClose} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Modal Tabs */}
+        <div className="flex items-center gap-1 px-6 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] shrink-0">
+          {MODAL_TABS.map((tab) => {
+            const Icon = tab.icon
+            const disabled = isNew && tab.id !== 'general'
+            return (
+              <TabButton key={tab.id} active={modalTab === tab.id} onClick={() => !disabled && setModalTab(tab.id)} disabled={disabled}>
+                <Icon size={12} />
+                {tab.label}
+              </TabButton>
+            )
+          })}
+        </div>
+
+        {/* Modal Body */}
+        <div className="flex-1 overflow-auto p-6">
+          {/* General Tab */}
+          {modalTab === 'general' && (
+            <div className="space-y-4 max-w-xl">
+              <Field label="Name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="e.g. Finance Agent" />
+              <Field label="Slug" value={form.slug} onChange={(v) => setForm({ ...form, slug: v })} placeholder="e.g. finance-agent" />
+              <ModelDropdown value={form.defaultModel} onChange={(v) => setForm({ ...form, defaultModel: v })} />
+              <Field label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Brief description of what this agent does" />
+              <Field label="System Prompt / Instructions" value={form.instructions} onChange={(v) => setForm({ ...form, instructions: v })} multiline rows={8} placeholder="You are a helpful assistant that..." />
+            </div>
+          )}
+
+          {/* Knowledge Base Tab */}
+          {modalTab === 'knowledge' && (
+            isNew ? <DisabledTabMessage tabName="Knowledge Base" /> : (
+              <div className="space-y-4">
+                {/* Search + Actions */}
+                <div className="flex gap-2">
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search documents..."
+                    className="flex-1 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]"
+                    onKeyDown={(e) => e.key === 'Enter' && searchDocs()}
+                  />
+                  <button onClick={searchDocs} className="px-3 py-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><Search size={14} /></button>
+                  <button onClick={() => setUploading(true)} className="px-3 py-2 rounded-xl bg-[#D94E2A] text-white text-xs font-bold hover:bg-[#B8401F] transition-all flex items-center gap-1"><Upload size={14} />Upload</button>
+                  <button onClick={loadDocs} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><RefreshCw size={14} /></button>
+                </div>
+
+                {/* Upload Form */}
+                {uploading && (
+                  <div className="p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-3">
+                    <Field label="Document Name" value={uploadForm.name} onChange={(v) => setUploadForm({ ...uploadForm, name: v })} placeholder="e.g. FAQ, Product Guide" />
+                    <Field label="Content" value={uploadForm.content} onChange={(v) => setUploadForm({ ...uploadForm, content: v })} multiline rows={6} placeholder="Paste document content here..." />
+                    <div className="flex gap-2">
+                      <button onClick={uploadDoc} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] transition-all flex items-center gap-2"><Check size={14} />Upload</button>
+                      <button onClick={() => setUploading(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-sm font-bold hover:bg-[var(--bg-hover)] transition-all"><X size={14} /></button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Search Results */}
+                {searchResults && (
+                  <div>
+                    <h4 className="text-sm font-bold text-[var(--text-secondary)] mb-2">Search Results ({searchResults.length})</h4>
+                    <DocList docs={searchResults} onDelete={deleteDoc} />
+                  </div>
+                )}
+
+                {/* Document List */}
+                {docsLoading ? (
+                  <div className="flex items-center gap-2 py-4"><Spinner /><span className="text-sm text-[var(--text-tertiary)]">Loading documents...</span></div>
+                ) : (
+                  <div>
+                    <h4 className="text-sm font-bold text-[var(--text-secondary)] mb-2">All Documents ({docs.length})</h4>
+                    <DocList docs={docs} onDelete={deleteDoc} />
+                  </div>
+                )}
+              </div>
+            )
+          )}
+
+          {/* Memory Tab */}
+          {modalTab === 'memory' && (
+            isNew ? <DisabledTabMessage tabName="Memory" /> : (
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <button onClick={() => { setMemEditing(true); setMemViewing(null) }} className="px-3 py-2 rounded-xl bg-[#D94E2A] text-white text-xs font-bold hover:bg-[#B8401F] transition-all flex items-center gap-1"><Plus size={14} />Create/Update Memory</button>
+                  <button onClick={loadMemory} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><RefreshCw size={14} /></button>
+                </div>
+
+                {/* Create/Update Form */}
+                {memEditing && (
+                  <div className="p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-3">
+                    <Field label="Document Key" value={memForm.docKey} onChange={(v) => setMemForm({ ...memForm, docKey: v })} placeholder="e.g. personality, guidelines" />
+                    <Field label="Content" value={memForm.content} onChange={(v) => setMemForm({ ...memForm, content: v })} multiline rows={6} />
+                    <div className="flex gap-2">
+                      <button onClick={saveMemory} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] transition-all flex items-center gap-2"><Check size={14} />Save</button>
+                      <button onClick={() => setMemEditing(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-sm font-bold hover:bg-[var(--bg-hover)] transition-all"><X size={14} /></button>
+                    </div>
+                  </div>
+                )}
+
+                {/* View Memory */}
+                {memViewing && (
+                  <div className="p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-bold text-[var(--text-primary)] font-mono">{memViewing}</h4>
+                      <button onClick={() => setMemViewing(null)} className="p-1 rounded text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"><X size={14} /></button>
+                    </div>
+                    <pre className="text-xs text-[var(--text-secondary)] whitespace-pre-wrap bg-[var(--bg-secondary)] p-3 rounded-lg overflow-auto max-h-48">{memViewContent}</pre>
+                  </div>
+                )}
+
+                {/* Memory List */}
+                {memLoading ? (
+                  <div className="flex items-center gap-2 py-4"><Spinner /><span className="text-sm text-[var(--text-tertiary)]">Loading memory...</span></div>
+                ) : memDocs.length === 0 ? (
+                  <p className="text-sm text-[var(--text-tertiary)]">No memory documents.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {memDocs.map((doc) => {
+                      const key = doc.docKey || doc.key || doc.id
+                      return (
+                        <div key={key} className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                          <div>
+                            <div className="font-bold text-sm text-[var(--text-primary)] font-mono">{key}</div>
+                            {doc.docType && <div className="text-xs text-[var(--text-tertiary)]">{doc.docType}</div>}
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => viewMemory(key)} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><Eye size={14} /></button>
+                            <button onClick={() => { setMemForm({ docKey: key, content: '' }); setMemEditing(true); setMemViewing(null) }} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><Pencil size={14} /></button>
+                            <button onClick={() => deleteMemory(key)} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-red-400 hover:bg-red-500/10 transition-all"><Trash2 size={14} /></button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          )}
+
+          {/* MCP Hub Tab */}
+          {modalTab === 'mcphub' && (
+            isNew ? <DisabledTabMessage tabName="MCP Hub" /> : (
+              <div className="space-y-4">
+                <p className="text-sm text-[var(--text-tertiary)]">Toggle capabilities on/off for this agent.</p>
+                {capsLoading ? (
+                  <div className="flex items-center gap-2 py-4"><Spinner /><span className="text-sm text-[var(--text-tertiary)]">Loading capabilities...</span></div>
+                ) : allCaps.length === 0 ? (
+                  <p className="text-sm text-[var(--text-tertiary)]">No capabilities registered. Add them from the MCP Hub tab.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {allCaps.map((cap) => {
+                      const enabled = isCapEnabled(cap.id)
+                      return (
+                        <div key={cap.id} className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                          <div className="flex items-center gap-3">
+                            <Plug size={16} className="text-[var(--text-tertiary)]" />
+                            <div>
+                              <div className="font-bold text-sm text-[var(--text-primary)]">{cap.name}</div>
+                              {cap.description && <div className="text-xs text-[var(--text-tertiary)]">{cap.description}</div>}
+                            </div>
+                          </div>
+                          <button onClick={() => toggleCap(cap.id)} className="transition-all">
+                            {enabled ? (
+                              <ToggleRight size={28} className="text-[#D94E2A]" />
+                            ) : (
+                              <ToggleLeft size={28} className="text-[var(--text-tertiary)]" />
+                            )}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-primary)] shrink-0">
+          <button onClick={onClose} className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-sm font-bold hover:bg-[var(--bg-hover)] transition-all">
+            Cancel
+          </button>
+          {modalTab === 'general' && (
+            <button onClick={handleSave} disabled={saving} className="px-5 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] disabled:opacity-50 transition-all flex items-center gap-2">
+              {saving ? <><Spinner /> Saving...</> : <><Check size={14} /> {isNew ? 'Create Agent' : 'Save Changes'}</>}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Document List (shared) ──────────────────────────────────────────
+function DocList({ docs, onDelete }) {
+  if (!docs || docs.length === 0) return <p className="text-sm text-[var(--text-tertiary)]">No documents.</p>
+  return (
+    <div className="space-y-2">
+      {docs.map((doc) => (
+        <div key={doc.id} className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+          <div className="min-w-0 flex-1">
+            <div className="font-bold text-sm text-[var(--text-primary)] truncate">{doc.name || doc.id}</div>
+            <div className="text-xs text-[var(--text-tertiary)]">
+              {doc.sourceType && <span>{doc.sourceType} | </span>}
+              {doc.chunkCount != null && <span>{doc.chunkCount} chunks | </span>}
+              {doc.createdAt && <span>{new Date(doc.createdAt).toLocaleDateString()}</span>}
+            </div>
+          </div>
+          <button onClick={() => onDelete(doc.id)} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-red-400 hover:bg-red-500/10 transition-all shrink-0"><Trash2 size={14} /></button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Agent Grid ──────────────────────────────────────────────────────
+function AgentGrid({ api, onRefreshNeeded }) {
   const [agents, setAgents] = useState([])
   const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(null) // null | 'new' | agent object
-  const [form, setForm] = useState({ name: '', slug: '', description: '', instructions: '', defaultModel: '' })
+  const [modalAgent, setModalAgent] = useState(undefined) // undefined=closed, null=new, object=edit
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -80,37 +615,8 @@ function AgentManager({ api }) {
 
   useEffect(() => { load() }, [load])
 
-  const openNew = () => {
-    setForm({ name: '', slug: '', description: '', instructions: '', defaultModel: '' })
-    setEditing('new')
-  }
-
-  const openEdit = (agent) => {
-    setForm({
-      name: agent.name || '',
-      slug: agent.slug || '',
-      description: agent.description || '',
-      instructions: agent.instructions || '',
-      defaultModel: agent.defaultModel || '',
-    })
-    setEditing(agent)
-  }
-
-  const save = async () => {
-    try {
-      if (editing === 'new') {
-        await api.post('/agents', form)
-        toast('Agent created')
-      } else {
-        await api.patch(`/agents/${editing.id}`, form)
-        toast('Agent updated')
-      }
-      setEditing(null)
-      load()
-    } catch (e) { toast('Error: ' + e.message) }
-  }
-
-  const remove = async (id) => {
+  const deleteAgent = async (e, id) => {
+    e.stopPropagation()
     if (!confirm('Delete this agent?')) return
     try {
       await api.del(`/agents/${id}`)
@@ -119,49 +625,281 @@ function AgentManager({ api }) {
     } catch (e) { toast('Error: ' + e.message) }
   }
 
-  if (editing) {
-    return (
-      <div className="p-6 max-w-2xl">
-        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">{editing === 'new' ? 'Create Agent' : 'Edit Agent'}</h3>
-        <div className="space-y-3">
-          <Field label="Name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
-          <Field label="Slug" value={form.slug} onChange={(v) => setForm({ ...form, slug: v })} />
-          <Field label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} />
-          <Field label="Instructions" value={form.instructions} onChange={(v) => setForm({ ...form, instructions: v })} multiline />
-          <Field label="Default Model" value={form.defaultModel} onChange={(v) => setForm({ ...form, defaultModel: v })} placeholder="e.g. gpt-4o" />
-        </div>
-        <div className="flex gap-3 mt-6">
-          <button onClick={save} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] transition-all flex items-center gap-2"><Check size={14} />Save</button>
-          <button onClick={() => setEditing(null)} className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-sm font-bold hover:bg-[var(--bg-hover)] transition-all flex items-center gap-2"><X size={14} />Cancel</button>
-        </div>
-      </div>
-    )
+  const handleModalSaved = (newAgent) => {
+    setModalAgent(undefined)
+    load()
+    if (onRefreshNeeded) onRefreshNeeded()
   }
+
+  // Count docs for an agent (we show it from the agent data if available)
+  const getDocCount = (agent) => agent.documentCount ?? agent._count?.documents ?? '?'
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-[var(--text-primary)]">Agents</h3>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-bold text-[var(--text-primary)]">Agents</h3>
+          <p className="text-sm text-[var(--text-tertiary)] mt-1">Manage your AI agents and their configurations.</p>
+        </div>
         <div className="flex gap-2">
           <button onClick={load} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><RefreshCw size={14} /></button>
-          <button onClick={openNew} className="px-3 py-2 rounded-xl bg-[#D94E2A] text-white text-xs font-bold hover:bg-[#B8401F] transition-all flex items-center gap-1"><Plus size={14} />New Agent</button>
+          <button onClick={() => setModalAgent(null)} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-xs font-bold hover:bg-[#B8401F] transition-all flex items-center gap-2"><Plus size={14} />New Agent</button>
         </div>
       </div>
-      {loading ? <p className="text-sm text-[var(--text-tertiary)]">Loading...</p> : agents.length === 0 ? <p className="text-sm text-[var(--text-tertiary)]">No agents found.</p> : (
-        <div className="space-y-2">
-          {agents.map((a) => (
-            <div key={a.id} className="flex items-center justify-between p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
-              <div>
-                <div className="font-bold text-sm text-[var(--text-primary)]">{a.name}</div>
-                <div className="text-xs text-[var(--text-tertiary)]">{a.slug} {a.defaultModel ? `| ${a.defaultModel}` : ''}</div>
-                {a.description && <div className="text-xs text-[var(--text-tertiary)] mt-1">{a.description}</div>}
+
+      {loading ? (
+        <div className="flex items-center gap-2 py-8"><Spinner /><span className="text-sm text-[var(--text-tertiary)]">Loading agents...</span></div>
+      ) : agents.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <Bot size={40} className="text-[var(--text-tertiary)] mb-3" />
+          <p className="text-sm text-[var(--text-tertiary)]">No agents yet. Create your first agent to get started.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {agents.map((agent) => {
+            const provider = getProviderForModel(agent.defaultModel)
+            const colors = getProviderColor(provider)
+            return (
+              <div
+                key={agent.id}
+                className="relative p-5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] hover:border-[var(--text-tertiary)] transition-all group"
+                style={{ borderLeftWidth: '3px', borderLeftColor: colors.accent }}
+              >
+                {/* Top Row: Name + Settings Gear */}
+                <div className="flex items-start justify-between mb-2">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-sm text-[var(--text-primary)] truncate">{agent.name}</h4>
+                    <span className="text-xs text-[var(--text-tertiary)] font-mono">{agent.slug}</span>
+                  </div>
+                  <div className="flex gap-1 shrink-0 ml-2">
+                    <button
+                      onClick={() => setModalAgent(agent)}
+                      className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all opacity-0 group-hover:opacity-100"
+                    >
+                      <Settings size={14} />
+                    </button>
+                    <button
+                      onClick={(e) => deleteAgent(e, agent.id)}
+                      className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Model Badge */}
+                <div className="mb-3">
+                  <ModelBadge modelId={agent.defaultModel} />
+                </div>
+
+                {/* Description */}
+                {agent.description && (
+                  <p className="text-xs text-[var(--text-tertiary)] line-clamp-2 mb-3">{agent.description}</p>
+                )}
+
+                {/* Footer Stats */}
+                <div className="flex items-center gap-3 pt-3 border-t border-[var(--border-subtle)]">
+                  <div className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
+                    <FileText size={12} />
+                    <span>{getDocCount(agent)} docs</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => openEdit(a)} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><Pencil size={14} /></button>
-                <button onClick={() => remove(a.id)} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-red-400 hover:bg-red-500/10 transition-all"><Trash2 size={14} /></button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Agent Config Modal */}
+      {modalAgent !== undefined && (
+        <AgentConfigModal
+          api={api}
+          agent={modalAgent}
+          onClose={() => setModalAgent(undefined)}
+          onSaved={handleModalSaved}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── MCP Hub ─────────────────────────────────────────────────────────
+function McpHub({ api }) {
+  const [capabilities, setCapabilities] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [registering, setRegistering] = useState(false)
+  const [regForm, setRegForm] = useState({ name: '', description: '', serverUrl: '' })
+  const [expanded, setExpanded] = useState({})
+  const [testing, setTesting] = useState({})
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await api.get('/capabilities')
+      setCapabilities(res.data || [])
+    } catch (e) { toast('Failed to load capabilities: ' + e.message) }
+    finally { setLoading(false) }
+  }, [api])
+
+  useEffect(() => { load() }, [load])
+
+  const registerCap = async () => {
+    if (!regForm.name || !regForm.serverUrl) {
+      toast('Name and Server URL are required')
+      return
+    }
+    try {
+      await api.post('/capabilities', { ...regForm, type: 'EXTERNAL' })
+      toast('MCP server registered')
+      setRegForm({ name: '', description: '', serverUrl: '' })
+      setRegistering(false)
+      load()
+    } catch (e) { toast('Error: ' + e.message) }
+  }
+
+  const deleteCap = async (id) => {
+    if (!confirm('Delete this capability?')) return
+    try {
+      await api.del(`/capabilities/${id}`)
+      toast('Capability deleted')
+      load()
+    } catch (e) { toast('Error: ' + e.message) }
+  }
+
+  const testConnection = async (id) => {
+    setTesting((prev) => ({ ...prev, [id]: 'loading' }))
+    try {
+      await api.post(`/capabilities/${id}/test`, {})
+      setTesting((prev) => ({ ...prev, [id]: 'success' }))
+      toast('Connection successful')
+    } catch (e) {
+      setTesting((prev) => ({ ...prev, [id]: 'error' }))
+      toast('Connection failed: ' + e.message)
+    }
+    setTimeout(() => setTesting((prev) => ({ ...prev, [id]: null })), 3000)
+  }
+
+  const toggleExpand = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }))
+
+  return (
+    <div className="p-6 max-w-4xl">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-bold text-[var(--text-primary)]">MCP Hub</h3>
+          <p className="text-sm text-[var(--text-tertiary)] mt-1">Manage platform capabilities and external MCP server connections.</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={load} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><RefreshCw size={14} /></button>
+          <button onClick={() => setRegistering(true)} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-xs font-bold hover:bg-[#B8401F] transition-all flex items-center gap-2"><Globe size={14} />Register External</button>
+        </div>
+      </div>
+
+      {/* Register Form */}
+      {registering && (
+        <div className="p-5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] mb-6 space-y-3">
+          <h4 className="text-sm font-bold text-[var(--text-primary)] mb-2">Register External MCP Server</h4>
+          <Field label="Name" value={regForm.name} onChange={(v) => setRegForm({ ...regForm, name: v })} placeholder="e.g. Custom Tools Server" />
+          <Field label="Description" value={regForm.description} onChange={(v) => setRegForm({ ...regForm, description: v })} placeholder="What this server provides" />
+          <Field label="Server URL" value={regForm.serverUrl} onChange={(v) => setRegForm({ ...regForm, serverUrl: v })} placeholder="https://your-mcp-server.example.com" />
+          <div className="flex gap-2 pt-1">
+            <button onClick={registerCap} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] transition-all flex items-center gap-2"><Check size={14} />Register</button>
+            <button onClick={() => setRegistering(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-sm font-bold hover:bg-[var(--bg-hover)] transition-all"><X size={14} /></button>
+          </div>
+        </div>
+      )}
+
+      {/* Capability List */}
+      {loading ? (
+        <div className="flex items-center gap-2 py-8"><Spinner /><span className="text-sm text-[var(--text-tertiary)]">Loading capabilities...</span></div>
+      ) : capabilities.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <Plug size={40} className="text-[var(--text-tertiary)] mb-3" />
+          <p className="text-sm text-[var(--text-tertiary)]">No capabilities registered yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {capabilities.map((cap) => {
+            const isBundled = cap.type === 'BUNDLED' || cap.bundled
+            const isExpanded = expanded[cap.id]
+            const testStatus = testing[cap.id]
+            const connectedCount = cap.agentCount ?? cap._count?.agents ?? 0
+
+            return (
+              <div key={cap.id} className="rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] overflow-hidden">
+                {/* Card Header */}
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <button onClick={() => toggleExpand(cap.id)} className="p-1 rounded text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-all shrink-0">
+                      {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-sm text-[var(--text-primary)] truncate">{cap.name}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          isBundled ? 'bg-purple-500/15 text-purple-400' : 'bg-sky-500/15 text-sky-400'
+                        }`}>
+                          {isBundled ? 'Bundled' : 'External'}
+                        </span>
+                      </div>
+                      {cap.description && <p className="text-xs text-[var(--text-tertiary)] truncate">{cap.description}</p>}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0 ml-4">
+                    <div className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
+                      <Bot size={12} />
+                      <span>{connectedCount} agent{connectedCount !== 1 ? 's' : ''}</span>
+                    </div>
+                    {!isBundled && (
+                      <>
+                        <button
+                          onClick={() => testConnection(cap.id)}
+                          disabled={testStatus === 'loading'}
+                          className={`p-2 rounded-lg transition-all ${
+                            testStatus === 'success' ? 'bg-emerald-500/15 text-emerald-400' :
+                            testStatus === 'error' ? 'bg-red-500/15 text-red-400' :
+                            'bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                          }`}
+                          title="Test connection"
+                        >
+                          {testStatus === 'loading' ? <Spinner /> : <TestTube2 size={14} />}
+                        </button>
+                        <button onClick={() => deleteCap(cap.id)} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-red-400 hover:bg-red-500/10 transition-all"><Trash2 size={14} /></button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                  <div className="px-4 pb-4 pt-0 border-t border-[var(--border-subtle)]">
+                    <div className="pt-3 space-y-2">
+                      {cap.serverUrl && (
+                        <div className="text-xs">
+                          <span className="text-[var(--text-tertiary)]">Server URL: </span>
+                          <span className="text-[var(--text-secondary)] font-mono">{cap.serverUrl}</span>
+                        </div>
+                      )}
+                      {cap.agents && cap.agents.length > 0 ? (
+                        <div>
+                          <span className="text-xs text-[var(--text-tertiary)] block mb-1">Connected Agents:</span>
+                          <div className="flex flex-wrap gap-1">
+                            {cap.agents.map((a) => (
+                              <span key={a.id || a} className="px-2 py-0.5 rounded-full bg-[var(--bg-subtle)] text-xs text-[var(--text-secondary)]">
+                                {a.name || a}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[var(--text-tertiary)]">No agents connected to this capability.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
@@ -173,8 +911,8 @@ function LlmConfig({ api }) {
   const [config, setConfig] = useState(null)
   const [providers, setProviders] = useState([])
   const [loading, setLoading] = useState(true)
-  const [providerInput, setProviderInput] = useState('')
-  const [modelInput, setModelInput] = useState('')
+  const [selectedProvider, setSelectedProvider] = useState('')
+  const [selectedModel, setSelectedModel] = useState('')
   const [keyProvider, setKeyProvider] = useState('')
   const [keyValue, setKeyValue] = useState('')
 
@@ -185,12 +923,11 @@ function LlmConfig({ api }) {
         api.get('/llm-config'),
         api.get('/llm-config/providers'),
       ])
-      setConfig(cfgRes.data || cfgRes)
+      const cfg = cfgRes.data || cfgRes
+      setConfig(cfg)
       setProviders(provRes.data || [])
-      if (cfgRes.data) {
-        setProviderInput(cfgRes.data.provider || '')
-        setModelInput(cfgRes.data.model || '')
-      }
+      setSelectedProvider(cfg.provider || '')
+      setSelectedModel(cfg.model || '')
     } catch (e) { toast('Failed to load LLM config: ' + e.message) }
     finally { setLoading(false) }
   }, [api])
@@ -199,7 +936,7 @@ function LlmConfig({ api }) {
 
   const saveConfig = async () => {
     try {
-      await api.put('/llm-config', { provider: providerInput, model: modelInput })
+      await api.put('/llm-config', { provider: selectedProvider, model: selectedModel })
       toast('LLM config updated')
       load()
     } catch (e) { toast('Error: ' + e.message) }
@@ -224,356 +961,159 @@ function LlmConfig({ api }) {
     } catch (e) { toast('Error: ' + e.message) }
   }
 
-  if (loading) return <div className="p-6 text-sm text-[var(--text-tertiary)]">Loading...</div>
+  // When provider button is clicked, also set the keyProvider for convenience
+  const handleProviderSelect = (p) => {
+    setSelectedProvider(p)
+    setKeyProvider(p)
+    // If current model doesn't belong to this provider, reset
+    if (!AVAILABLE_MODELS[p]?.some((m) => m.id === selectedModel)) {
+      setSelectedModel(AVAILABLE_MODELS[p]?.[0]?.id || '')
+    }
+  }
+
+  if (loading) return <div className="flex items-center gap-2 p-6"><Spinner /><span className="text-sm text-[var(--text-tertiary)]">Loading LLM config...</span></div>
+
+  const providerNames = Object.keys(AVAILABLE_MODELS)
+  const modelsForProvider = AVAILABLE_MODELS[selectedProvider] || []
 
   return (
-    <div className="p-6 max-w-2xl space-y-8">
-      {/* Current Config */}
+    <div className="p-6 max-w-3xl space-y-8">
+      {/* Current Config Display */}
       <section>
         <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Current Configuration</h3>
         {config && (
-          <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-sm space-y-1">
-            <div><span className="text-[var(--text-tertiary)]">Provider:</span> <span className="text-[var(--text-primary)] font-mono">{config.provider || 'Not set'}</span></div>
-            <div><span className="text-[var(--text-tertiary)]">Model:</span> <span className="text-[var(--text-primary)] font-mono">{config.model || 'Not set'}</span></div>
+          <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[var(--text-tertiary)] uppercase tracking-wider font-bold">Provider</span>
+              {config.provider ? (
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${getProviderColor(config.provider).bg} ${getProviderColor(config.provider).text}`}>
+                  {config.provider}
+                </span>
+              ) : (
+                <span className="text-sm text-[var(--text-tertiary)]">Not set</span>
+              )}
+            </div>
+            <div className="w-px h-8 bg-[var(--border-subtle)]" />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[var(--text-tertiary)] uppercase tracking-wider font-bold">Model</span>
+              {config.model ? <ModelBadge modelId={config.model} /> : <span className="text-sm text-[var(--text-tertiary)]">Not set</span>}
+            </div>
           </div>
         )}
       </section>
 
-      {/* Set Provider/Model */}
+      {/* Provider Selection */}
       <section>
-        <h3 className="text-base font-bold text-[var(--text-primary)] mb-3">Set Provider & Model</h3>
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
-            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">Provider</label>
-            <input value={providerInput} onChange={(e) => setProviderInput(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]" placeholder="openai" />
-          </div>
-          <div className="flex-1">
-            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">Model</label>
-            <input value={modelInput} onChange={(e) => setModelInput(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]" placeholder="gpt-4o" />
-          </div>
-          <button onClick={saveConfig} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] transition-all whitespace-nowrap">Save</button>
+        <h3 className="text-base font-bold text-[var(--text-primary)] mb-3">Select Provider</h3>
+        <div className="flex gap-2 mb-4">
+          {providerNames.map((p) => {
+            const colors = getProviderColor(p)
+            const isActive = selectedProvider === p
+            return (
+              <button
+                key={p}
+                onClick={() => handleProviderSelect(p)}
+                className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                  isActive
+                    ? `${colors.bg} ${colors.text} ${colors.border}`
+                    : 'bg-[var(--bg-subtle)] text-[var(--text-tertiary)] border-transparent hover:text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                }`}
+              >
+                {p.charAt(0).toUpperCase() + p.slice(1)}
+              </button>
+            )
+          })}
         </div>
-      </section>
 
-      {/* Available Providers */}
-      {providers.length > 0 && (
-        <section>
-          <h3 className="text-base font-bold text-[var(--text-primary)] mb-3">Available Providers</h3>
-          <div className="space-y-2">
-            {providers.map((p) => (
-              <div key={p.id || p.name} className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="font-bold text-[var(--text-primary)]">{p.name || p.id}</span>
-                    {p.hasKey && <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">Key configured</span>}
-                    {p.keyPrefix && <span className="ml-2 text-xs text-[var(--text-tertiary)] font-mono">{p.keyPrefix}...</span>}
-                  </div>
-                  {p.hasKey && (
-                    <button onClick={() => deleteKey(p.name || p.id)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"><Trash2 size={14} /></button>
-                  )}
-                </div>
-                {p.models && p.models.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {p.models.map((m) => (
-                      <span key={m} className="px-2 py-0.5 rounded-full bg-[var(--bg-subtle)] text-xs text-[var(--text-tertiary)] font-mono">{m}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Save API Key */}
-      <section>
-        <h3 className="text-base font-bold text-[var(--text-primary)] mb-3">Save API Key</h3>
-        <div className="flex gap-3 items-end">
-          <div className="w-40">
-            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">Provider</label>
-            <input value={keyProvider} onChange={(e) => setKeyProvider(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]" placeholder="openai" />
-          </div>
-          <div className="flex-1">
-            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">API Key</label>
-            <input type="password" value={keyValue} onChange={(e) => setKeyValue(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]" placeholder="sk-..." />
-          </div>
-          <button onClick={saveKey} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] transition-all flex items-center gap-1"><Key size={14} />Save</button>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// ─── Knowledge Base ──────────────────────────────────────────────────
-function KnowledgeBase({ api, agents }) {
-  const [agentId, setAgentId] = useState('')
-  const [docs, setDocs] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState(null)
-  const [uploading, setUploading] = useState(false)
-  const [uploadForm, setUploadForm] = useState({ name: '', content: '', sourceType: '' })
-
-  const loadDocs = useCallback(async () => {
-    if (!agentId) return
-    setLoading(true)
-    try {
-      const res = await api.get(`/agents/${agentId}/documents`)
-      setDocs(res.data || [])
-      setSearchResults(null)
-    } catch (e) { toast('Failed to load documents: ' + e.message) }
-    finally { setLoading(false) }
-  }, [api, agentId])
-
-  useEffect(() => { if (agentId) loadDocs() }, [agentId, loadDocs])
-
-  const search = async () => {
-    if (!agentId || !searchQuery) return
-    try {
-      const res = await api.get(`/agents/${agentId}/documents/search?q=${encodeURIComponent(searchQuery)}`)
-      setSearchResults(res.data || [])
-    } catch (e) { toast('Search failed: ' + e.message) }
-  }
-
-  const upload = async () => {
-    if (!agentId || !uploadForm.name || !uploadForm.content) return
-    try {
-      const body = { name: uploadForm.name, content: uploadForm.content }
-      if (uploadForm.sourceType) body.sourceType = uploadForm.sourceType
-      await api.post(`/agents/${agentId}/documents`, body)
-      toast('Document uploaded')
-      setUploadForm({ name: '', content: '', sourceType: '' })
-      setUploading(false)
-      loadDocs()
-    } catch (e) { toast('Error: ' + e.message) }
-  }
-
-  const remove = async (docId) => {
-    if (!confirm('Delete this document?')) return
-    try {
-      await api.del(`/agents/${agentId}/documents/${docId}`)
-      toast('Document deleted')
-      loadDocs()
-    } catch (e) { toast('Error: ' + e.message) }
-  }
-
-  return (
-    <div className="p-6 max-w-3xl">
-      <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Knowledge Base</h3>
-
-      {/* Agent Selector */}
-      <AgentSelector agents={agents} value={agentId} onChange={setAgentId} />
-
-      {!agentId ? <p className="text-sm text-[var(--text-tertiary)] mt-4">Select an agent to manage its knowledge base.</p> : (
-        <div className="mt-4 space-y-6">
-          {/* Search */}
-          <div className="flex gap-2">
-            <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search documents..." className="flex-1 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]" onKeyDown={(e) => e.key === 'Enter' && search()} />
-            <button onClick={search} className="px-3 py-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><Search size={14} /></button>
-            <button onClick={() => { setUploading(true) }} className="px-3 py-2 rounded-xl bg-[#D94E2A] text-white text-xs font-bold hover:bg-[#B8401F] transition-all flex items-center gap-1"><Upload size={14} />Upload</button>
-            <button onClick={loadDocs} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><RefreshCw size={14} /></button>
-          </div>
-
-          {/* Upload Form */}
-          {uploading && (
-            <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-3">
-              <Field label="Name" value={uploadForm.name} onChange={(v) => setUploadForm({ ...uploadForm, name: v })} />
-              <Field label="Content" value={uploadForm.content} onChange={(v) => setUploadForm({ ...uploadForm, content: v })} multiline />
-              <Field label="Source Type (optional)" value={uploadForm.sourceType} onChange={(v) => setUploadForm({ ...uploadForm, sourceType: v })} placeholder="e.g. manual, url, pdf" />
-              <div className="flex gap-2">
-                <button onClick={upload} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] transition-all flex items-center gap-2"><Check size={14} />Upload</button>
-                <button onClick={() => setUploading(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-sm font-bold hover:bg-[var(--bg-hover)] transition-all"><X size={14} /></button>
-              </div>
-            </div>
-          )}
-
-          {/* Search Results */}
-          {searchResults && (
-            <div>
-              <h4 className="text-sm font-bold text-[var(--text-secondary)] mb-2">Search Results ({searchResults.length})</h4>
-              <DocList docs={searchResults} onDelete={remove} />
-            </div>
-          )}
-
-          {/* Documents List */}
-          {loading ? <p className="text-sm text-[var(--text-tertiary)]">Loading...</p> : (
-            <div>
-              <h4 className="text-sm font-bold text-[var(--text-secondary)] mb-2">All Documents ({docs.length})</h4>
-              <DocList docs={docs} onDelete={remove} />
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Agent Memory ────────────────────────────────────────────────────
-function AgentMemory({ api, agents }) {
-  const [agentId, setAgentId] = useState('')
-  const [memDocs, setMemDocs] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [viewing, setViewing] = useState(null)
-  const [viewContent, setViewContent] = useState('')
-  const [editing, setEditing] = useState(false)
-  const [editForm, setEditForm] = useState({ docKey: '', content: '', docType: '' })
-
-  const load = useCallback(async () => {
-    if (!agentId) return
-    setLoading(true)
-    try {
-      const res = await api.get(`/agents/${agentId}/memory`)
-      setMemDocs(res.data || [])
-    } catch (e) { toast('Failed to load memory: ' + e.message) }
-    finally { setLoading(false) }
-  }, [api, agentId])
-
-  useEffect(() => { if (agentId) load() }, [agentId, load])
-
-  const viewDoc = async (docKey) => {
-    try {
-      const res = await api.get(`/agents/${agentId}/memory/${encodeURIComponent(docKey)}`)
-      setViewing(docKey)
-      setViewContent(typeof res.data === 'string' ? res.data : (res.data?.content || JSON.stringify(res.data, null, 2)))
-    } catch (e) { toast('Error: ' + e.message) }
-  }
-
-  const saveMemory = async () => {
-    if (!agentId || !editForm.docKey || !editForm.content) return
-    try {
-      const body = { content: editForm.content }
-      if (editForm.docType) body.docType = editForm.docType
-      await api.put(`/agents/${agentId}/memory/${encodeURIComponent(editForm.docKey)}`, body)
-      toast('Memory saved')
-      setEditing(false)
-      setEditForm({ docKey: '', content: '', docType: '' })
-      load()
-    } catch (e) { toast('Error: ' + e.message) }
-  }
-
-  const remove = async (docKey) => {
-    if (!confirm(`Delete memory "${docKey}"?`)) return
-    try {
-      await api.del(`/agents/${agentId}/memory/${encodeURIComponent(docKey)}`)
-      toast('Memory deleted')
-      load()
-    } catch (e) { toast('Error: ' + e.message) }
-  }
-
-  return (
-    <div className="p-6 max-w-3xl">
-      <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Agent Memory</h3>
-
-      <AgentSelector agents={agents} value={agentId} onChange={setAgentId} />
-
-      {!agentId ? <p className="text-sm text-[var(--text-tertiary)] mt-4">Select an agent to manage its memory.</p> : (
-        <div className="mt-4 space-y-6">
-          <div className="flex gap-2">
-            <button onClick={() => { setEditing(true); setViewing(null) }} className="px-3 py-2 rounded-xl bg-[#D94E2A] text-white text-xs font-bold hover:bg-[#B8401F] transition-all flex items-center gap-1"><Plus size={14} />Create/Update Memory</button>
-            <button onClick={load} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><RefreshCw size={14} /></button>
-          </div>
-
-          {/* Create/Update Form */}
-          {editing && (
-            <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-3">
-              <Field label="Document Key" value={editForm.docKey} onChange={(v) => setEditForm({ ...editForm, docKey: v })} placeholder="e.g. personality, guidelines" />
-              <Field label="Content" value={editForm.content} onChange={(v) => setEditForm({ ...editForm, content: v })} multiline />
-              <Field label="Doc Type (optional)" value={editForm.docType} onChange={(v) => setEditForm({ ...editForm, docType: v })} placeholder="e.g. context, rules" />
-              <div className="flex gap-2">
-                <button onClick={saveMemory} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] transition-all flex items-center gap-2"><Check size={14} />Save</button>
-                <button onClick={() => setEditing(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-sm font-bold hover:bg-[var(--bg-hover)] transition-all"><X size={14} /></button>
-              </div>
-            </div>
-          )}
-
-          {/* View Memory */}
-          {viewing && (
-            <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-bold text-[var(--text-primary)] font-mono">{viewing}</h4>
-                <button onClick={() => setViewing(null)} className="p-1 rounded text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"><X size={14} /></button>
-              </div>
-              <pre className="text-xs text-[var(--text-secondary)] whitespace-pre-wrap bg-[var(--bg-primary)] p-3 rounded-lg overflow-auto max-h-64">{viewContent}</pre>
-            </div>
-          )}
-
-          {/* Memory List */}
-          {loading ? <p className="text-sm text-[var(--text-tertiary)]">Loading...</p> : memDocs.length === 0 ? <p className="text-sm text-[var(--text-tertiary)]">No memory documents.</p> : (
-            <div className="space-y-2">
-              {memDocs.map((doc) => {
-                const key = doc.docKey || doc.key || doc.id
+        {/* Model Selection */}
+        {selectedProvider && (
+          <div className="mb-4">
+            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2 block">Model</label>
+            <div className="flex flex-wrap gap-2">
+              {modelsForProvider.map((m) => {
+                const isActive = selectedModel === m.id
+                const colors = getProviderColor(selectedProvider)
                 return (
-                  <div key={key} className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
-                    <div>
-                      <div className="font-bold text-sm text-[var(--text-primary)] font-mono">{key}</div>
-                      {doc.docType && <div className="text-xs text-[var(--text-tertiary)]">{doc.docType}</div>}
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => viewDoc(key)} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><Eye size={14} /></button>
-                      <button onClick={() => { setEditForm({ docKey: key, content: '', docType: doc.docType || '' }); setEditing(true); setViewing(null) }} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><Pencil size={14} /></button>
-                      <button onClick={() => remove(key)} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-red-400 hover:bg-red-500/10 transition-all"><Trash2 size={14} /></button>
-                    </div>
-                  </div>
+                  <button
+                    key={m.id}
+                    onClick={() => setSelectedModel(m.id)}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
+                      isActive
+                        ? `${colors.bg} ${colors.text} ${colors.border}`
+                        : 'bg-[var(--bg-primary)] text-[var(--text-tertiary)] border-[var(--border-subtle)] hover:text-[var(--text-secondary)] hover:border-[var(--text-tertiary)]'
+                    }`}
+                  >
+                    {m.label}
+                  </button>
                 )
               })}
             </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Shared Components ───────────────────────────────────────────────
-function Field({ label, value, onChange, multiline, placeholder }) {
-  const cls = "w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A] placeholder:text-[var(--text-tertiary)]"
-  return (
-    <div>
-      <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">{label}</label>
-      {multiline ? (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={5} className={cls + " resize-y"} placeholder={placeholder} />
-      ) : (
-        <input value={value} onChange={(e) => onChange(e.target.value)} className={cls} placeholder={placeholder} />
-      )}
-    </div>
-  )
-}
-
-function AgentSelector({ agents, value, onChange }) {
-  return (
-    <div>
-      <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">Agent</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full max-w-xs px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]"
-      >
-        <option value="">Select an agent...</option>
-        {agents.map((a) => (
-          <option key={a.id} value={a.id}>{a.name} ({a.slug})</option>
-        ))}
-      </select>
-    </div>
-  )
-}
-
-function DocList({ docs, onDelete }) {
-  if (!docs || docs.length === 0) return <p className="text-sm text-[var(--text-tertiary)]">No documents.</p>
-  return (
-    <div className="space-y-2">
-      {docs.map((doc) => (
-        <div key={doc.id} className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
-          <div className="min-w-0 flex-1">
-            <div className="font-bold text-sm text-[var(--text-primary)] truncate">{doc.name || doc.id}</div>
-            <div className="text-xs text-[var(--text-tertiary)]">
-              {doc.sourceType && <span>{doc.sourceType} | </span>}
-              {doc.chunkCount != null && <span>{doc.chunkCount} chunks | </span>}
-              {doc.createdAt && <span>{new Date(doc.createdAt).toLocaleDateString()}</span>}
-            </div>
           </div>
-          <button onClick={() => onDelete(doc.id)} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-red-400 hover:bg-red-500/10 transition-all shrink-0"><Trash2 size={14} /></button>
+        )}
+
+        <button onClick={saveConfig} disabled={!selectedProvider || !selectedModel} className="px-5 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] disabled:opacity-50 transition-all">
+          Save Configuration
+        </button>
+      </section>
+
+      {/* API Key Management */}
+      <section>
+        <h3 className="text-base font-bold text-[var(--text-primary)] mb-3">API Keys</h3>
+
+        {/* Existing Keys */}
+        {providers.length > 0 && (
+          <div className="space-y-2 mb-4">
+            {providers.map((p) => {
+              const provName = p.name || p.id
+              const colors = getProviderColor(provName)
+              return (
+                <div key={provName} className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+                  <div className="flex items-center gap-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${colors.bg} ${colors.text}`}>{provName}</span>
+                    {p.hasKey ? (
+                      <span className="flex items-center gap-1 text-xs text-emerald-400">
+                        <Check size={12} />
+                        <span>Key configured</span>
+                        {p.keyPrefix && <span className="text-[var(--text-tertiary)] font-mono ml-1">{p.keyPrefix}...</span>}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-[var(--text-tertiary)]">No key set</span>
+                    )}
+                  </div>
+                  {p.hasKey && (
+                    <button onClick={() => deleteKey(provName)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"><Trash2 size={14} /></button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Save New Key */}
+        <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-3">
+          <h4 className="text-sm font-bold text-[var(--text-primary)]">Save API Key</h4>
+          <div className="flex gap-3 items-end">
+            <div className="w-40">
+              <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">Provider</label>
+              <select
+                value={keyProvider}
+                onChange={(e) => setKeyProvider(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]"
+              >
+                <option value="">Select...</option>
+                {providerNames.map((p) => (
+                  <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">API Key</label>
+              <input type="password" value={keyValue} onChange={(e) => setKeyValue(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]" placeholder="sk-..." />
+            </div>
+            <button onClick={saveKey} disabled={!keyProvider || !keyValue} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] disabled:opacity-50 transition-all flex items-center gap-1 whitespace-nowrap"><Key size={14} />Save</button>
+          </div>
         </div>
-      ))}
+      </section>
     </div>
   )
 }
@@ -583,7 +1123,6 @@ export default function AdminPanel() {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem('admin-key') || '')
   const [authenticated, setAuthenticated] = useState(false)
   const [adminTab, setAdminTab] = useState('agents')
-  const [agents, setAgents] = useState([])
 
   const api = useMemo(() => adminKey ? createAdminApi(adminKey) : null, [adminKey])
 
@@ -602,12 +1141,6 @@ export default function AdminPanel() {
     }
     validate()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Load agents list for Knowledge Base and Memory tabs
-  useEffect(() => {
-    if (!authenticated || !api) return
-    api.get('/agents').then((res) => setAgents(res.data || [])).catch(() => {})
-  }, [authenticated, api])
 
   const handleLogin = (key) => {
     setAdminKey(key)
@@ -662,10 +1195,9 @@ export default function AdminPanel() {
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        {adminTab === 'agents' && <AgentManager api={api} />}
+        {adminTab === 'agents' && <AgentGrid api={api} />}
+        {adminTab === 'mcp' && <McpHub api={api} />}
         {adminTab === 'llm' && <LlmConfig api={api} />}
-        {adminTab === 'knowledge' && <KnowledgeBase api={api} agents={agents} />}
-        {adminTab === 'memory' && <AgentMemory api={api} agents={agents} />}
       </div>
     </div>
   )
