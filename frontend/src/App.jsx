@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, Sun, Moon } from 'lucide-react'
+import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, FileText, Sun, Moon } from 'lucide-react'
 import { useTheme } from './context/ThemeContext'
 import Home from './components/Home'
 import SoundBoard from './components/SoundBoard'
@@ -11,12 +11,17 @@ import Toast from './components/Toast'
 const MAIN_TABS = [
   { id: 'home', label: 'Home', icon: HomeIcon },
   { id: 'show', label: 'The Show', icon: Tv },
+  { id: 'docs', label: 'Documentation', icon: BookOpen },
 ]
 
 const SHOW_TABS = [
   { id: 'episodes', label: 'Episodes', icon: Tv },
   { id: 'sounds', label: 'Soundboard', icon: Volume2 },
   { id: 'memes', label: 'Meme Board', icon: Image },
+]
+
+const DOC_TABS = [
+  { id: 'api', label: 'API Docs', icon: FileText },
   { id: 'mcp', label: 'MCP Docs', icon: BookOpen },
 ]
 
@@ -31,6 +36,7 @@ export default function App() {
   const isPopout = useIsPopout()
   const [mainTab, setMainTab] = useState('home')
   const [showTab, setShowTab] = useState('episodes')
+  const [docTab, setDocTab] = useState('api')
   const { theme, toggleTheme } = useTheme()
 
   if (isPopout) {
@@ -109,6 +115,32 @@ export default function App() {
               </div>
             </>
           )}
+
+          {/* Docs sub-tabs */}
+          {mainTab === 'docs' && (
+            <>
+              <div className="w-px h-6 bg-[var(--divider-px)]" />
+              <div className="flex items-center gap-1 bg-[var(--bg-subtle)] rounded-xl p-1">
+                {DOC_TABS.map((tab) => {
+                  const Icon = tab.icon
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setDocTab(tab.id)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
+                        ${docTab === tab.id
+                          ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
+                          : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                        }`}
+                    >
+                      <Icon size={12} />
+                      {tab.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Theme toggle */}
@@ -127,7 +159,14 @@ export default function App() {
         {mainTab === 'show' && showTab === 'episodes' && <EpisodeBoard />}
         {mainTab === 'show' && showTab === 'sounds' && <SoundBoard />}
         {mainTab === 'show' && showTab === 'memes' && <MemeBoard />}
-        {mainTab === 'show' && showTab === 'mcp' && <McpDocs />}
+        {mainTab === 'docs' && docTab === 'api' && (
+          <iframe
+            src="https://backend-production-0e40.up.railway.app/api/docs"
+            className="flex-1 w-full border-0"
+            title="API Documentation"
+          />
+        )}
+        {mainTab === 'docs' && docTab === 'mcp' && <McpDocs />}
       </div>
       <Toast />
     </div>
