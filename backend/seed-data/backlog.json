@@ -1,0 +1,336 @@
+{
+  "id": "backlog",
+  "title": "Backlog",
+  "date": "",
+  "segments": [
+    {
+      "id": "open-intro",
+      "name": "Open / Intro",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "app-of-the-show",
+      "name": "App of the Show",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Notion Walkthrough",
+          "bullets": [
+            "Live walkthrough of Notion",
+            "Key features and workflows for finance & accounting teams",
+            "How Notion fits into the AI-powered productivity stack"
+          ],
+          "notes": "App of the Show segment — walk through Notion live, highlighting features relevant to finance and accounting professionals.",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "in-the-news",
+      "name": "In the News Updates",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "link",
+          "title": "Vibe-Coded Desk Reservation Tool — Inspiring Others to Build",
+          "url": "https://www.linkedin.com/posts/brock-beyer-818218a7_i-built-a-desk-reservation-tool-100-vibe-activity-7435037989027737600-Ba0P",
+          "notes": "Brock Beyer built a desk reservation tool 100% vibe-coded — great story about a non-developer just going for it with AI. Includes a helpful prompt guide at the bottom. The angle: inspiring others in finance & accounting to start building their own tools.",
+          "status": "proposed"
+        },
+        {
+          "type": "link",
+          "title": "AI Can't Do Transfer Pricing?",
+          "url": "https://www.linkedin.com/posts/secret-cfo_psa-please-dont-hack-a-transfer-pricing-activity-7432798007538135040-Nryw",
+          "notes": "Secret CFO post — PSA on why you shouldn't hack transfer pricing with AI. Transfer pricing is one of those areas where AI oversimplification could create serious compliance and regulatory risk.",
+          "status": "proposed"
+        },
+        {
+          "type": "link",
+          "title": "Running Open Source Models on iPhone 17",
+          "url": "",
+          "notes": "Moved from EP2 in-the-news to backlog.",
+          "status": "proposed"
+        },
+        {
+          "type": "link",
+          "title": "Crypto.com Announces OpenClaw API Integration",
+          "url": "",
+          "notes": "Moved from EP2 in-the-news to backlog.",
+          "status": "proposed"
+        },
+        {
+          "type": "link",
+          "title": "Founder Says AI Tax Engines Don't Solve Everything — Give It a Month",
+          "url": "",
+          "notes": "Moved from EP2 in-the-news to backlog.",
+          "status": "proposed"
+        },
+        {
+          "type": "link",
+          "title": "NYT Sends Autonomous Agent Reporter Into Moltbook",
+          "url": "",
+          "notes": "Moved from EP2 in-the-news to backlog.",
+          "status": "proposed"
+        },
+        {
+          "type": "link",
+          "title": "Replit Controller Builds Accounting Close Tool",
+          "url": "https://www.linkedin.com/posts/mohamedalsabawi_i-built-a-custom-accounting-close-tool-yesterday-activity-7437534992072646656-m51W",
+          "notes": "Mohamed Alsabawi built a custom accounting close tool using Replit's controller agent. Shows how non-engineers can now build real accounting workflow tools with AI-powered development platforms.",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "take-of-the-show",
+      "name": "Take of the Show",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "link",
+          "title": "The Death of Apps & Rise of the Meta-App",
+          "url": "https://www.linkedin.com/pulse/we-all-digital-gods-death-apps-rise-meta-app-zach-lloyd-rejlc/",
+          "notes": "Zach Lloyd argues meta-apps like Claude Code, Codex, and Warp bypass traditional apps entirely — you start with what you want to accomplish and the meta-app goes right to the solution. MCP, CLIs, and APIs are just a stopgap because data is siloed across legacy apps. Connects to Ore's EP1 take 'The UI is Dead' — this extends the thesis from UI dying to entire apps being replaced.",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "one-thing-ai",
+      "name": "One Thing I Did with AI",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "app-checkin",
+      "name": "App of the Show Check",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "ai-thingzzz",
+      "name": "AI ThingZzz",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "text",
+          "title": "What Is an Agent?",
+          "bullets": [
+            "Breaking down AI agents — what they are, how they work, and why everyone's talking about them",
+            "Recurring segment: demystify AI concepts for finance & accounting professionals"
+          ],
+          "notes": "Explainer segment — make AI jargon accessible. First topic: What is an agent? Cover autonomous action, tool use, reasoning loops, and real-world examples in finance.",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "uncookme",
+      "name": "Uncookme!",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Uncookme!",
+          "bullets": [
+            "Recurring segment: invite a guest who has a real problem",
+            "Hosts live-solve the problem on-air using AI tools",
+            "Part troubleshooting, part showcase, all entertainment"
+          ],
+          "notes": "Format: Guest presents their problem → hosts brainstorm and build a solution live → guest reacts. Think live consulting meets improv."
+        }
+      ]
+    },
+    {
+      "id": "useful-things",
+      "name": "Useful Things We Saw This Week",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "outtro",
+      "name": "Outtro",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "bigco-corner",
+      "name": "BigCo Corner",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "text",
+          "title": "BigCo Corner",
+          "bullets": [
+            "Recurring segment: spotlight how big companies are adopting and deploying AI",
+            "Enterprise AI strategy, internal tools, workforce changes, and real implementations"
+          ],
+          "notes": "Discussion segment covering AI moves by large corporations — think Big 4, Fortune 500, major banks, tech giants. What are they building, buying, and rolling out?",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "ai-and-crypto",
+      "name": "AI and Crypto",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "link",
+          "title": "AI Agents Using Crypto for Payments",
+          "url": "https://x.com/peterschroederr/status/2029567709290353096",
+          "notes": "AI agents are starting to use crypto rails for payments — the intersection of autonomous agents and decentralized finance. How crypto solves the payments problem for AI agents that need to transact without human intervention.",
+          "status": "proposed"
+        },
+        {
+          "type": "text",
+          "title": "Crypto Wasn't Made for Humans — It Was Made for AI",
+          "bullets": [
+            "Ever eyeballed a crypto address? 0x7a250d... — humans weren't built for this",
+            "Protocol gets hacked → you get notified on Twitter. What if you're not on Twitter? AI agents monitor 24/7",
+            "Like SWIFT codes, crypto addresses are machine-native — AI reads them natively",
+            "Example: You want safer DeFi → AI agent moves your funds from a risky protocol into AAVE, or presents you a plan to approve",
+            "You may not even know what AAVE is — and that's the point. AI abstracts the complexity"
+          ],
+          "notes": "Source: Bankless — https://x.com/bankless/status/2028455291000340911 — Thesis: Crypto's UX was never designed for humans. Addresses, protocols, monitoring — it's all machine-readable. AI agents are the missing UX layer that makes crypto actually usable. Recurring segment potential: exploring the AI × crypto intersection.",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "the-future-accountant",
+      "name": "The Future Accountant",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "text",
+          "title": "The Future Accountant",
+          "bullets": [
+            "Welcome guest accountant Thea Yatras",
+            "Recurring segment: exploring what the modern accountant looks like in the age of AI"
+          ],
+          "notes": "Guest segment featuring accountant Thea Yatras. Discussion on how AI is reshaping the accounting profession — skills, tools, workflows, and what the future accountant needs to thrive.",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "off-the-deep-end",
+      "name": "Off the Deep End",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "text",
+          "title": "What Really Happens When You Send a Chat Message?",
+          "bullets": [
+            "Deep-dive: trace what actually happens under the hood when you send a message to an LLM",
+            "Actually ask an LLM live on the call to explain it — meta moment",
+            "Reference: Anthropic engineering on code execution with MCP"
+          ],
+          "notes": "Recurring segment: go absurdly deep on a technical topic and make it entertaining. First topic: the journey of a chat message — from keystroke to tokenization to inference to response. Actually demo it live by asking an LLM to explain itself. Source: https://www.anthropic.com/engineering/code-execution-with-mcp",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "finance-leader-perspectives",
+      "name": "Finance Leader Perspectives",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Leading in Finance in an AI Age",
+          "bullets": [
+            "Welcome guest Sloan Session",
+            "Recurring segment: perspectives from finance leaders navigating the AI transformation",
+            "Topic: what does leadership in finance look like when AI is reshaping the profession?"
+          ],
+          "notes": "Guest segment featuring Sloan Session. Discussion on leading finance teams and organizations through the AI revolution — strategy, talent, change management, and what it takes to lead when the tools are evolving faster than the playbook.",
+          "status": "proposed"
+        },
+        {
+          "type": "text",
+          "title": "Leading with AI — Vince Tejada",
+          "bullets": [
+            "Welcome guest Vince Tejada",
+            "Topic: how he is leading with AI in finance",
+            "Recurring segment: perspectives from finance leaders navigating the AI transformation"
+          ],
+          "notes": "Guest segment featuring Vince Tejada. Discussion on how he is actively leading with AI — adoption strategy, practical implementation, and what it looks like to champion AI from a leadership seat in finance.",
+          "status": "proposed"
+        },
+        {
+          "type": "text",
+          "title": "Thinking About AI in Finance — Scott Kincaid",
+          "bullets": [
+            "Welcome guest Scott Kincaid",
+            "Topic: how he thinks about AI in finance",
+            "Recurring segment: perspectives from finance leaders navigating the AI transformation"
+          ],
+          "notes": "Guest segment featuring Scott Kincaid. Discussion on his perspective and framework for thinking about AI in finance — where it fits, where it's headed, and how finance leaders should be approaching it strategically.",
+          "status": "proposed"
+        },
+        {
+          "type": "text",
+          "title": "Treasury Management and AI — Gero Piskov",
+          "bullets": [
+            "Welcome guest Gero Piskov",
+            "Topic: Treasury Management and AI",
+            "Recurring segment: perspectives from finance leaders navigating the AI transformation"
+          ],
+          "notes": "Guest segment featuring Gero Piskov. Discussion on how AI is transforming treasury management — cash forecasting, liquidity planning, risk management, and what modern treasury operations look like with AI in the toolkit.",
+          "status": "proposed"
+        },
+        {
+          "type": "text",
+          "title": "AI Impact on the World — Ailin Pallisso Poux",
+          "bullets": [
+            "Welcome guest Ailin Pallisso Poux",
+            "Topic: AI's impact on the world — building for others, not just yourself",
+            "Topic: using AI to plug personal gaps and grow beyond your limitations",
+            "Recurring segment: perspectives from finance leaders navigating the AI transformation"
+          ],
+          "notes": "Guest segment featuring Ailin Pallisso Poux. Discussion on how AI is impacting the world at large, building products and solutions for others, and how she uses AI to fill personal skill and knowledge gaps.",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "useful-ai-tools",
+      "name": "Useful AI Tools",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Notion Custom Agents — Walkthrough",
+          "bullets": [
+            "Live walkthrough: building and using custom agents inside Notion",
+            "How Notion's AI agents can automate workflows, summarize content, and act on your workspace",
+            "Practical demo for finance & accounting professionals"
+          ],
+          "notes": "Recurring segment: spotlight useful AI tools with live demos. First feature: Notion Custom Agents — walk through how to set them up, what they can do, and how finance teams can use them to automate workspace tasks.",
+          "status": "proposed"
+        },
+        {
+          "type": "text",
+          "title": "11Labs Agent — Walkthrough / Demo",
+          "bullets": [
+            "Live walkthrough: building and deploying a conversational AI agent with ElevenLabs",
+            "How 11Labs Agents handle voice synthesis, real-time conversation, and custom knowledge bases",
+            "Practical demo: creating an AI voice agent for finance & accounting use cases"
+          ],
+          "notes": "Recurring segment: spotlight useful AI tools with live demos. Feature: ElevenLabs Conversational AI Agents — walk through setup, voice configuration, knowledge base integration, and how finance teams can deploy voice agents for client interactions, internal support, or workflow automation.",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "coming-soon",
+      "name": "Coming Soon",
+      "status": "proposed",
+      "slides": []
+    }
+  ]
+}

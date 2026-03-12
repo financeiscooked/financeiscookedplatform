@@ -1,0 +1,76 @@
+{
+  "id": "ep3",
+  "title": "Episode 3",
+  "date": "",
+  "segments": [
+    {
+      "id": "open-intro",
+      "name": "Open / Intro",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "app-of-the-show",
+      "name": "App of the Show",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "topic",
+          "title": "Claude Skills Introduction",
+          "notes": "Overview of Claude Skills and key use cases for finance & accounting: CSV import and data processing, automated testing, building apps and tools, workflow automation, and more.",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "in-the-news",
+      "name": "In the News Updates",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "take-of-the-show",
+      "name": "Take of the Show",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "one-thing-ai",
+      "name": "One Thing I Did with AI",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "app-checkin",
+      "name": "App of the Show Check",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "finance-people-doing-stuff",
+      "name": "Finance People Doing Stuff",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "link",
+          "title": "Replit Controller Builds Accounting Close Tool",
+          "url": "https://www.linkedin.com/posts/mohamedalsabawi_i-built-a-custom-accounting-close-tool-yesterday-activity-7437534992072646656-m51W",
+          "notes": "Mohamed Alsabawi built a custom accounting close tool using Replit's controller agent. Shows how non-engineers can now build real accounting workflow tools with AI-powered development platforms.",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "outtro",
+      "name": "Outtro",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "coming-soon",
+      "name": "Coming Soon",
+      "status": "proposed",
+      "slides": []
+    }
+  ]
+}
