@@ -13,9 +13,12 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.5.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "openai": "^6.27.0",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {

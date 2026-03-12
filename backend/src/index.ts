@@ -7,6 +7,11 @@ import slidesRouter from './routes/slides.js';
 import votesRouter from './routes/votes.js';
 import adminRouter from './routes/admin.js';
 import docsRouter from './routes/docs.js';
+import agentsRouter from './routes/agents.js';
+import chatRouter from './routes/chat.js';
+import llmConfigRouter from './routes/llmConfig.js';
+import agentDocumentsRouter from './routes/agentDocuments.js';
+import agentMemoryRouter from './routes/agentMemory.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +31,13 @@ app.use('/api', slidesRouter);
 app.use('/api', votesRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api', docsRouter);
+
+// AI Agent routes
+app.use('/api/agents', agentsRouter);
+app.use('/api/chat', chatRouter);
+app.use('/api/llm-config', llmConfigRouter);
+app.use('/api/agents', agentDocumentsRouter);
+app.use('/api/agents', agentMemoryRouter);
 
 // Error handler
 app.use(errorHandler);

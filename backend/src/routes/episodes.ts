@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma.js';
+import { requireAdmin } from '../middleware/admin-auth.js';
 
 const router = Router();
 
@@ -33,7 +34,7 @@ router.get('/episodes', async (req, res, next) => {
 router.get('/episodes/:slug', async (req, res, next) => {
   try {
     const episode = await prisma.episode.findUnique({
-      where: { slug: req.params.slug },
+      where: { slug: req.params.slug as string },
       include: {
         segments: {
           orderBy: { sortOrder: 'asc' },
@@ -83,7 +84,7 @@ router.get('/episodes/:slug', async (req, res, next) => {
 });
 
 // POST /api/episodes - create
-router.post('/episodes', async (req, res, next) => {
+router.post('/episodes', requireAdmin, async (req, res, next) => {
   try {
     const { slug, title, date, sortOrder } = req.body;
     const episode = await prisma.episode.create({
@@ -94,11 +95,11 @@ router.post('/episodes', async (req, res, next) => {
 });
 
 // PUT /api/episodes/:slug - update
-router.put('/episodes/:slug', async (req, res, next) => {
+router.put('/episodes/:slug', requireAdmin, async (req, res, next) => {
   try {
     const { title, date, sortOrder } = req.body;
     const episode = await prisma.episode.update({
-      where: { slug: req.params.slug },
+      where: { slug: req.params.slug as string },
       data: {
         ...(title !== undefined && { title }),
         ...(date !== undefined && { date }),
@@ -110,9 +111,9 @@ router.put('/episodes/:slug', async (req, res, next) => {
 });
 
 // DELETE /api/episodes/:slug
-router.delete('/episodes/:slug', async (req, res, next) => {
+router.delete('/episodes/:slug', requireAdmin, async (req, res, next) => {
   try {
-    await prisma.episode.delete({ where: { slug: req.params.slug } });
+    await prisma.episode.delete({ where: { slug: req.params.slug as string } });
     res.json({ ok: true, data: null });
   } catch (err) { next(err); }
 });

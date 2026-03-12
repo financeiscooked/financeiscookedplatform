@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, FileText, Sun, Moon } from 'lucide-react'
+import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, FileText, Sun, Moon, Shield } from 'lucide-react'
 import { useTheme } from './context/ThemeContext'
 import Home from './components/Home'
 import SoundBoard from './components/SoundBoard'
@@ -7,11 +7,14 @@ import MemeBoard from './components/MemeBoard'
 import EpisodeBoard from './components/EpisodeBoard'
 import McpDocs from './components/McpDocs'
 import Toast from './components/Toast'
+import AgentChatButton from './components/agent/AgentChatButton'
+import AdminPanel from './components/admin/AdminPanel'
 
 const MAIN_TABS = [
   { id: 'home', label: 'Home', icon: HomeIcon },
   { id: 'show', label: 'The Show', icon: Tv },
   { id: 'docs', label: 'Documentation', icon: BookOpen },
+  { id: 'admin', label: 'Admin', icon: Shield },
 ]
 
 const SHOW_TABS = [
@@ -167,8 +170,10 @@ export default function App() {
           />
         )}
         {mainTab === 'docs' && docTab === 'mcp' && <McpDocs />}
+        {mainTab === 'admin' && <AdminPanel />}
       </div>
       <Toast />
+      <AgentChatButton />
     </div>
   )
 }

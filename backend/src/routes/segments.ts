@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma.js';
+import { requireAdmin } from '../middleware/admin-auth.js';
 
 const router = Router();
 
 // POST /api/episodes/:slug/segments
-router.post('/episodes/:slug/segments', async (req, res, next) => {
+router.post('/episodes/:slug/segments', requireAdmin, async (req, res, next) => {
   try {
-    const episode = await prisma.episode.findUnique({ where: { slug: req.params.slug } });
+    const episode = await prisma.episode.findUnique({ where: { slug: req.params.slug as string } });
     if (!episode) {
       res.status(404).json({ ok: false, error: 'Episode not found' });
       return;
@@ -27,11 +28,11 @@ router.post('/episodes/:slug/segments', async (req, res, next) => {
 });
 
 // PUT /api/segments/:id
-router.put('/segments/:id', async (req, res, next) => {
+router.put('/segments/:id', requireAdmin, async (req, res, next) => {
   try {
     const { name, status, sortOrder } = req.body;
     const segment = await prisma.segment.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: {
         ...(name !== undefined && { name }),
         ...(status !== undefined && { status }),
@@ -43,9 +44,9 @@ router.put('/segments/:id', async (req, res, next) => {
 });
 
 // DELETE /api/segments/:id
-router.delete('/segments/:id', async (req, res, next) => {
+router.delete('/segments/:id', requireAdmin, async (req, res, next) => {
   try {
-    await prisma.segment.delete({ where: { id: req.params.id } });
+    await prisma.segment.delete({ where: { id: req.params.id as string } });
     res.json({ ok: true, data: null });
   } catch (err) { next(err); }
 });

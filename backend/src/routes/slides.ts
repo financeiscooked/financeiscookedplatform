@@ -1,15 +1,16 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma.js';
+import { requireAdmin } from '../middleware/admin-auth.js';
 
 const router = Router();
 
 // POST /api/segments/:id/slides
-router.post('/segments/:id/slides', async (req, res, next) => {
+router.post('/segments/:id/slides', requireAdmin, async (req, res, next) => {
   try {
     const { type, title, url, notes, details, status, bullets, sortOrder } = req.body;
     const slide = await prisma.slide.create({
       data: {
-        segmentId: req.params.id,
+        segmentId: req.params.id as string as string,
         type,
         title,
         url,
@@ -25,11 +26,11 @@ router.post('/segments/:id/slides', async (req, res, next) => {
 });
 
 // PUT /api/slides/:id
-router.put('/slides/:id', async (req, res, next) => {
+router.put('/slides/:id', requireAdmin, async (req, res, next) => {
   try {
     const { type, title, url, notes, details, status, bullets, sortOrder } = req.body;
     const slide = await prisma.slide.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: {
         ...(type !== undefined && { type }),
         ...(title !== undefined && { title }),
@@ -46,15 +47,15 @@ router.put('/slides/:id', async (req, res, next) => {
 });
 
 // DELETE /api/slides/:id
-router.delete('/slides/:id', async (req, res, next) => {
+router.delete('/slides/:id', requireAdmin, async (req, res, next) => {
   try {
-    await prisma.slide.delete({ where: { id: req.params.id } });
+    await prisma.slide.delete({ where: { id: req.params.id as string as string } });
     res.json({ ok: true, data: null });
   } catch (err) { next(err); }
 });
 
 // POST /api/slides/:id/move - move slide to different segment
-router.post('/slides/:id/move', async (req, res, next) => {
+router.post('/slides/:id/move', requireAdmin, async (req, res, next) => {
   try {
     const { targetSegmentId, targetEpisodeSlug, targetSegmentSlug } = req.body;
 
@@ -82,7 +83,7 @@ router.post('/slides/:id/move', async (req, res, next) => {
     }
 
     const slide = await prisma.slide.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { segmentId },
     });
     res.json({ ok: true, data: { id: slide.id, title: slide.title } });
@@ -90,10 +91,10 @@ router.post('/slides/:id/move', async (req, res, next) => {
 });
 
 // POST /api/slides/:id/finalize
-router.post('/slides/:id/finalize', async (req, res, next) => {
+router.post('/slides/:id/finalize', requireAdmin, async (req, res, next) => {
   try {
     const slide = await prisma.slide.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { status: 'final' },
       include: { segment: true },
     });
