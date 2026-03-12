@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react'
-import { Home as HomeIcon, Tv, Volume2, Image, Sun, Moon } from 'lucide-react'
+import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, Sun, Moon } from 'lucide-react'
 import { useTheme } from './context/ThemeContext'
 import Home from './components/Home'
 import SoundBoard from './components/SoundBoard'
 import MemeBoard from './components/MemeBoard'
 import EpisodeBoard from './components/EpisodeBoard'
+import McpDocs from './components/McpDocs'
 import Toast from './components/Toast'
 
 const MAIN_TABS = [
@@ -16,6 +17,7 @@ const SHOW_TABS = [
   { id: 'episodes', label: 'Episodes', icon: Tv },
   { id: 'sounds', label: 'Soundboard', icon: Volume2 },
   { id: 'memes', label: 'Meme Board', icon: Image },
+  { id: 'mcp', label: 'MCP Docs', icon: BookOpen },
 ]
 
 function useIsPopout() {
@@ -125,6 +127,7 @@ export default function App() {
         {mainTab === 'show' && showTab === 'episodes' && <EpisodeBoard />}
         {mainTab === 'show' && showTab === 'sounds' && <SoundBoard />}
         {mainTab === 'show' && showTab === 'memes' && <MemeBoard />}
+        {mainTab === 'show' && showTab === 'mcp' && <McpDocs />}
       </div>
       <Toast />
     </div>
