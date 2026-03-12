@@ -9,9 +9,12 @@ const router = Router();
 // POST /api/admin/seed
 router.post('/seed', async (req, res, next) => {
   try {
-    // Look for seed-data relative to project root
+    // Look for seed-data: first check ./seed-data (deployed), then ../seed-data (local dev)
     const __dirname = dirname(fileURLToPath(import.meta.url));
-    const seedDir = join(__dirname, '../../../seed-data');
+    const { existsSync } = await import('fs');
+    const localSeed = join(__dirname, '../../seed-data');
+    const parentSeed = join(__dirname, '../../../seed-data');
+    const seedDir = existsSync(localSeed) ? localSeed : parentSeed;
     const result = await seedFromJson(seedDir);
     res.json({ ok: true, data: result });
   } catch (err) { next(err); }
