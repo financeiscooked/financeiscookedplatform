@@ -1,0 +1,168 @@
+{
+  "id": "ep2",
+  "title": "Episode 2",
+  "date": "",
+  "segments": [
+    {
+      "id": "open-intro",
+      "name": "Open / Intro",
+      "status": "final",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Suno AI Music Demo",
+          "bullets": [
+            "Show Suno AI music generation live",
+            "\"For when you need a break from spreadsheets\"",
+            "Demo how easy it is to create music with AI — fun cold open energy"
+          ],
+          "notes": "Cold open moment: actually demo Suno to generate music live. The vibe is 'finance people need a break from spreadsheets sometimes' — light, fun, sets the tone for the episode."
+        }
+      ]
+    },
+    {
+      "id": "in-the-news",
+      "name": "In the News Updates",
+      "status": "final",
+      "slides": [
+        {
+          "type": "link",
+          "title": "Stacks Raises $23M for Autonomous Close Operations",
+          "url": "https://siliconangle.com/2026/02/19/agentic-finance-startup-stacks-raises-23m/",
+          "notes": "London-based Series A — AI agents for month-end close, reconciliations, journal entries, variance analysis. Targeting $100B+ legacy CFO software market.",
+          "details": "Source: SiliconANGLE, Feb 19\n\nStacks secured Series A funding to automate monthly close, reconciliations, journal entries, and variance analysis. Their AI agents integrate directly with ERPs to handle the \"two most manual workflows\" in finance: accounting and month-end close.\n\nWhy it matters: We've discussed agentics extensively — this funding shows investors believe autonomous finance workflows are production-ready. The focus on month-end close specifically addresses our biggest pain point. The $100B+ legacy \"office of the CFO\" software market is wide open for disruption.",
+          "status": "final"
+        },
+        {
+          "type": "link",
+          "title": "Is This the Future of Every Company?",
+          "url": "https://x.com/zackbshapiro/status/2027389987444957625",
+          "notes": "Zack Shapiro tweet — raises the question: is this what the future of every company looks like? Big implications for how businesses are structured and operated going forward.",
+          "status": "final"
+        },
+        {
+          "type": "link",
+          "title": "FloQast Adds Agent Builder for Accounting",
+          "url": "https://www.floqast.com/ai-agents",
+          "notes": "FloQast launched an agent builder letting accounting teams build and deploy AI agents — includes a live demo. Big move from an established accounting platform into agentic workflows.",
+          "status": "final"
+        },
+        {
+          "type": "link",
+          "title": "Here's What Happened in AI in February",
+          "url": "https://www.linkedin.com/posts/alyona-mysko_heres-what-happened-in-ai-in-february-that-activity-7434271268188635136-jZlh",
+          "notes": "LinkedIn roundup by Alyona Mysko summarizing the biggest AI developments from February 2026. Great overview post to reference for the show.",
+          "status": "final"
+        },
+        {
+          "type": "link",
+          "title": "Every Company Will Have an Internal Agent Builder",
+          "url": "https://www.linkedin.com/feed/update/urn:li:activity:7435006276461531137/",
+          "notes": "Key prediction: 'Within a year, every company over 50 people will have at least one person whose full-time job is building internal agents.' Huge implications for finance & accounting teams — the rise of the internal agent builder role.",
+          "status": "final"
+        },
+        {
+          "type": "link",
+          "title": "AI Replaces Spreadsheets",
+          "url": "https://x.com/andrewchen/status/2031532980032909640?s=46",
+          "notes": "",
+          "status": "final"
+        },
+        {
+          "type": "link",
+          "title": "AI Tax Return Accuracy Benchmark — GPT-5.4 Leads at 57%",
+          "url": "https://www.linkedin.com/posts/michaelrbock_the-rivalry-between-openai-anthropic-continues-activity-7435697215009955840-8y7E",
+          "notes": "LinkedIn post showing the % of tax returns each model completed PERFECTLY. GPT-5.4: 56.86%, Claude Opus 4.6: 52.94%, Gemini 3.1 Pro: 49.02%, GPT-5 w/ Web Search: 41.67%, GPT-5.2 Pro: 41.18%, Claude Sonnet 4.6: 37.25%, Gemini 3 Pro: 36.27%, Claude Opus 4.5: 36.27%, GPT-5.2: 33.82%, Gemini 2.5 Pro: 32.35%. The rivalry is heating up — but even the best model only nails ~57% perfectly. What does that mean for tax pros?",
+          "status": "final"
+        }
+      ]
+    },
+    {
+      "id": "mount-rushmore",
+      "name": "Mount Rushmore of AI Apps",
+      "status": "final",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Mount Rushmore of AI Apps",
+          "bullets": [
+            "Each host picks their Mount Rushmore — the 4 AI apps that belong on the mountain",
+            "Joe's Mount Rushmore picks",
+            "Ore's Mount Rushmore picks",
+            "Debate: who has the better Mt. Rushmore?"
+          ],
+          "notes": "Fun segment — Joe and Ore each reveal their Mount Rushmore of AI apps (top 4). Compare picks, debate who got it right. Great audience engagement potential."
+        }
+      ]
+    },
+    {
+      "id": "take-of-the-show",
+      "name": "Take of the Show",
+      "status": "final",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Joe's Take: SaaS is Not Dead",
+          "bullets": [
+            "SaaS isn't dying — it's evolving",
+            "AI doesn't replace SaaS, it makes SaaS better",
+            "Every major SaaS platform is adding AI agents, not getting replaced by them",
+            "The subscription model still works — usage-based pricing is just a pricing change, not a death sentence",
+            "Enterprise buyers still want platforms, not a pile of AI scripts"
+          ],
+          "notes": "Joe's argument: the 'SaaS is dead' narrative is overblown. AI is a feature layer on top of SaaS, not a replacement. Companies still need structured platforms with security, compliance, audit trails, and team collaboration — things agents alone don't solve.",
+          "status": "final"
+        },
+        {
+          "type": "text",
+          "title": "Ore's Take: Agent Platforms Everywhere",
+          "bullets": [
+            "Every company will have an internal agent platform within 2 years",
+            "FloQast, Notion, Replit — everyone is shipping agent builders",
+            "The new hire isn't a person, it's an agent that runs 24/7",
+            "Finance teams will manage agent fleets the way they manage headcount",
+            "The question isn't IF agents are coming — it's who builds them first"
+          ],
+          "notes": "Ore's argument: we're entering the age of agent platforms. It's not about one AI tool — it's about platforms that let you build, deploy, and manage agents across your entire operation. Finance teams that build agents now will have a massive advantage.",
+          "status": "final"
+        }
+      ]
+    },
+    {
+      "id": "outtro",
+      "name": "Outtro",
+      "status": "final",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Thank you!!!",
+          "bullets": [],
+          "notes": "",
+          "status": "final"
+        }
+      ]
+    },
+    {
+      "id": "coming-soon",
+      "name": "Coming Soon",
+      "status": "final",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Coming Soon",
+          "bullets": [
+            "Claude Skills",
+            "Claude Cowork",
+            "AI and Crypto",
+            "Our First Guest!!",
+            "Cool Things",
+            "Apps Apps Apps",
+            "TheFinanceSetup"
+          ],
+          "notes": "",
+          "status": "final"
+        }
+      ]
+    }
+  ]
+}

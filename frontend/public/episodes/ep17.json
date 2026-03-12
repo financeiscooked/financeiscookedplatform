@@ -1,0 +1,73 @@
+{
+  "id": "ep17",
+  "title": "Episode 17",
+  "date": "",
+  "segments": [
+    {
+      "id": "open-intro",
+      "name": "Open / Intro",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "app-of-the-show",
+      "name": "App of the Show",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "in-the-news",
+      "name": "In the News Updates",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "mount-rushmore",
+      "name": "Mount Rushmore of AI Apps",
+      "status": "proposed",
+      "slides": [
+        {
+          "type": "text",
+          "title": "Mount Rushmore of AI Apps",
+          "bullets": [
+            "Each host picks their Mount Rushmore — the 4 AI apps that belong on the mountain",
+            "Joe's Mount Rushmore picks",
+            "Ore's Mount Rushmore picks",
+            "Debate: who has the better Mt. Rushmore?"
+          ],
+          "notes": "Recurring segment — Joe and Ore each reveal their Mount Rushmore of AI apps (top 4). Compare picks, debate who got it right. Great audience engagement potential."
+        }
+      ]
+    },
+    {
+      "id": "take-of-the-show",
+      "name": "Take of the Show",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "one-thing-ai",
+      "name": "One Thing I Did with AI",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "app-checkin",
+      "name": "App of the Show Check",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "outtro",
+      "name": "Outtro",
+      "status": "proposed",
+      "slides": []
+    },
+    {
+      "id": "coming-soon",
+      "name": "Coming Soon",
+      "status": "proposed",
+      "slides": []
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Brand colors */
+:root {
+  --brand-fire: #D94E2A;
+  --brand-navy: #2B3A5C;
+  --brand-amber: #F0A030;
+  --brand-offwhite: #F5F2EC;
+  --brand-brown: #6B3A20;
+  --brand-blue: #4A9FD9;
+}
+
+/* Theme variables */
+[data-theme="dark"] {
+  --bg-primary: #111827;
+  --bg-surface: #1E293B;
+  --bg-subtle: rgba(255,255,255,0.05);
+  --bg-hover: rgba(255,255,255,0.1);
+  --bg-active: rgba(255,255,255,0.08);
+  --text-primary: #F5F2EC;
+  --text-secondary: rgba(245,242,236,0.6);
+  --text-tertiary: rgba(245,242,236,0.4);
+  --text-muted: rgba(245,242,236,0.3);
+  --text-hint: rgba(245,242,236,0.2);
+  --text-faint: rgba(245,242,236,0.15);
+  --border-default: rgba(245,242,236,0.1);
+  --border-subtle: rgba(245,242,236,0.06);
+  --border-strong: rgba(245,242,236,0.15);
+  --border-hover: rgba(245,242,236,0.2);
+  --border-heavy: rgba(245,242,236,0.3);
+  --input-bg: rgba(0,0,0,0.4);
+  --overlay-bg: rgba(0,0,0,0.7);
+  --overlay-heavy: rgba(0,0,0,0.85);
+  --btn-edit-bg: rgba(0,0,0,0.6);
+  --btn-edit-hover: rgba(0,0,0,0.8);
+  --img-border-bg: rgba(0,0,0,0.2);
+  --sound-btn-border: rgba(245,242,236,0.08);
+  --sound-btn-hover-border: rgba(245,242,236,0.2);
+  --sound-btn-hover-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  --divider-px: rgba(245,242,236,0.1);
+  --accent-primary: #D94E2A;
+  --accent-secondary: #F0A030;
+  --accent-link: #4A9FD9;
+}
+
+[data-theme="light"] {
+  --bg-primary: #F5F2EC;
+  --bg-surface: #ffffff;
+  --bg-subtle: rgba(43,58,92,0.05);
+  --bg-hover: rgba(43,58,92,0.08);
+  --bg-active: rgba(43,58,92,0.06);
+  --text-primary: #2B3A5C;
+  --text-secondary: rgba(43,58,92,0.75);
+  --text-tertiary: rgba(43,58,92,0.6);
+  --text-muted: rgba(43,58,92,0.5);
+  --text-hint: rgba(43,58,92,0.38);
+  --text-faint: rgba(43,58,92,0.22);
+  --border-default: rgba(43,58,92,0.12);
+  --border-subtle: rgba(43,58,92,0.06);
+  --border-strong: rgba(43,58,92,0.15);
+  --border-hover: rgba(43,58,92,0.25);
+  --border-heavy: rgba(43,58,92,0.3);
+  --input-bg: rgba(43,58,92,0.05);
+  --overlay-bg: rgba(0,0,0,0.5);
+  --overlay-heavy: rgba(0,0,0,0.7);
+  --btn-edit-bg: rgba(255,255,255,0.85);
+  --btn-edit-hover: rgba(255,255,255,1);
+  --img-border-bg: rgba(43,58,92,0.05);
+  --sound-btn-border: rgba(43,58,92,0.1);
+  --sound-btn-hover-border: rgba(43,58,92,0.2);
+  --sound-btn-hover-shadow: 0 8px 25px rgba(43,58,92,0.1);
+  --divider-px: rgba(43,58,92,0.12);
+  --accent-primary: #D94E2A;
+  --accent-secondary: #F0A030;
+  --accent-link: #4A9FD9;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-primary);
+  font-family: 'Inter', sans-serif;
+  height: 100vh;
+}
+
+#root {
+  height: 100vh;
+}
+
+.font-russo {
+  font-family: 'Russo One', sans-serif;
+}
+
+@keyframes buttonPress {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.93); }
+  100% { transform: scale(1); }
+}
+.btn-press { animation: buttonPress 0.15s ease-in-out; }
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 15px var(--glow-color), inset 0 0 15px rgba(255,255,255,0.1); }
+  50% { box-shadow: 0 0 30px var(--glow-color), 0 0 60px var(--glow-color), inset 0 0 20px rgba(255,255,255,0.15); }
+}
+.glow-playing { animation: glowPulse 0.4s ease-in-out; }
+
+.sound-btn {
+  position: relative;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  border: 2px solid var(--sound-btn-border);
+  overflow: hidden;
+}
+.sound-btn:hover {
+  border-color: var(--sound-btn-hover-border);
+  transform: translateY(-2px);
+  box-shadow: var(--sound-btn-hover-shadow);
+}
+.sound-btn:active { transform: translateY(0); }
+
+.edit-overlay {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.sound-btn:hover .edit-overlay { opacity: 1; }
+
+::-webkit-scrollbar { display: none; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.animate-fade-in { animation: fade-in 0.2s ease-out; }
