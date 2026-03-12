@@ -27,7 +27,25 @@ interface JsonEpisode {
   segments: JsonSegment[];
 }
 
+const VALID_SLIDE_TYPES = new Set(['text', 'link', 'image', 'gallery']);
+const VALID_STATUSES = new Set(['proposed', 'final']);
+
+function normalizeSlideType(type: string): string {
+  return VALID_SLIDE_TYPES.has(type) ? type : 'text';
+}
+
+function normalizeStatus(status: string | undefined): string {
+  return status && VALID_STATUSES.has(status) ? status : 'proposed';
+}
+
 export async function seedFromJson(seedDir: string): Promise<{ episodes: number; segments: number; slides: number }> {
+  // Clear existing data for clean seed
+  await prisma.vote.deleteMany();
+  await prisma.slideImage.deleteMany();
+  await prisma.slide.deleteMany();
+  await prisma.segment.deleteMany();
+  await prisma.episode.deleteMany();
+
   const files = readdirSync(seedDir).filter(f => f.endsWith('.json') && f !== 'index.json');
   let totalEpisodes = 0, totalSegments = 0, totalSlides = 0;
 
@@ -51,12 +69,12 @@ export async function seedFromJson(seedDir: string): Promise<{ episodes: number;
 
       const segment = await prisma.segment.upsert({
         where: { episodeId_slug: { episodeId: episode.id, slug: seg.id } },
-        update: { name: seg.name, status: (seg.status as any) ?? 'proposed', sortOrder: si },
+        update: { name: seg.name, status: normalizeStatus(seg.status) as any, sortOrder: si },
         create: {
           episodeId: episode.id,
           slug: seg.id,
           name: seg.name,
-          status: (seg.status as any) ?? 'proposed',
+          status: normalizeStatus(seg.status) as any,
           sortOrder: si,
         },
       });
@@ -68,12 +86,12 @@ export async function seedFromJson(seedDir: string): Promise<{ episodes: number;
         await prisma.slide.create({
           data: {
             segmentId: segment.id,
-            type: slide.type as any,
+            type: normalizeSlideType(slide.type) as any,
             title: slide.title,
             url: slide.url ?? null,
             notes: slide.notes ?? null,
             details: slide.details ?? null,
-            status: (slide.status as any) ?? 'proposed',
+            status: normalizeStatus(slide.status) as any,
             bullets: slide.bullets ?? [],
             sortOrder: sli,
             ...(slide.images?.length ? {
