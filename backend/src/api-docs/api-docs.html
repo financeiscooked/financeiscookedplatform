@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>financeiscooked API Docs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0f1419',
+            card: '#1a2332',
+            cardHover: '#1f2b3d',
+            accent: '#D94E2A',
+            amber: '#F0A030',
+            textPrimary: '#e8e6e3',
+            textSecondary: '#8899aa',
+            border: '#2a3a4e',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #0f1419; color: #e8e6e3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f1419; }
+    ::-webkit-scrollbar-thumb { background: #2a3a4e; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a4a5e; }
+    .method-get { background: #22c55e; }
+    .method-post { background: #3b82f6; }
+    .method-put { background: #f59e0b; }
+    .method-delete { background: #ef4444; }
+    .method-get-text { color: #22c55e; }
+    .method-post-text { color: #3b82f6; }
+    .method-put-text { color: #f59e0b; }
+    .method-delete-text { color: #ef4444; }
+    .method-get-border { border-color: #22c55e33; background: #22c55e0d; }
+    .method-post-border { border-color: #3b82f633; background: #3b82f60d; }
+    .method-put-border { border-color: #f59e0b33; background: #f59e0b0d; }
+    .method-delete-border { border-color: #ef444433; background: #ef44440d; }
+    .status-2xx { color: #22c55e; }
+    .status-4xx { color: #f59e0b; }
+    .status-5xx { color: #ef4444; }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .on-air-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.2s ease-out; }
+    textarea, input { outline: none; }
+    textarea:focus, input:focus { border-color: #D94E2A !important; }
+    .sidebar-item { transition: all 0.15s ease; }
+    .sidebar-item:hover { background: #1f2b3d; }
+    .sidebar-item.active { background: #1f2b3d; border-right: 2px solid #D94E2A; }
+    pre { white-space: pre-wrap; word-wrap: break-word; }
+    .json-key { color: #7dd3fc; }
+    .json-string { color: #86efac; }
+    .json-number { color: #fde68a; }
+    .json-boolean { color: #c4b5fd; }
+    .json-null { color: #9ca3af; }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<!-- Sidebar -->
+<aside id="sidebar" class="w-72 min-w-[288px] h-full flex flex-col border-r border-border bg-card overflow-hidden">
+  <!-- Brand Header -->
+  <div class="p-4 border-b border-border">
+    <div class="flex items-center gap-2 mb-1">
+      <span class="on-air-dot inline-block w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
+      <span class="text-xs font-bold tracking-widest text-red-400 uppercase">On Air</span>
+    </div>
+    <h1 class="text-xl font-bold">
+      <span class="text-white">finance</span><span style="color:#D94E2A">is</span><span style="color:#F0A030">cooked</span>
+    </h1>
+    <p class="text-xs text-textSecondary mt-0.5">Interactive API Documentation</p>
+  </div>
+
+  <!-- Search -->
+  <div class="p-3 border-b border-border">
+    <input id="search" type="text" placeholder="Search endpoints..."
+      class="w-full px-3 py-2 text-sm bg-bg border border-border rounded-lg text-textPrimary placeholder-textSecondary" />
+  </div>
+
+  <!-- Nav -->
+  <nav id="nav" class="flex-1 overflow-y-auto py-2">
+    <!-- Populated by JS -->
+  </nav>
+
+  <!-- History Toggle -->
+  <div class="border-t border-border p-3">
+    <button onclick="toggleHistory()" class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg bg-bg border border-border hover:border-accent transition-colors">
+      <span class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        History
+      </span>
+      <span id="historyCount" class="text-xs bg-border px-2 py-0.5 rounded-full">0</span>
+    </button>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="flex-1 h-full overflow-y-auto">
+  <!-- Overview Page -->
+  <div id="overview" class="fade-in max-w-4xl mx-auto p-8">
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold mb-2">
+        <span class="text-white">finance</span><span style="color:#D94E2A">is</span><span style="color:#F0A030">cooked</span>
+        <span class="text-textSecondary font-normal text-2xl ml-2">API</span>
+      </h2>
+      <p class="text-textSecondary text-lg">Backend API for the financeiscooked show content management platform.</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div id="quickStats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Base URL -->
+    <div class="bg-card border border-border rounded-xl p-5 mb-6">
+      <h3 class="text-sm font-semibold text-textSecondary uppercase tracking-wider mb-2">Base URL</h3>
+      <code id="baseUrlDisplay" class="text-lg font-mono" style="color:#F0A030"></code>
+    </div>
+
+    <!-- Response Format -->
+    <div class="bg-card border border-border rounded-xl p-5 mb-6">
+      <h3 class="text-sm font-semibold text-textSecondary uppercase tracking-wider mb-3">Response Format</h3>
+      <p class="text-sm text-textSecondary mb-3">All responses follow a standard envelope:</p>
+      <pre class="bg-bg rounded-lg p-4 text-sm font-mono overflow-x-auto"><span class="json-key">"ok"</span>: <span class="json-boolean">true</span> | <span class="json-boolean">false</span>,
+<span class="json-key">"data"</span>: { ... }        <span class="text-textSecondary">// on success</span>
+<span class="json-key">"error"</span>: <span class="json-string">"message"</span>    <span class="text-textSecondary">// on failure</span></pre>
+    </div>
+
+    <!-- Categories -->
+    <h3 class="text-sm font-semibold text-textSecondary uppercase tracking-wider mb-3">Categories</h3>
+    <div id="categoryCards" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Endpoint Detail -->
+  <div id="endpointDetail" class="hidden fade-in max-w-4xl mx-auto p-8">
+    <!-- Header -->
+    <div id="epHeader" class="mb-6">
+      <button onclick="showOverview()" class="text-sm text-textSecondary hover:text-accent transition-colors mb-3 inline-flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to overview
+      </button>
+      <div class="flex items-center gap-3 mb-2">
+        <span id="epMethod" class="px-3 py-1 rounded-md text-xs font-bold text-white uppercase tracking-wider"></span>
+        <code id="epPath" class="text-xl font-mono text-textPrimary"></code>
+      </div>
+      <p id="epSummary" class="text-textSecondary"></p>
+    </div>
+
+    <!-- Request Builder -->
+    <div class="bg-card border border-border rounded-xl mb-6 overflow-hidden">
+      <div class="px-5 py-3 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-textSecondary">Request</h3>
+        <button onclick="generateCurl()" class="text-xs px-3 py-1 rounded-md bg-bg border border-border text-textSecondary hover:text-textPrimary hover:border-accent transition-colors">
+          Copy cURL
+        </button>
+      </div>
+
+      <!-- URL Bar -->
+      <div class="px-5 py-3 border-b border-border flex items-center gap-2">
+        <span id="reqMethodBadge" class="px-2 py-0.5 rounded text-xs font-bold text-white uppercase"></span>
+        <code id="reqUrl" class="text-sm font-mono text-textSecondary flex-1 truncate"></code>
+      </div>
+
+      <!-- Path Params -->
+      <div id="pathParamsSection" class="hidden px-5 py-4 border-b border-border">
+        <h4 class="text-xs font-semibold text-textSecondary uppercase tracking-wider mb-3">Path Parameters</h4>
+        <div id="pathParams" class="space-y-3"></div>
+      </div>
+
+      <!-- Query Params -->
+      <div id="queryParamsSection" class="hidden px-5 py-4 border-b border-border">
+        <h4 class="text-xs font-semibold text-textSecondary uppercase tracking-wider mb-3">Query Parameters</h4>
+        <div id="queryParams" class="space-y-3"></div>
+      </div>
+
+      <!-- Body -->
+      <div id="bodySection" class="hidden px-5 py-4 border-b border-border">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-xs font-semibold text-textSecondary uppercase tracking-wider">Request Body <span class="text-textSecondary font-normal normal-case">(JSON)</span></h4>
+          <button onclick="loadExample()" class="text-xs px-3 py-1 rounded-md bg-bg border border-border text-amber hover:border-amber transition-colors">
+            Load Example
+          </button>
+        </div>
+        <!-- Schema Info -->
+        <div id="bodySchema" class="mb-3 text-xs space-y-1"></div>
+        <textarea id="bodyEditor" rows="8"
+          class="w-full px-4 py-3 bg-bg border border-border rounded-lg font-mono text-sm text-textPrimary resize-y"
+          placeholder="{ }"></textarea>
+      </div>
+
+      <!-- Execute -->
+      <div class="px-5 py-4">
+        <button onclick="executeRequest()" id="executeBtn"
+          class="px-6 py-2.5 rounded-lg font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+          style="background: linear-gradient(135deg, #D94E2A, #F0A030)">
+          Execute Request
+        </button>
+      </div>
+    </div>
+
+    <!-- Response Viewer -->
+    <div id="responseSection" class="hidden bg-card border border-border rounded-xl mb-6 overflow-hidden fade-in">
+      <div class="px-5 py-3 border-b border-border flex items-center justify-between">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-textSecondary">Response</h3>
+        <div class="flex items-center gap-4 text-xs">
+          <span id="resTime" class="text-textSecondary"></span>
+          <span id="resStatus" class="font-bold"></span>
+        </div>
+      </div>
+      <pre id="resBody" class="px-5 py-4 text-sm font-mono overflow-x-auto max-h-[500px] overflow-y-auto"></pre>
+    </div>
+
+    <!-- cURL Modal -->
+    <div id="curlModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
+      <div class="bg-card border border-border rounded-xl w-full max-w-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold uppercase tracking-wider text-textSecondary">cURL Command</h3>
+          <button onclick="copyCurl()" class="text-xs px-3 py-1 rounded-md border border-accent text-accent hover:bg-accent hover:text-white transition-colors">Copy</button>
+        </div>
+        <pre id="curlOutput" class="bg-bg rounded-lg p-4 text-sm font-mono text-textPrimary overflow-x-auto"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Panel -->
+  <div id="historyPanel" class="hidden fade-in max-w-4xl mx-auto p-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <button onclick="showOverview()" class="text-sm text-textSecondary hover:text-accent transition-colors mb-3 inline-flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          Back to overview
+        </button>
+        <h2 class="text-2xl font-bold">Request History</h2>
+      </div>
+      <button onclick="clearHistory()" class="text-xs px-3 py-1.5 rounded-md border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors">
+        Clear All
+      </button>
+    </div>
+    <div id="historyList" class="space-y-3"></div>
+    <p id="historyEmpty" class="hidden text-textSecondary text-center py-12">No requests yet. Execute an endpoint to see history here.</p>
+  </div>
+</main>
+
+<script>
+// ── Endpoint Catalog ──────────────────────────────────────────────────
+const CATEGORIES = [
+  {
+    name: 'Episodes', slug: 'episodes', description: 'CRUD operations for podcast episodes',
+    endpoints: [
+      { method: 'GET', path: '/api/episodes', summary: 'List all episodes with segment/slide counts', auth: false, params: [], body: null },
+      { method: 'GET', path: '/api/episodes/:slug', summary: 'Get full episode with nested segments and slides', auth: false, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep2', description: 'Episode slug (e.g. ep1, ep2, backlog)' }], body: null },
+      { method: 'POST', path: '/api/episodes', summary: 'Create a new episode', auth: false, params: [], body: { schema: { slug: { type: 'string', required: true, example: 'ep99', description: 'Unique episode slug' }, title: { type: 'string', required: true, example: 'Episode 99', description: 'Episode title' }, date: { type: 'string', required: false, example: '2026-04-01', description: 'Episode date' }, sortOrder: { type: 'number', required: false, example: 99, description: 'Sort position' } }, example: { slug: 'ep99', title: 'Episode 99', date: '2026-04-01', sortOrder: 99 } } },
+      { method: 'PUT', path: '/api/episodes/:slug', summary: 'Update episode metadata', auth: false, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep2' }], body: { schema: { title: { type: 'string', required: false, example: 'Updated Title' }, date: { type: 'string', required: false, example: '2026-04-01' }, sortOrder: { type: 'number', required: false, example: 2 } }, example: { title: 'Updated Title' } } },
+      { method: 'DELETE', path: '/api/episodes/:slug', summary: 'Delete episode and all children', auth: false, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep99' }], body: null },
+    ]
+  },
+  {
+    name: 'Segments', slug: 'segments', description: 'Manage segments within episodes',
+    endpoints: [
+      { method: 'POST', path: '/api/episodes/:slug/segments', summary: 'Create segment in episode', auth: false, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep2', description: 'Episode slug' }], body: { schema: { slug: { type: 'string', required: true, example: 'new-segment', description: 'Segment slug' }, name: { type: 'string', required: true, example: 'New Segment', description: 'Segment display name' }, status: { type: 'string', required: false, enum: ['proposed','final'], example: 'proposed', description: 'Content status' }, sortOrder: { type: 'number', required: false, example: 0 } }, example: { slug: 'new-segment', name: 'New Segment', status: 'proposed', sortOrder: 0 } } },
+      { method: 'PUT', path: '/api/segments/:id', summary: 'Update segment', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Segment UUID' }], body: { schema: { name: { type: 'string', required: false, example: 'Updated Name' }, status: { type: 'string', required: false, enum: ['proposed','final'] }, sortOrder: { type: 'number', required: false } }, example: { name: 'Updated Name', status: 'final' } } },
+      { method: 'DELETE', path: '/api/segments/:id', summary: 'Delete segment and all slides', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: null },
+    ]
+  },
+  {
+    name: 'Slides', slug: 'slides', description: 'Manage slides within segments, including move and finalize operations',
+    endpoints: [
+      { method: 'POST', path: '/api/segments/:id/slides', summary: 'Create slide in segment', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Segment UUID' }], body: { schema: { type: { type: 'string', required: true, enum: ['text','link','image','gallery'], example: 'link', description: 'Slide type' }, title: { type: 'string', required: true, example: 'New Article Title', description: 'Slide title' }, url: { type: 'string', required: false, example: 'https://example.com/article' }, notes: { type: 'string', required: false, example: 'Some notes about this slide' }, details: { type: 'string', required: false }, status: { type: 'string', required: false, enum: ['proposed','final'], example: 'proposed' }, bullets: { type: 'array', required: false, example: ['Point 1','Point 2'] }, sortOrder: { type: 'number', required: false, example: 0 } }, example: { type: 'link', title: 'New Article Title', url: 'https://example.com/article', notes: 'Some notes', status: 'proposed', bullets: [], sortOrder: 0 } } },
+      { method: 'PUT', path: '/api/slides/:id', summary: 'Update slide', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: { schema: { type: { type: 'string', required: false, enum: ['text','link','image','gallery'] }, title: { type: 'string', required: false }, url: { type: 'string', required: false }, notes: { type: 'string', required: false }, details: { type: 'string', required: false }, status: { type: 'string', required: false, enum: ['proposed','final'] }, bullets: { type: 'array', required: false }, sortOrder: { type: 'number', required: false } }, example: { title: 'Updated Title', status: 'final' } } },
+      { method: 'DELETE', path: '/api/slides/:id', summary: 'Delete slide', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: null },
+      { method: 'POST', path: '/api/slides/:id/move', summary: 'Move slide to different segment/episode', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Slide UUID to move' }], body: { schema: { targetSegmentId: { type: 'uuid', required: false, description: 'Direct segment UUID target' }, targetEpisodeSlug: { type: 'string', required: false, example: 'backlog', description: 'Target episode slug (use with targetSegmentSlug)' }, targetSegmentSlug: { type: 'string', required: false, example: 'in-the-news', description: 'Target segment slug (use with targetEpisodeSlug)' } }, example: { targetEpisodeSlug: 'backlog', targetSegmentSlug: 'in-the-news' } } },
+      { method: 'POST', path: '/api/slides/:id/finalize', summary: 'Set slide + parent segment status to final', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000' }], body: null },
+    ]
+  },
+  {
+    name: 'Votes', slug: 'votes', description: 'Anonymous voting on slides',
+    endpoints: [
+      { method: 'POST', path: '/api/slides/:id/vote', summary: 'Cast a vote on a slide', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Slide UUID' }], body: { schema: { direction: { type: 'string', required: true, enum: ['up','down'], example: 'up', description: 'Vote direction' } }, example: { direction: 'up' } } },
+      { method: 'GET', path: '/api/episodes/:slug/votes', summary: 'Get all vote counts for an episode', auth: false, params: [{ name: 'slug', in: 'path', required: true, type: 'string', example: 'ep2', description: 'Episode slug' }], body: null },
+    ]
+  },
+  {
+    name: 'Admin', slug: 'admin', description: 'Administrative and utility endpoints',
+    endpoints: [
+      { method: 'POST', path: '/api/admin/seed', summary: 'Seed database from JSON files in /seed-data', auth: false, params: [], body: null },
+      { method: 'GET', path: '/api/admin/stats', summary: 'Get database statistics', auth: false, params: [], body: null },
+      { method: 'GET', path: '/api/health', summary: 'Health check', auth: false, params: [], body: null },
+    ]
+  }
+];
+
+// ── State ─────────────────────────────────────────────────────────────
+const BASE_URL = window.location.origin;
+let currentEndpoint = null;
+let history = JSON.parse(localStorage.getItem('fic_api_history') || '[]');
+
+// ── Init ──────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('baseUrlDisplay').textContent = BASE_URL;
+  renderSidebar();
+  renderOverview();
+  updateHistoryCount();
+
+  document.getElementById('search').addEventListener('input', (e) => {
+    renderSidebar(e.target.value.toLowerCase());
+  });
+});
+
+// ── Sidebar ───────────────────────────────────────────────────────────
+function renderSidebar(filter = '') {
+  const nav = document.getElementById('nav');
+  let html = '';
+
+  // Overview link
+  html += `<div class="px-3 mb-1">
+    <button onclick="showOverview()" class="sidebar-item w-full text-left px-3 py-2 rounded-lg text-sm text-textSecondary hover:text-textPrimary flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+      Overview
+    </button>
+  </div>`;
+
+  CATEGORIES.forEach(cat => {
+    const filtered = cat.endpoints.filter(ep =>
+      !filter ||
+      ep.path.toLowerCase().includes(filter) ||
+      ep.summary.toLowerCase().includes(filter) ||
+      ep.method.toLowerCase().includes(filter)
+    );
+    if (filter && filtered.length === 0) return;
+
+    html += `<div class="mt-3 px-3 mb-1">
+      <div class="flex items-center justify-between px-3 py-1">
+        <span class="text-xs font-semibold uppercase tracking-wider text-textSecondary">${cat.name}</span>
+        <span class="text-xs text-textSecondary bg-bg px-1.5 py-0.5 rounded">${filtered.length}</span>
+      </div>
+    </div>`;
+
+    (filter ? filtered : cat.endpoints).forEach((ep, i) => {
+      const id = `${cat.slug}-${i}`;
+      html += `<div class="px-2">
+        <button onclick="selectEndpoint('${cat.slug}', ${cat.endpoints.indexOf(ep)})"
+          data-ep-id="${cat.slug}-${cat.endpoints.indexOf(ep)}"
+          class="sidebar-item w-full text-left px-3 py-2 rounded-lg flex items-center gap-2.5 text-sm">
+          <span class="method-${ep.method.toLowerCase()} text-[10px] font-bold px-1.5 py-0.5 rounded text-white w-12 text-center flex-shrink-0">${ep.method}</span>
+          <span class="text-textSecondary truncate font-mono text-xs">${ep.path.replace('/api/', '/')}</span>
+        </button>
+      </div>`;
+    });
+  });
+
+  nav.innerHTML = html;
+}
+
+// ── Overview ──────────────────────────────────────────────────────────
+function renderOverview() {
+  const totalEndpoints = CATEGORIES.reduce((sum, c) => sum + c.endpoints.length, 0);
+  const methods = {};
+  CATEGORIES.forEach(c => c.endpoints.forEach(ep => { methods[ep.method] = (methods[ep.method] || 0) + 1; }));
+
+  const stats = document.getElementById('quickStats');
+  stats.innerHTML = `
+    <div class="bg-card border border-border rounded-xl p-4 text-center">
+      <div class="text-2xl font-bold" style="color:#F0A030">${totalEndpoints}</div>
+      <div class="text-xs text-textSecondary mt-1">Total Endpoints</div>
+    </div>
+    <div class="bg-card border border-border rounded-xl p-4 text-center">
+      <div class="text-2xl font-bold text-green-400">${methods['GET'] || 0}</div>
+      <div class="text-xs text-textSecondary mt-1">GET</div>
+    </div>
+    <div class="bg-card border border-border rounded-xl p-4 text-center">
+      <div class="text-2xl font-bold text-blue-400">${methods['POST'] || 0}</div>
+      <div class="text-xs text-textSecondary mt-1">POST</div>
+    </div>
+    <div class="bg-card border border-border rounded-xl p-4 text-center">
+      <div class="text-2xl font-bold text-amber-400">${methods['PUT'] || 0} <span class="text-red-400">/ ${methods['DELETE'] || 0}</span></div>
+      <div class="text-xs text-textSecondary mt-1">PUT / DELETE</div>
+    </div>
+  `;
+
+  const cards = document.getElementById('categoryCards');
+  cards.innerHTML = CATEGORIES.map(cat => {
+    const methodCounts = {};
+    cat.endpoints.forEach(ep => { methodCounts[ep.method] = (methodCounts[ep.method] || 0) + 1; });
+    return `<button onclick="selectEndpoint('${cat.slug}', 0)"
+      class="bg-card border border-border rounded-xl p-5 text-left hover:border-accent/50 transition-colors group">
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="font-semibold text-textPrimary group-hover:text-accent transition-colors">${cat.name}</h4>
+        <span class="text-xs text-textSecondary">${cat.endpoints.length} endpoints</span>
+      </div>
+      <p class="text-sm text-textSecondary mb-3">${cat.description}</p>
+      <div class="flex gap-2">
+        ${Object.entries(methodCounts).map(([m, c]) => `<span class="method-${m.toLowerCase()} text-[10px] font-bold px-1.5 py-0.5 rounded text-white">${m} ${c}</span>`).join('')}
+      </div>
+    </button>`;
+  }).join('');
+}
+
+// ── Show/Hide Panels ──────────────────────────────────────────────────
+function showOverview() {
+  document.getElementById('overview').classList.remove('hidden');
+  document.getElementById('endpointDetail').classList.add('hidden');
+  document.getElementById('historyPanel').classList.add('hidden');
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  currentEndpoint = null;
+}
+
+function showEndpointDetail() {
+  document.getElementById('overview').classList.add('hidden');
+  document.getElementById('endpointDetail').classList.remove('hidden');
+  document.getElementById('historyPanel').classList.add('hidden');
+}
+
+function toggleHistory() {
+  const panel = document.getElementById('historyPanel');
+  if (panel.classList.contains('hidden')) {
+    document.getElementById('overview').classList.add('hidden');
+    document.getElementById('endpointDetail').classList.add('hidden');
+    panel.classList.remove('hidden');
+    renderHistory();
+  } else {
+    showOverview();
+  }
+}
+
+// ── Select Endpoint ───────────────────────────────────────────────────
+function selectEndpoint(catSlug, epIndex) {
+  const cat = CATEGORIES.find(c => c.slug === catSlug);
+  if (!cat) return;
+  const ep = cat.endpoints[epIndex];
+  if (!ep) return;
+  currentEndpoint = ep;
+
+  // Update sidebar active state
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  const activeBtn = document.querySelector(`[data-ep-id="${catSlug}-${epIndex}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  showEndpointDetail();
+
+  // Header
+  const methodEl = document.getElementById('epMethod');
+  methodEl.textContent = ep.method;
+  methodEl.className = `method-${ep.method.toLowerCase()} px-3 py-1 rounded-md text-xs font-bold text-white uppercase tracking-wider`;
+  document.getElementById('epPath').textContent = ep.path;
+  document.getElementById('epSummary').textContent = ep.summary;
+
+  // Request URL bar
+  const reqBadge = document.getElementById('reqMethodBadge');
+  reqBadge.textContent = ep.method;
+  reqBadge.className = `method-${ep.method.toLowerCase()} px-2 py-0.5 rounded text-xs font-bold text-white uppercase`;
+  updateRequestUrl();
+
+  // Path params
+  const pathParams = ep.params.filter(p => p.in === 'path');
+  const pathSection = document.getElementById('pathParamsSection');
+  const pathContainer = document.getElementById('pathParams');
+  if (pathParams.length > 0) {
+    pathSection.classList.remove('hidden');
+    pathContainer.innerHTML = pathParams.map(p => `
+      <div>
+        <label class="flex items-center gap-2 text-xs mb-1">
+          <span class="font-mono text-textPrimary">${p.name}</span>
+          <span class="text-textSecondary">${p.type}</span>
+          ${p.required ? '<span class="text-accent text-[10px]">required</span>' : ''}
+        </label>
+        ${p.description ? `<p class="text-xs text-textSecondary mb-1">${p.description}</p>` : ''}
+        <input type="text" data-param="${p.name}" value="${p.example || ''}"
+          class="w-full px-3 py-2 bg-bg border border-border rounded-lg font-mono text-sm text-textPrimary"
+          placeholder="${p.example || p.name}" oninput="updateRequestUrl()" />
+      </div>
+    `).join('');
+  } else {
+    pathSection.classList.add('hidden');
+  }
+
+  // Query params
+  const queryParams = ep.params.filter(p => p.in === 'query');
+  const querySection = document.getElementById('queryParamsSection');
+  const queryContainer = document.getElementById('queryParams');
+  if (queryParams.length > 0) {
+    querySection.classList.remove('hidden');
+    queryContainer.innerHTML = queryParams.map(p => `
+      <div>
+        <label class="flex items-center gap-2 text-xs mb-1">
+          <span class="font-mono text-textPrimary">${p.name}</span>
+          <span class="text-textSecondary">${p.type}</span>
+        </label>
+        <input type="text" data-query="${p.name}" value="${p.example || ''}"
+          class="w-full px-3 py-2 bg-bg border border-border rounded-lg font-mono text-sm text-textPrimary"
+          placeholder="${p.example || ''}" oninput="updateRequestUrl()" />
+      </div>
+    `).join('');
+  } else {
+    querySection.classList.add('hidden');
+  }
+
+  // Body
+  const bodySection = document.getElementById('bodySection');
+  const bodySchema = document.getElementById('bodySchema');
+  if (ep.body) {
+    bodySection.classList.remove('hidden');
+    // Render schema info
+    bodySchema.innerHTML = Object.entries(ep.body.schema).map(([key, s]) => {
+      let typeBadge = `<span class="text-blue-400">${s.type}</span>`;
+      if (s.enum) typeBadge += ` <span class="text-textSecondary">[${s.enum.join(', ')}]</span>`;
+      return `<div class="flex items-center gap-2 text-textSecondary">
+        <span class="font-mono text-textPrimary">${key}</span>
+        ${typeBadge}
+        ${s.required ? '<span class="text-accent">required</span>' : '<span class="text-textSecondary">optional</span>'}
+        ${s.description ? `<span class="text-textSecondary">- ${s.description}</span>` : ''}
+      </div>`;
+    }).join('');
+    document.getElementById('bodyEditor').value = JSON.stringify(ep.body.example, null, 2);
+  } else {
+    bodySection.classList.add('hidden');
+    bodySchema.innerHTML = '';
+    document.getElementById('bodyEditor').value = '';
+  }
+
+  // Hide response
+  document.getElementById('responseSection').classList.add('hidden');
+}
+
+// ── Update URL display ────────────────────────────────────────────────
+function updateRequestUrl() {
+  if (!currentEndpoint) return;
+  document.getElementById('reqUrl').textContent = BASE_URL + buildPath();
+}
+
+function buildPath() {
+  if (!currentEndpoint) return '';
+  let path = currentEndpoint.path;
+
+  // Replace path params
+  document.querySelectorAll('[data-param]').forEach(input => {
+    path = path.replace(`:${input.dataset.param}`, encodeURIComponent(input.value || input.placeholder));
+  });
+
+  // Query params
+  const queryParts = [];
+  document.querySelectorAll('[data-query]').forEach(input => {
+    if (input.value) queryParts.push(`${input.dataset.query}=${encodeURIComponent(input.value)}`);
+  });
+  if (queryParts.length) path += '?' + queryParts.join('&');
+
+  return path;
+}
+
+// ── Load Example ──────────────────────────────────────────────────────
+function loadExample() {
+  if (currentEndpoint && currentEndpoint.body) {
+    document.getElementById('bodyEditor').value = JSON.stringify(currentEndpoint.body.example, null, 2);
+  }
+}
+
+// ── Execute Request ───────────────────────────────────────────────────
+async function executeRequest() {
+  if (!currentEndpoint) return;
+
+  const btn = document.getElementById('executeBtn');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  const url = BASE_URL + buildPath();
+  const method = currentEndpoint.method;
+  const options = { method, headers: {} };
+
+  if (currentEndpoint.body) {
+    const bodyText = document.getElementById('bodyEditor').value.trim();
+    if (bodyText) {
+      options.headers['Content-Type'] = 'application/json';
+      try {
+        options.body = JSON.stringify(JSON.parse(bodyText));
+      } catch {
+        options.body = bodyText;
+        options.headers['Content-Type'] = 'application/json';
+      }
+    }
+  }
+
+  const start = performance.now();
+  let status, statusText, body;
+
+  try {
+    const res = await fetch(url, options);
+    const elapsed = Math.round(performance.now() - start);
+    status = res.status;
+    statusText = res.statusText;
+
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('json')) {
+      body = await res.json();
+    } else {
+      body = await res.text();
+    }
+
+    showResponse(status, statusText, elapsed, body);
+    addToHistory(method, url, options.body, status, elapsed, body);
+  } catch (err) {
+    const elapsed = Math.round(performance.now() - start);
+    showResponse(0, 'Network Error', elapsed, { error: err.message });
+    addToHistory(method, url, options.body, 0, elapsed, { error: err.message });
+  }
+
+  btn.textContent = 'Execute Request';
+  btn.disabled = false;
+}
+
+// ── Show Response ─────────────────────────────────────────────────────
+function showResponse(status, statusText, elapsed, body) {
+  const section = document.getElementById('responseSection');
+  section.classList.remove('hidden');
+
+  document.getElementById('resTime').textContent = `${elapsed}ms`;
+
+  const statusEl = document.getElementById('resStatus');
+  statusEl.textContent = `${status} ${statusText}`;
+  if (status >= 200 && status < 300) statusEl.className = 'font-bold status-2xx';
+  else if (status >= 400 && status < 500) statusEl.className = 'font-bold status-4xx';
+  else statusEl.className = 'font-bold status-5xx';
+
+  const bodyEl = document.getElementById('resBody');
+  if (typeof body === 'object') {
+    bodyEl.innerHTML = syntaxHighlight(JSON.stringify(body, null, 2));
+  } else {
+    bodyEl.textContent = body;
+  }
+
+  section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── JSON Syntax Highlighting ──────────────────────────────────────────
+function syntaxHighlight(json) {
+  return json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+      let cls = 'json-number';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'json-key' : 'json-string';
+      } else if (/true|false/.test(match)) {
+        cls = 'json-boolean';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    });
+}
+
+// ── cURL Generator ────────────────────────────────────────────────────
+function generateCurl() {
+  if (!currentEndpoint) return;
+  const url = BASE_URL + buildPath();
+  let curl = `curl -X ${currentEndpoint.method} '${url}'`;
+
+  if (currentEndpoint.body) {
+    const bodyText = document.getElementById('bodyEditor').value.trim();
+    if (bodyText) {
+      curl += ` \\\n  -H 'Content-Type: application/json' \\\n  -d '${bodyText}'`;
+    }
+  }
+
+  document.getElementById('curlOutput').textContent = curl;
+  document.getElementById('curlModal').classList.remove('hidden');
+}
+
+function copyCurl() {
+  const text = document.getElementById('curlOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('#curlModal button');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+  });
+}
+
+// ── History ───────────────────────────────────────────────────────────
+function addToHistory(method, url, requestBody, status, elapsed, responseBody) {
+  const entry = {
+    id: Date.now(),
+    method, url, requestBody, status, elapsed, responseBody,
+    timestamp: new Date().toISOString()
+  };
+  history.unshift(entry);
+  if (history.length > 50) history = history.slice(0, 50);
+  localStorage.setItem('fic_api_history', JSON.stringify(history));
+  updateHistoryCount();
+}
+
+function updateHistoryCount() {
+  document.getElementById('historyCount').textContent = history.length;
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const empty = document.getElementById('historyEmpty');
+
+  if (history.length === 0) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+
+  empty.classList.add('hidden');
+  list.innerHTML = history.map(h => {
+    const time = new Date(h.timestamp).toLocaleTimeString();
+    const statusClass = h.status >= 200 && h.status < 300 ? 'status-2xx' : h.status >= 400 && h.status < 500 ? 'status-4xx' : 'status-5xx';
+    const path = h.url.replace(BASE_URL, '');
+    return `<button onclick="replayHistory(${h.id})"
+      class="w-full text-left bg-card border border-border rounded-xl p-4 hover:border-accent/50 transition-colors method-${h.method.toLowerCase()}-border">
+      <div class="flex items-center justify-between mb-1">
+        <div class="flex items-center gap-2">
+          <span class="method-${h.method.toLowerCase()} text-[10px] font-bold px-1.5 py-0.5 rounded text-white">${h.method}</span>
+          <code class="text-sm font-mono text-textPrimary">${path}</code>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <span class="text-textSecondary">${h.elapsed}ms</span>
+          <span class="${statusClass} font-bold">${h.status}</span>
+        </div>
+      </div>
+      <div class="text-xs text-textSecondary">${time}</div>
+    </button>`;
+  }).join('');
+}
+
+function replayHistory(id) {
+  const entry = history.find(h => h.id === id);
+  if (!entry) return;
+
+  // Find matching endpoint
+  for (const cat of CATEGORIES) {
+    for (let i = 0; i < cat.endpoints.length; i++) {
+      const ep = cat.endpoints[i];
+      // Match by method and path pattern
+      const pattern = ep.path.replace(/:[^/]+/g, '[^/]+');
+      const regex = new RegExp(`^${pattern}$`);
+      const urlPath = entry.url.replace(BASE_URL, '').split('?')[0];
+      if (ep.method === entry.method && regex.test(urlPath)) {
+        selectEndpoint(cat.slug, i);
+
+        // Fill in path params from the actual URL
+        const pathParts = urlPath.split('/');
+        const templateParts = ep.path.split('/');
+        templateParts.forEach((part, idx) => {
+          if (part.startsWith(':')) {
+            const paramName = part.slice(1);
+            const input = document.querySelector(`[data-param="${paramName}"]`);
+            if (input && pathParts[idx]) input.value = pathParts[idx];
+          }
+        });
+
+        // Fill body
+        if (entry.requestBody) {
+          document.getElementById('bodyEditor').value = typeof entry.requestBody === 'string'
+            ? entry.requestBody
+            : JSON.stringify(entry.requestBody, null, 2);
+        }
+
+        updateRequestUrl();
+
+        // Show previous response
+        showResponse(entry.status, '', entry.elapsed, entry.responseBody);
+        return;
+      }
+    }
+  }
+}
+
+function clearHistory() {
+  history = [];
+  localStorage.removeItem('fic_api_history');
+  updateHistoryCount();
+  renderHistory();
+}
+</script>
+</body>
+</html>

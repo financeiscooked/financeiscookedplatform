@@ -6,6 +6,7 @@ import segmentsRouter from './routes/segments.js';
 import slidesRouter from './routes/slides.js';
 import votesRouter from './routes/votes.js';
 import adminRouter from './routes/admin.js';
+import docsRouter from './routes/docs.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,6 +25,7 @@ app.use('/api', segmentsRouter);
 app.use('/api', slidesRouter);
 app.use('/api', votesRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api', docsRouter);
 
 // Error handler
 app.use(errorHandler);
