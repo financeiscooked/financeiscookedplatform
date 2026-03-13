@@ -229,7 +229,7 @@ router.post('/:conversationId/stream', async (req, res, next) => {
       agentId: conversation.agentId,
       conversationId: conversation.id,
       userMessage: content,
-      openaiApiKey: llmConfig.provider === 'openai' ? llmConfig.apiKey! : undefined,
+      openaiApiKey: await resolveApiKey('openai') ?? undefined,
     });
 
     // Load built-in tools
@@ -387,7 +387,7 @@ router.post('/:conversationId/message', async (req, res, next) => {
       agentId: conversation.agentId,
       conversationId: conversation.id,
       userMessage: content,
-      openaiApiKey: llmConfig.provider === 'openai' ? llmConfig.apiKey! : undefined,
+      openaiApiKey: await resolveApiKey('openai') ?? undefined,
     });
 
     const tools: Tool[] = [...DEEP_TOOLS, ...MEMORY_TOOLS];

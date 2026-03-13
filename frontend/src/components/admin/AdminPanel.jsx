@@ -192,7 +192,6 @@ function AgentConfigModal({ api, agent, onClose, onSaved }) {
     slug: agent?.slug || '',
     description: agent?.description || '',
     instructions: agent?.instructions || '',
-    defaultModel: agent?.defaultModel || '',
   })
 
   // Knowledge Base state
@@ -201,7 +200,8 @@ function AgentConfigModal({ api, agent, onClose, onSaved }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState(null)
   const [uploading, setUploading] = useState(false)
-  const [uploadForm, setUploadForm] = useState({ name: '', content: '' })
+  const [uploadForm, setUploadForm] = useState({ name: '', content: '', sourceType: '' })
+  const [dragOver, setDragOver] = useState(false)
 
   // Memory state
   const [memDocs, setMemDocs] = useState([])
@@ -296,12 +296,42 @@ function AgentConfigModal({ api, agent, onClose, onSaved }) {
   const uploadDoc = async () => {
     if (!agentId || !uploadForm.name || !uploadForm.content) return
     try {
-      await api.post(`/agents/${agentId}/documents`, uploadForm)
+      const payload = { name: uploadForm.name, content: uploadForm.content }
+      if (uploadForm.sourceType) payload.sourceType = uploadForm.sourceType
+      await api.post(`/agents/${agentId}/documents`, payload)
       toast('Document uploaded')
-      setUploadForm({ name: '', content: '' })
+      setUploadForm({ name: '', content: '', sourceType: '' })
       setUploading(false)
       loadDocs()
     } catch (e) { toast('Error: ' + e.message) }
+  }
+
+  const handleFileRead = (file) => {
+    if (!file) return
+    const ext = file.name.split('.').pop().toLowerCase()
+    const allowed = ['txt', 'md', 'csv', 'json', 'pdf']
+    if (!allowed.includes(ext)) {
+      toast('Unsupported file type. Allowed: .txt, .md, .csv, .json, .pdf')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setUploadForm({ name: file.name, content: e.target.result, sourceType: ext })
+      setUploading(true)
+    }
+    reader.readAsText(file)
+  }
+
+  const handleFileDrop = (e) => {
+    e.preventDefault()
+    setDragOver(false)
+    const file = e.dataTransfer?.files?.[0]
+    handleFileRead(file)
+  }
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0]
+    handleFileRead(file)
   }
 
   const deleteDoc = async (docId) => {
@@ -403,7 +433,6 @@ function AgentConfigModal({ api, agent, onClose, onSaved }) {
             <div className="space-y-4 max-w-xl">
               <Field label="Name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="e.g. Finance Agent" />
               <Field label="Slug" value={form.slug} onChange={(v) => setForm({ ...form, slug: v })} placeholder="e.g. finance-agent" />
-              <ModelDropdown value={form.defaultModel} onChange={(v) => setForm({ ...form, defaultModel: v })} />
               <Field label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Brief description of what this agent does" />
               <Field label="System Prompt / Instructions" value={form.instructions} onChange={(v) => setForm({ ...form, instructions: v })} multiline rows={8} placeholder="You are a helpful assistant that..." />
             </div>
@@ -423,18 +452,50 @@ function AgentConfigModal({ api, agent, onClose, onSaved }) {
                     onKeyDown={(e) => e.key === 'Enter' && searchDocs()}
                   />
                   <button onClick={searchDocs} className="px-3 py-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><Search size={14} /></button>
-                  <button onClick={() => setUploading(true)} className="px-3 py-2 rounded-xl bg-[#D94E2A] text-white text-xs font-bold hover:bg-[#B8401F] transition-all flex items-center gap-1"><Upload size={14} />Upload</button>
                   <button onClick={loadDocs} className="p-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-all"><RefreshCw size={14} /></button>
                 </div>
 
-                {/* Upload Form */}
+                {/* File Drop Zone */}
+                {!uploading && (
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleFileDrop}
+                    onClick={() => document.getElementById('kb-file-input')?.click()}
+                    className={`p-8 rounded-xl border-2 border-dashed cursor-pointer transition-all text-center ${
+                      dragOver
+                        ? 'border-[#D94E2A] bg-[#D94E2A]/10'
+                        : 'border-[var(--border-subtle)] bg-[var(--bg-primary)] hover:border-[var(--text-tertiary)]'
+                    }`}
+                  >
+                    <FileText size={32} className="mx-auto mb-2 text-[var(--text-tertiary)]" />
+                    <p className="text-sm text-[var(--text-secondary)] font-bold mb-1">Drop files here</p>
+                    <p className="text-xs text-[var(--text-tertiary)] mb-3">or click to browse</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">.txt .md .csv .json .pdf</p>
+                    <input
+                      id="kb-file-input"
+                      type="file"
+                      accept=".txt,.md,.csv,.json,.pdf"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+
+                {/* Upload Confirmation */}
                 {uploading && (
                   <div className="p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-3">
+                    <div className="flex items-center gap-3 mb-2">
+                      <FileText size={18} className="text-[#D94E2A] shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-[var(--text-primary)] truncate">{uploadForm.name}</p>
+                        <p className="text-xs text-[var(--text-tertiary)]">{uploadForm.sourceType?.toUpperCase()} file &middot; {(uploadForm.content.length / 1024).toFixed(1)} KB</p>
+                      </div>
+                    </div>
                     <Field label="Document Name" value={uploadForm.name} onChange={(v) => setUploadForm({ ...uploadForm, name: v })} placeholder="e.g. FAQ, Product Guide" />
-                    <Field label="Content" value={uploadForm.content} onChange={(v) => setUploadForm({ ...uploadForm, content: v })} multiline rows={6} placeholder="Paste document content here..." />
                     <div className="flex gap-2">
-                      <button onClick={uploadDoc} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] transition-all flex items-center gap-2"><Check size={14} />Upload</button>
-                      <button onClick={() => setUploading(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-sm font-bold hover:bg-[var(--bg-hover)] transition-all"><X size={14} /></button>
+                      <button onClick={uploadDoc} disabled={!uploadForm.name || !uploadForm.content} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] disabled:opacity-50 transition-all flex items-center gap-2"><Upload size={14} />Upload</button>
+                      <button onClick={() => { setUploading(false); setUploadForm({ name: '', content: '', sourceType: '' }) }} className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-sm font-bold hover:bg-[var(--bg-hover)] transition-all"><X size={14} /></button>
                     </div>
                   </div>
                 )}
@@ -736,7 +797,22 @@ function McpHub({ api }) {
     setLoading(true)
     try {
       const res = await api.get('/capabilities')
-      setCapabilities(res.data || [])
+      const caps = res.data || []
+      setCapabilities(caps)
+
+      // Auto-register bundled MCP if not present
+      const hasBundled = caps.some((c) => c.type === 'BUNDLED' || c.type === 'bundled')
+      if (!hasBundled) {
+        try {
+          await api.post('/capabilities', {
+            name: 'financeiscooked Platform MCP',
+            description: 'Built-in MCP server with episode, segment, slide, and vote tools',
+            type: 'bundled',
+          })
+          const reloadRes = await api.get('/capabilities')
+          setCapabilities(reloadRes.data || [])
+        } catch (regErr) { /* silently ignore if auto-register fails */ }
+      }
     } catch (e) { toast('Failed to load capabilities: ' + e.message) }
     finally { setLoading(false) }
   }, [api])
@@ -911,9 +987,9 @@ function LlmConfig({ api }) {
   const [config, setConfig] = useState(null)
   const [providers, setProviders] = useState([])
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState('')
   const [selectedModel, setSelectedModel] = useState('')
-  const [keyProvider, setKeyProvider] = useState('')
   const [keyValue, setKeyValue] = useState('')
 
   const load = useCallback(async () => {
@@ -934,22 +1010,27 @@ function LlmConfig({ api }) {
 
   useEffect(() => { load() }, [load])
 
-  const saveConfig = async () => {
-    try {
-      await api.put('/llm-config', { provider: selectedProvider, model: selectedModel })
-      toast('LLM config updated')
-      load()
-    } catch (e) { toast('Error: ' + e.message) }
+  const getKeyStatus = (providerName) => {
+    const p = providers.find((pr) => (pr.name || pr.id) === providerName)
+    return p?.hasKey || false
   }
 
-  const saveKey = async () => {
-    if (!keyProvider || !keyValue) return
+  const saveAll = async () => {
+    if (!selectedProvider || !selectedModel) {
+      toast('Please select a provider and model')
+      return
+    }
+    setSaving(true)
     try {
-      await api.put('/llm-config/api-key', { provider: keyProvider, key: keyValue })
-      toast(`API key saved for ${keyProvider}`)
-      setKeyValue('')
+      await api.put('/llm-config', { provider: selectedProvider, model: selectedModel })
+      if (keyValue.trim()) {
+        await api.put('/llm-config/api-key', { provider: selectedProvider, apiKey: keyValue.trim() })
+        setKeyValue('')
+      }
+      toast('LLM configuration saved')
       load()
     } catch (e) { toast('Error: ' + e.message) }
+    finally { setSaving(false) }
   }
 
   const deleteKey = async (provider) => {
@@ -961,11 +1042,9 @@ function LlmConfig({ api }) {
     } catch (e) { toast('Error: ' + e.message) }
   }
 
-  // When provider button is clicked, also set the keyProvider for convenience
   const handleProviderSelect = (p) => {
     setSelectedProvider(p)
-    setKeyProvider(p)
-    // If current model doesn't belong to this provider, reset
+    setKeyValue('')
     if (!AVAILABLE_MODELS[p]?.some((m) => m.id === selectedModel)) {
       setSelectedModel(AVAILABLE_MODELS[p]?.[0]?.id || '')
     }
@@ -977,58 +1056,44 @@ function LlmConfig({ api }) {
   const modelsForProvider = AVAILABLE_MODELS[selectedProvider] || []
 
   return (
-    <div className="p-6 max-w-3xl space-y-8">
-      {/* Current Config Display */}
-      <section>
-        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Current Configuration</h3>
-        {config && (
-          <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-[var(--text-tertiary)] uppercase tracking-wider font-bold">Provider</span>
-              {config.provider ? (
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${getProviderColor(config.provider).bg} ${getProviderColor(config.provider).text}`}>
-                  {config.provider}
-                </span>
-              ) : (
-                <span className="text-sm text-[var(--text-tertiary)]">Not set</span>
-              )}
-            </div>
-            <div className="w-px h-8 bg-[var(--border-subtle)]" />
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-[var(--text-tertiary)] uppercase tracking-wider font-bold">Model</span>
-              {config.model ? <ModelBadge modelId={config.model} /> : <span className="text-sm text-[var(--text-tertiary)]">Not set</span>}
-            </div>
-          </div>
-        )}
-      </section>
+    <div className="p-6 max-w-3xl">
+      <h3 className="text-lg font-bold text-[var(--text-primary)] mb-6">LLM Configuration</h3>
 
-      {/* Provider Selection */}
-      <section>
-        <h3 className="text-base font-bold text-[var(--text-primary)] mb-3">Select Provider</h3>
-        <div className="flex gap-2 mb-4">
-          {providerNames.map((p) => {
-            const colors = getProviderColor(p)
-            const isActive = selectedProvider === p
-            return (
-              <button
-                key={p}
-                onClick={() => handleProviderSelect(p)}
-                className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
-                  isActive
-                    ? `${colors.bg} ${colors.text} ${colors.border}`
-                    : 'bg-[var(--bg-subtle)] text-[var(--text-tertiary)] border-transparent hover:text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
-                }`}
-              >
-                {p.charAt(0).toUpperCase() + p.slice(1)}
-              </button>
-            )
-          })}
+      <div className="p-5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-6">
+        {/* Step 1: Provider Selection */}
+        <div>
+          <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2 block">1. Select Provider</label>
+          <div className="flex gap-2">
+            {providerNames.map((p) => {
+              const colors = getProviderColor(p)
+              const isActive = selectedProvider === p
+              const hasKey = getKeyStatus(p)
+              return (
+                <button
+                  key={p}
+                  onClick={() => handleProviderSelect(p)}
+                  className={`relative px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                    isActive
+                      ? `${colors.bg} ${colors.text} ${colors.border}`
+                      : 'bg-[var(--bg-subtle)] text-[var(--text-tertiary)] border-transparent hover:text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                  }`}
+                >
+                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                  {hasKey && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                      <Check size={10} className="text-white" />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
-        {/* Model Selection */}
+        {/* Step 2: Model Selection */}
         {selectedProvider && (
-          <div className="mb-4">
-            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2 block">Model</label>
+          <div>
+            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2 block">2. Select Model</label>
             <div className="flex flex-wrap gap-2">
               {modelsForProvider.map((m) => {
                 const isActive = selectedModel === m.id
@@ -1051,69 +1116,39 @@ function LlmConfig({ api }) {
           </div>
         )}
 
-        <button onClick={saveConfig} disabled={!selectedProvider || !selectedModel} className="px-5 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] disabled:opacity-50 transition-all">
-          Save Configuration
-        </button>
-      </section>
-
-      {/* API Key Management */}
-      <section>
-        <h3 className="text-base font-bold text-[var(--text-primary)] mb-3">API Keys</h3>
-
-        {/* Existing Keys */}
-        {providers.length > 0 && (
-          <div className="space-y-2 mb-4">
-            {providers.map((p) => {
-              const provName = p.name || p.id
-              const colors = getProviderColor(provName)
-              return (
-                <div key={provName} className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
-                  <div className="flex items-center gap-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${colors.bg} ${colors.text}`}>{provName}</span>
-                    {p.hasKey ? (
-                      <span className="flex items-center gap-1 text-xs text-emerald-400">
-                        <Check size={12} />
-                        <span>Key configured</span>
-                        {p.keyPrefix && <span className="text-[var(--text-tertiary)] font-mono ml-1">{p.keyPrefix}...</span>}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-[var(--text-tertiary)]">No key set</span>
-                    )}
-                  </div>
-                  {p.hasKey && (
-                    <button onClick={() => deleteKey(provName)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"><Trash2 size={14} /></button>
-                  )}
-                </div>
-              )
-            })}
+        {/* Step 3: API Key */}
+        {selectedProvider && (
+          <div>
+            <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-2 block">
+              3. API Key for {selectedProvider.charAt(0).toUpperCase() + selectedProvider.slice(1)}
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="password"
+                value={keyValue}
+                onChange={(e) => setKeyValue(e.target.value)}
+                className="flex-1 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]"
+                placeholder={getKeyStatus(selectedProvider) ? 'Key already set — enter new key to replace' : 'sk-...'}
+              />
+              {getKeyStatus(selectedProvider) && (
+                <button onClick={() => deleteKey(selectedProvider)} className="p-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-all" title="Delete existing key"><Trash2 size={14} /></button>
+              )}
+            </div>
+            {getKeyStatus(selectedProvider) && (
+              <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Key configured. Leave blank to keep current key.</p>
+            )}
           </div>
         )}
 
-        {/* Save New Key */}
-        <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-3">
-          <h4 className="text-sm font-bold text-[var(--text-primary)]">Save API Key</h4>
-          <div className="flex gap-3 items-end">
-            <div className="w-40">
-              <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">Provider</label>
-              <select
-                value={keyProvider}
-                onChange={(e) => setKeyProvider(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]"
-              >
-                <option value="">Select...</option>
-                {providerNames.map((p) => (
-                  <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1 block">API Key</label>
-              <input type="password" value={keyValue} onChange={(e) => setKeyValue(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]" placeholder="sk-..." />
-            </div>
-            <button onClick={saveKey} disabled={!keyProvider || !keyValue} className="px-4 py-2 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] disabled:opacity-50 transition-all flex items-center gap-1 whitespace-nowrap"><Key size={14} />Save</button>
-          </div>
-        </div>
-      </section>
+        {/* Save All Button */}
+        <button
+          onClick={saveAll}
+          disabled={saving || !selectedProvider || !selectedModel}
+          className="w-full px-5 py-3 rounded-xl bg-[#D94E2A] text-white text-sm font-bold hover:bg-[#B8401F] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+        >
+          {saving ? <><Spinner /> Saving...</> : <><Check size={14} /> Save All</>}
+        </button>
+      </div>
     </div>
   )
 }
