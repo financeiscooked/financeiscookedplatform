@@ -158,7 +158,7 @@ function TabButton({ active, onClick, children, disabled }) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
+      className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold tracking-wider uppercase transition-all whitespace-nowrap shrink-0
         ${disabled ? 'opacity-40 cursor-not-allowed text-[var(--text-tertiary)]' :
           active ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg' :
           'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
@@ -389,10 +389,10 @@ function AgentConfigModal({ api, agent, onClose, onSaved }) {
   }
 
   const MODAL_TABS = [
-    { id: 'general', label: 'General', icon: Settings },
-    { id: 'knowledge', label: 'Knowledge Base', icon: Database },
-    { id: 'memory', label: 'Memory', icon: Brain },
-    { id: 'mcphub', label: 'MCP Hub', icon: Plug },
+    { id: 'general', label: 'General', shortLabel: 'General', icon: Settings },
+    { id: 'knowledge', label: 'Knowledge Base', shortLabel: 'KB', icon: Database },
+    { id: 'memory', label: 'Memory', shortLabel: 'Memory', icon: Brain },
+    { id: 'mcphub', label: 'MCP Hub', shortLabel: 'MCP', icon: Plug },
   ]
 
   return (
@@ -401,9 +401,9 @@ function AgentConfigModal({ api, agent, onClose, onSaved }) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       {/* Modal */}
-      <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-3xl max-h-[90vh] sm:max-h-[85vh] flex flex-col rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] shadow-2xl overflow-hidden mx-1 sm:mx-4">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)] shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[var(--border-subtle)] shrink-0">
           <h2 className="text-lg font-bold text-[var(--text-primary)]">
             {isNew ? 'Create Agent' : `Edit: ${agent.name}`}
           </h2>
@@ -413,21 +413,22 @@ function AgentConfigModal({ api, agent, onClose, onSaved }) {
         </div>
 
         {/* Modal Tabs */}
-        <div className="flex items-center gap-1 px-6 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-1 px-2 sm:px-6 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] shrink-0 overflow-x-auto">
           {MODAL_TABS.map((tab) => {
             const Icon = tab.icon
             const disabled = isNew && tab.id !== 'general'
             return (
               <TabButton key={tab.id} active={modalTab === tab.id} onClick={() => !disabled && setModalTab(tab.id)} disabled={disabled}>
                 <Icon size={12} />
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.shortLabel}</span>
               </TabButton>
             )
           })}
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
           {/* General Tab */}
           {modalTab === 'general' && (
             <div className="space-y-4 max-w-xl">
@@ -622,7 +623,7 @@ function AgentConfigModal({ api, agent, onClose, onSaved }) {
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-primary)] shrink-0">
+        <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-primary)] shrink-0">
           <button onClick={onClose} className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-sm font-bold hover:bg-[var(--bg-hover)] transition-all">
             Cancel
           </button>
@@ -718,13 +719,10 @@ function AgentGrid({ api, onRefreshNeeded }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {agents.map((agent) => {
-            const provider = getProviderForModel(agent.defaultModel)
-            const colors = getProviderColor(provider)
             return (
               <div
                 key={agent.id}
                 className="relative p-5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] hover:border-[var(--text-tertiary)] transition-all group"
-                style={{ borderLeftWidth: '3px', borderLeftColor: colors.accent }}
               >
                 {/* Top Row: Name + Settings Gear */}
                 <div className="flex items-start justify-between mb-2">
@@ -746,11 +744,6 @@ function AgentGrid({ api, onRefreshNeeded }) {
                       <Trash2 size={14} />
                     </button>
                   </div>
-                </div>
-
-                {/* Model Badge */}
-                <div className="mb-3">
-                  <ModelBadge modelId={agent.defaultModel} />
                 </div>
 
                 {/* Description */}
@@ -1011,7 +1004,7 @@ function LlmConfig({ api }) {
   useEffect(() => { load() }, [load])
 
   const getKeyStatus = (providerName) => {
-    const p = providers.find((pr) => (pr.name || pr.id) === providerName)
+    const p = providers.find((pr) => pr.id === providerName)
     return p?.hasKey || false
   }
 

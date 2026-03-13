@@ -73,7 +73,7 @@ export async function searchMemory(
     >(
       `SELECT chunk_text, 1 - (embedding <=> $1::vector) as similarity, doc_id
        FROM agent_memory_embeddings
-       WHERE agent_id = $2
+       WHERE agent_id = $2::uuid
        ORDER BY embedding <=> $1::vector
        LIMIT $3`,
       embeddingStr,
@@ -113,7 +113,7 @@ export async function embedDocument(
 
     await prisma.$executeRawUnsafe(
       `INSERT INTO agent_memory_embeddings (id, doc_id, agent_id, chunk_text, embedding, line_start, line_end, content_hash)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4::vector, $5, $6, $7)`,
+       VALUES (gen_random_uuid(), $1::uuid, $2::uuid, $3, $4::vector, $5, $6, $7)`,
       docId,
       agentId,
       chunks[i],

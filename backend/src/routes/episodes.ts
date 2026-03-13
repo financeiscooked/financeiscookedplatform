@@ -60,6 +60,7 @@ router.get('/episodes/:slug', async (req, res, next) => {
       date: episode.date,
       segments: episode.segments.map(seg => ({
         id: seg.slug,
+        uuid: seg.id,
         name: seg.name,
         status: seg.status,
         slides: seg.slides.map(slide => ({

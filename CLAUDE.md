@@ -26,8 +26,9 @@ cd frontend && npm run dev
 ## Railway
 - Project: financeiscooked-platform
 - Deploy token: `a50a135b-4379-4970-acdb-7878a76b515c`
-- Deploy: `cd backend && RAILWAY_TOKEN=<token> railway up -s backend`
-- Deploy: `cd frontend && RAILWAY_TOKEN=<token> railway up -s frontend`
+- **IMPORTANT**: Always deploy from the PROJECT ROOT (both services have `rootDirectory` set on Railway)
+- Deploy backend: `RAILWAY_TOKEN=<token> railway up -s backend`
+- Deploy frontend: `RAILWAY_TOKEN=<token> railway up -s frontend`
 
 ## New Feature Checklist — MANDATORY
 

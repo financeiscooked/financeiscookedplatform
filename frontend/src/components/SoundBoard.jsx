@@ -131,7 +131,7 @@ export default function SoundBoard() {
   return (
     <>
       {/* Stop All button */}
-      <div className="absolute top-4 right-6 z-10">
+      <div className="absolute top-2 sm:top-4 right-3 sm:right-6 z-10">
         <button
           onClick={() => setStopAllSignal((s) => s + 1)}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#D94E2A]/10 hover:bg-[#D94E2A]/20 text-[#D94E2A] hover:text-[#D94E2A]/80 transition-colors text-xs font-bold tracking-wider uppercase"
@@ -145,7 +145,7 @@ export default function SoundBoard() {
       {/* Scrollable content */}
       <div className="flex-1 p-4 overflow-y-auto flex flex-col items-center gap-6">
         {/* Main Sound Grid */}
-        <div className="grid grid-cols-4 gap-3 w-full max-w-4xl" style={{ gridAutoRows: '1fr' }}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-4xl" style={{ gridAutoRows: '1fr' }}>
           {mainSlots.map((slot) => (
             <SoundButton
               key={slot.id}
@@ -169,7 +169,7 @@ export default function SoundBoard() {
 
         {/* Extra Sound Grid */}
         {extraSlots.length > 0 && (
-          <div className="grid grid-cols-4 gap-3 w-full max-w-4xl" style={{ gridAutoRows: '1fr' }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-4xl" style={{ gridAutoRows: '1fr' }}>
             {extraSlots.map((slot) => (
               <SoundButton
                 key={slot.id}

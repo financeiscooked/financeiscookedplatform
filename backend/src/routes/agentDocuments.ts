@@ -79,8 +79,8 @@ router.post('/:agentId/documents', requireAdmin, async (req, res, next) => {
         await ingestDocument(document.id, agentId, content, apiKey);
         ingested = true;
       }
-    } catch {
-      // Non-critical — document is saved, just not embedded yet
+    } catch (err: any) {
+      console.error('Document ingestion failed:', err.message || err);
     }
 
     res.status(201).json({

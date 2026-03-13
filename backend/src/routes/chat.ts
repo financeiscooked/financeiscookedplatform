@@ -6,6 +6,7 @@ import { getProviderForModel } from '../services/llm/index.js';
 import { executeWithTools, streamWithTools } from '../services/toolExecutor.js';
 import { DEEP_TOOLS } from '../services/deepTools.js';
 import { MEMORY_TOOLS } from '../services/memoryTools.js';
+import { PLATFORM_TOOLS } from '../services/platformTools.js';
 import type { Tool } from '../services/llm/types.js';
 
 const router = Router();
@@ -233,7 +234,7 @@ router.post('/:conversationId/stream', async (req, res, next) => {
     });
 
     // Load built-in tools
-    const tools: Tool[] = [...DEEP_TOOLS, ...MEMORY_TOOLS];
+    const tools: Tool[] = [...DEEP_TOOLS, ...MEMORY_TOOLS, ...PLATFORM_TOOLS];
 
     // Set up SSE
     res.writeHead(200, {
@@ -390,7 +391,7 @@ router.post('/:conversationId/message', async (req, res, next) => {
       openaiApiKey: await resolveApiKey('openai') ?? undefined,
     });
 
-    const tools: Tool[] = [...DEEP_TOOLS, ...MEMORY_TOOLS];
+    const tools: Tool[] = [...DEEP_TOOLS, ...MEMORY_TOOLS, ...PLATFORM_TOOLS];
 
     const { result } = await executeWithTools({
       messages: ctx.messages,

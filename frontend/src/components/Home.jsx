@@ -37,7 +37,7 @@ const FEATURES = [
 
 const SEGMENTS = [
   { icon: '🛠️', title: 'App of the Show', desc: 'We build something real — live on the show. Websites, tools, automations. You watch, you learn, you build along.' },
-  { icon: '⚡', title: 'Quick Updates', desc: 'The AI news that matters for finance pros. Funding rounds, product launches, industry moves — no fluff, just signal.' },
+  { icon: '⚡', title: 'Quick Updates', desc: 'The AI news that matters for finance pros. Funding rounds, product launches, industry moves. All signal, no noise.' },
   { icon: '🔥', title: 'Take of the Show', desc: 'Ore and Joe each bring a hot take. Bold predictions, contrarian views, and honest opinions on where finance is headed.' },
   { icon: '🤖', title: 'One Thing I Did with AI', desc: 'A real AI use case from the week — something we actually did in our own work that saved time or delivered better results.' },
   { icon: '🎬', title: 'Open Source Everything', desc: 'Every tool, template, and project we build on the show gets shared. Download it, fork it, make it yours.' },
@@ -85,22 +85,22 @@ export default function Home() {
     <div style={{ height: '100%', overflowY: 'auto', backgroundColor: S.bg, color: S.text, fontFamily: "'Inter', -apple-system, sans-serif" }}>
 
       {/* ── HERO ── */}
-      <header style={{ padding: '100px 0 80px', background: S.darkBg, color: '#fff', overflow: 'hidden' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
+      <header style={{ padding: 'clamp(48px, 10vw, 100px) 0 clamp(40px, 8vw, 80px)', background: S.darkBg, color: '#fff', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 clamp(16px, 4vw, 24px)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 'clamp(24px, 5vw, 48px)', alignItems: 'center' }}>
             <div style={{ maxWidth: 600 }}>
               <div style={{
                 display: 'inline-block', padding: '8px 20px', background: 'rgba(240,160,48,0.15)',
                 color: S.amber, border: '1px solid rgba(240,160,48,0.3)', borderRadius: 24,
                 fontSize: '0.85rem', fontWeight: 600, marginBottom: 32, letterSpacing: '0.02em',
               }}>
-                Hosted by Ore & Joe — New episodes weekly
+                Hosted by Ore & Joe. New episodes weekly
               </div>
               <h1 style={{ fontSize: 'clamp(3rem, 6vw, 4.5rem)', fontWeight: 700, lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 24 }}>
                 Finance is <span style={{ color: S.primary }}>Cooked</span>
               </h1>
               <p style={{ fontSize: '1.15rem', lineHeight: 1.7, color: 'rgba(255,255,255,0.7)', marginBottom: 40 }}>
-                AI is changing everything in finance — and it's moving fast. Every week, we build real things, break down what matters, and share the hottest takes so you stay ahead. No fluff, no theory — just two finance pros cooking with AI live.
+                AI is changing everything in finance, and it's moving fast. Every week, we build real things, break down what matters, and share the hottest takes so you stay ahead. All signal, no noise. Just two finance pros cooking with AI live.
               </p>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 48 }}>
                 <a href="https://youtu.be/YWj1NiRtlMc" target="_blank" rel="noopener noreferrer"
@@ -121,14 +121,14 @@ export default function Home() {
       </header>
 
       {/* ── ABOUT / FEATURES ── */}
-      <section style={{ padding: '100px 0', background: S.surface }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-          <FadeIn style={{ textAlign: 'center', marginBottom: 64 }}>
-            <img src="/images/logo-chefs.png" alt="Finance is Cooked" style={{ width: 220, height: 'auto', margin: '0 auto 24px', borderRadius: 12 }} />
+      <section style={{ padding: 'clamp(48px, 10vw, 100px) 0', background: S.surface }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 clamp(16px, 4vw, 24px)' }}>
+          <FadeIn style={{ textAlign: 'center', marginBottom: 'clamp(32px, 6vw, 64px)' }}>
+            <img src="/images/logo-chefs.png" alt="Finance is Cooked" style={{ width: 'clamp(140px, 30vw, 220px)', height: 'auto', margin: '0 auto 24px', borderRadius: 12 }} />
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 16, color: S.text }}>Why Watch Finance is Cooked?</h2>
             <p style={{ fontSize: '1.15rem', color: S.textMuted, maxWidth: 560, margin: '0 auto' }}>AI is transforming finance fast. You can either get cooked — or become one of the chefs. We're here to make sure you're cooking.</p>
           </FadeIn>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 24 }}>
             {FEATURES.map(f => (
               <FadeIn key={f.title} style={{ padding: 36, borderRadius: 16, border: `1px solid ${S.border}`, background: S.bg, transition: 'all 0.3s ease' }}>
                 <div style={{ fontSize: '2rem', marginBottom: 16 }}>{f.icon}</div>
@@ -141,13 +141,13 @@ export default function Home() {
       </section>
 
       {/* ── HOSTS ── */}
-      <section style={{ padding: '100px 0', background: S.bg }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px' }}>
-          <FadeIn style={{ textAlign: 'center', marginBottom: 64 }}>
+      <section style={{ padding: 'clamp(48px, 10vw, 100px) 0', background: S.bg }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 clamp(16px, 4vw, 24px)' }}>
+          <FadeIn style={{ textAlign: 'center', marginBottom: 'clamp(32px, 6vw, 64px)' }}>
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 16, color: S.text }}>Meet Your Hosts</h2>
             <p style={{ fontSize: '1.15rem', color: S.textMuted, maxWidth: 560, margin: '0 auto' }}>Two finance & accounting professionals who caught the AI bug — and now they can't shut up about it.</p>
           </FadeIn>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 32 }}>
             <FadeIn style={{ padding: 40, borderRadius: 16, border: `1px solid ${S.border}`, background: S.surface, textAlign: 'center', transition: 'all 0.3s' }}>
               <div style={{ fontSize: '3rem', marginBottom: 16 }}>🧑‍🍳</div>
               <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 6, color: S.text }}>Ore Phillips</h3>
@@ -165,9 +165,9 @@ export default function Home() {
       </section>
 
       {/* ── EPISODES ── */}
-      <section style={{ padding: '100px 0', background: S.bg }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-          <FadeIn style={{ textAlign: 'center', marginBottom: 64 }}>
+      <section style={{ padding: 'clamp(48px, 10vw, 100px) 0', background: S.bg }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 clamp(16px, 4vw, 24px)' }}>
+          <FadeIn style={{ textAlign: 'center', marginBottom: 'clamp(32px, 6vw, 64px)' }}>
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 16, color: S.text }}>Latest Episodes</h2>
             <p style={{ fontSize: '1.15rem', color: S.textMuted, maxWidth: 560, margin: '0 auto' }}>New episodes drop weekly. Season 1 coming soon.</p>
           </FadeIn>
@@ -184,7 +184,7 @@ export default function Home() {
           </FadeIn>
           {/* Segments */}
           <h3 style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: 700, marginBottom: 32, color: S.text }}>Every Episode Includes</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 20 }}>
             {SEGMENTS.map(s => (
               <FadeIn key={s.title} style={{ padding: 28, borderRadius: 12, border: `1px solid ${S.border}`, background: S.surface, transition: 'all 0.3s' }}>
                 <span style={{ fontSize: '1.6rem', display: 'block', marginBottom: 12 }}>{s.icon}</span>
@@ -197,8 +197,8 @@ export default function Home() {
       </section>
 
       {/* ── BUILDS ── */}
-      <section style={{ padding: '100px 0', background: S.surface }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      <section style={{ padding: 'clamp(48px, 10vw, 100px) 0', background: S.surface }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 clamp(16px, 4vw, 24px)' }}>
           <FadeIn style={{ textAlign: 'center', marginBottom: 64 }}>
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 16, color: S.text }}>What We've Built with AI</h2>
             <p style={{ fontSize: '1.15rem', color: S.textMuted, maxWidth: 560, margin: '0 auto' }}>Everything we build is open source. Grab the code, remix it, make it yours.</p>
@@ -234,8 +234,8 @@ export default function Home() {
       </section>
 
       {/* ── TOPICS ── */}
-      <section style={{ padding: '100px 0', background: S.surface }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      <section style={{ padding: 'clamp(48px, 10vw, 100px) 0', background: S.surface }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 clamp(16px, 4vw, 24px)' }}>
           <FadeIn style={{ textAlign: 'center', marginBottom: 64 }}>
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 16, color: S.text }}>What We Cover</h2>
             <p style={{ fontSize: '1.15rem', color: S.textMuted, maxWidth: 560, margin: '0 auto' }}>Deep dives into the AI tools and skills that matter most for finance professionals.</p>
@@ -251,21 +251,21 @@ export default function Home() {
       </section>
 
       {/* ── NEWSLETTER ── */}
-      <section style={{ padding: '100px 0', background: `linear-gradient(135deg, ${S.darkBg} 0%, #2A1A14 50%, ${S.primaryDark} 100%)`, color: '#fff' }}>
-        <div style={{ maxWidth: 560, margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
+      <section style={{ padding: 'clamp(48px, 10vw, 100px) 0', background: `linear-gradient(135deg, ${S.darkBg} 0%, #2A1A14 50%, ${S.primaryDark} 100%)`, color: '#fff' }}>
+        <div style={{ maxWidth: 560, margin: '0 auto', padding: '0 clamp(16px, 4vw, 24px)', textAlign: 'center' }}>
           <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 16 }}>Stay in the loop</h2>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1.1rem', marginBottom: 32 }}>Newsletter coming soon. Drop your email and we'll reach out when it's live.</p>
-          <div style={{ display: 'flex', gap: 12, maxWidth: 480, margin: '0 auto' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, maxWidth: 480, margin: '0 auto' }}>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="your@email.com"
-              style={{ flex: 1, padding: '14px 20px', borderRadius: 24, border: `1px solid ${S.darkSurface}`, background: S.darkSurface, color: '#fff', fontSize: '1rem', outline: 'none' }}
+              style={{ flex: '1 1 200px', padding: '14px 20px', borderRadius: 24, border: `1px solid ${S.darkSurface}`, background: S.darkSurface, color: '#fff', fontSize: '1rem', outline: 'none', minWidth: 0 }}
             />
             <a
               href={`mailto:financeiscooked@gmail.com?subject=${encodeURIComponent('Newsletter Sign-Up')}&body=${encodeURIComponent('Hey! I want to be notified when the newsletter launches.\n\nMy email: ' + email)}`}
-              style={{ padding: '14px 28px', borderRadius: 24, fontWeight: 600, fontSize: '0.95rem', background: S.primary, color: '#fff', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              style={{ flex: '0 0 auto', padding: '14px 28px', borderRadius: 24, fontWeight: 600, fontSize: '0.95rem', background: S.primary, color: '#fff', textDecoration: 'none', whiteSpace: 'nowrap' }}>
               Notify Me
             </a>
           </div>
@@ -274,13 +274,13 @@ export default function Home() {
       </section>
 
       {/* ── PLATFORMS ── */}
-      <section style={{ padding: '100px 0', background: S.bg }}>
-        <div style={{ maxWidth: 640, margin: '0 auto', padding: '0 24px' }}>
-          <FadeIn style={{ textAlign: 'center', marginBottom: 64 }}>
+      <section style={{ padding: 'clamp(48px, 10vw, 100px) 0', background: S.bg }}>
+        <div style={{ maxWidth: 640, margin: '0 auto', padding: '0 clamp(16px, 4vw, 24px)' }}>
+          <FadeIn style={{ textAlign: 'center', marginBottom: 'clamp(32px, 6vw, 64px)' }}>
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 16, color: S.text }}>Watch & Subscribe</h2>
             <p style={{ fontSize: '1.15rem', color: S.textMuted, maxWidth: 560, margin: '0 auto' }}>We're live on YouTube. More platforms coming soon.</p>
           </FadeIn>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 16 }}>
             {PLATFORMS.map(p => (
               <FadeIn key={p.label} as="a" href={p.url} target={p.soon ? undefined : '_blank'} rel="noopener noreferrer"
                 style={{
@@ -299,8 +299,8 @@ export default function Home() {
 
       {/* ── FOOTER ── */}
       <footer style={{ background: S.darkBg, color: 'rgba(255,255,255,0.7)', padding: '64px 0 32px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48, marginBottom: 48 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 clamp(16px, 4vw, 24px)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: 'clamp(24px, 5vw, 48px)', marginBottom: 48 }}>
             <div>
               <img src="/images/logo-tagline.png" alt="Finance is Cooked" style={{ width: 160, height: 'auto', borderRadius: 8 }} />
               <p style={{ marginTop: 16, fontSize: '0.9rem', lineHeight: 1.6, maxWidth: 280 }}>Helping finance and accounting professionals learn AI and build the skills that matter.</p>

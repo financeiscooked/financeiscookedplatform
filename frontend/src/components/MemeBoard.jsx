@@ -150,7 +150,7 @@ export default function MemeBoard() {
     <>
       {/* Meme Grid */}
       <div className="flex-1 p-4 flex items-center justify-center">
-        <div className="grid grid-cols-4 gap-3 w-full max-w-4xl" style={{ gridAutoRows: '1fr' }}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-4xl" style={{ gridAutoRows: '1fr' }}>
           {slots.map((slot) => (
             <MemeButton
               key={slot.id}

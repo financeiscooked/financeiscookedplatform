@@ -342,10 +342,10 @@ export default function McpDocs() {
   }, [filtered])
 
   return (
-    <div className="flex h-full overflow-hidden">
-      {/* Sidebar */}
+    <div className="flex flex-col sm:flex-row h-full overflow-hidden">
+      {/* Sidebar — vertical on desktop, horizontal scroll on mobile */}
       <div
-        className="w-60 shrink-0 flex flex-col overflow-y-auto"
+        className="hidden sm:flex w-60 shrink-0 flex-col overflow-y-auto"
         style={{ borderRight: '1px solid var(--border-default)', background: 'var(--bg-primary)' }}
       >
         <div className="p-4" style={{ borderBottom: '1px solid var(--border-default)' }}>
@@ -395,8 +395,36 @@ export default function McpDocs() {
         </div>
       </div>
 
+      {/* Mobile category bar */}
+      <div
+        className="sm:hidden shrink-0 flex items-center gap-2 px-3 py-2 overflow-x-auto"
+        style={{ borderBottom: '1px solid var(--border-default)', background: 'var(--bg-primary)' }}
+      >
+        <span className="text-[10px] font-bold uppercase tracking-wider shrink-0" style={{ color: 'var(--text-muted)' }}>
+          {totalTools} tools
+        </span>
+        {TOOL_DOCS.map(cat => (
+          <button
+            key={cat.id}
+            onClick={() => {
+              setActiveCategory(activeCategory === cat.id ? null : cat.id)
+              const el = sectionRefs.current[cat.id]
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+            className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium cursor-pointer border-none transition-all"
+            style={{
+              background: activeCategory === cat.id ? '#D94E2A' : 'var(--bg-subtle)',
+              color: activeCategory === cat.id ? '#fff' : 'var(--text-secondary)',
+            }}
+          >
+            {cat.label}
+            <span className="text-[10px] opacity-70">{cat.tools.length}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Main content */}
-      <div className="flex-1 overflow-y-auto p-8" style={{ maxWidth: 800 }}>
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8" style={{ maxWidth: 800 }}>
         {/* Header */}
         <div className="mb-8">
           <div className="w-8 h-[3px] rounded mb-4" style={{ background: '#D94E2A' }} />

@@ -93,7 +93,7 @@ export async function searchSimilar(
   >(
     `SELECT content, 1 - (embedding <=> $1::vector) as similarity, document_id, chunk_index
      FROM kb_document_chunks
-     WHERE agent_id = $2
+     WHERE agent_id = $2::uuid
      ORDER BY embedding <=> $1::vector
      LIMIT $3`,
     embeddingStr,
@@ -124,7 +124,7 @@ export async function ingestDocument(
 
     await prisma.$executeRawUnsafe(
       `INSERT INTO kb_document_chunks (id, document_id, agent_id, chunk_index, content, embedding, token_count)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::vector, $6)`,
+       VALUES (gen_random_uuid(), $1::uuid, $2::uuid, $3, $4, $5::vector, $6)`,
       documentId,
       agentId,
       i,

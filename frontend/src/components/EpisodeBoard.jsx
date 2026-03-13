@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { fetchEpisodes, fetchEpisode, castVote, fetchVotes, finalizeSlide, moveSlideToEpisode, deleteSlide, finalizeSegment, deleteSegment } from '../utils/api'
 import {
   ChevronLeft,
   ChevronRight,
@@ -394,52 +395,54 @@ function StatusBadge({ status }) {
 }
 
 // Proposed Bank — shows all proposed slides across all episodes, grouped by segment
-async function sendToProducer(message) {
-  try {
-    const res = await fetch('/.netlify/functions/slack-send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message }),
-    })
-    const data = await res.json()
-    if (!data.ok) throw new Error(data.error || 'Slack send failed')
-    return { ok: true }
-  } catch (err) {
-    console.error('Failed to send to producer:', err)
-    return { ok: false, error: err.message }
-  }
-}
 
 // Sidebar action buttons for Prep/Show segments
-function SidebarSegmentActions({ viewMode, episodeId, segmentId, segmentName }) {
+function SidebarSegmentActions({ viewMode, episodeId, segmentId, segmentUuid, segmentName, onRefresh }) {
   const [sending, setSending] = useState(null)
   const [result, setResult] = useState(null)
 
   const handleAccept = async () => {
     setSending('accept')
     setResult(null)
-    const res = await sendToProducer(`@producer finalize "${segmentName}" in ${episodeId} ${segmentId}`)
-    setResult(res)
+    try {
+      await finalizeSegment(segmentUuid)
+      setResult({ ok: true })
+      if (onRefresh) onRefresh()
+      setTimeout(() => setResult(null), 3000)
+    } catch (err) {
+      setResult({ ok: false, error: err.message })
+    }
     setSending(null)
-    if (res.ok) setTimeout(() => setResult(null), 3000)
   }
 
   const handleBacklog = async () => {
     setSending('backlog')
     setResult(null)
-    const res = await sendToProducer(`@producer move "${segmentName}" from ${episodeId} ${segmentId} to backlog ${segmentId}`)
-    setResult(res)
+    try {
+      // Move all slides in this segment to backlog, then delete the segment
+      // For now, just delete the segment (slides cascade)
+      await deleteSegment(segmentUuid)
+      setResult({ ok: true })
+      if (onRefresh) onRefresh()
+      setTimeout(() => setResult(null), 3000)
+    } catch (err) {
+      setResult({ ok: false, error: err.message })
+    }
     setSending(null)
-    if (res.ok) setTimeout(() => setResult(null), 3000)
   }
 
   const handleDelete = async () => {
     setSending('delete')
     setResult(null)
-    const res = await sendToProducer(`@producer remove "${segmentName}" from ${episodeId} ${segmentId}`)
-    setResult(res)
+    try {
+      await deleteSegment(segmentUuid)
+      setResult({ ok: true })
+      if (onRefresh) onRefresh()
+      setTimeout(() => setResult(null), 3000)
+    } catch (err) {
+      setResult({ ok: false, error: err.message })
+    }
     setSending(null)
-    if (res.ok) setTimeout(() => setResult(null), 3000)
   }
 
   return (
@@ -509,33 +512,30 @@ function ActionRow({ viewMode, sending, onAccept, onBacklog, onDelete, result, s
       )}
       {result && (
         <span className={`flex items-center gap-1 text-xs ml-2 ${result.ok ? 'text-emerald-400' : 'text-red-400'}`}>
-          {result.ok ? <><Send size={10} /> Sent to @producer!</> : `Error: ${result.error}`}
+          {result.ok ? <><Check size={10} /> Done!</> : `Error: ${result.error}`}
         </span>
       )}
     </div>
   )
 }
 
-function VoteButtons({ voteKey, votes, onVote }) {
-  const counts = votes[voteKey] || { up: 0, down: 0 }
-  const net = counts.up - counts.down
+function VoteButtons({ slideId, votes, onVote }) {
+  const counts = votes[slideId] || { up: 0, down: 0 }
 
   return (
     <div className="flex items-center gap-1">
       <button
-        onClick={(e) => { e.stopPropagation(); onVote(voteKey, 'up') }}
+        onClick={(e) => { e.stopPropagation(); onVote(slideId, 'up') }}
         className="p-1 rounded hover:bg-emerald-500/15 text-[var(--text-hint)] hover:text-emerald-400 transition-all"
         title="Upvote"
       >
         <ThumbsUp size={12} />
       </button>
-      <span className={`text-[11px] font-bold min-w-[18px] text-center ${
-        net > 0 ? 'text-emerald-400' : net < 0 ? 'text-red-400' : 'text-[var(--text-hint)]'
-      }`}>
-        {net > 0 ? `+${net}` : net}
-      </span>
+      {counts.up > 0 && <span className="text-[11px] font-bold text-emerald-400">{counts.up}</span>}
+      <span className="text-[var(--text-hint)] text-[10px] mx-0.5">/</span>
+      {counts.down > 0 && <span className="text-[11px] font-bold text-red-400">{counts.down}</span>}
       <button
-        onClick={(e) => { e.stopPropagation(); onVote(voteKey, 'down') }}
+        onClick={(e) => { e.stopPropagation(); onVote(slideId, 'down') }}
         className="p-1 rounded hover:bg-red-500/15 text-[var(--text-hint)] hover:text-red-400 transition-all"
         title="Downvote"
       >
@@ -545,7 +545,7 @@ function VoteButtons({ voteKey, votes, onVote }) {
   )
 }
 
-function ProposedSlideCard({ episode, segment, slide, slideIdx, onSelectSlide, allEpisodes, isAdmin, votes, onVote }) {
+function ProposedSlideCard({ episode, segment, slide, slideIdx, onSelectSlide, allEpisodes, isAdmin, votes, onVote, onRefresh }) {
   const [sending, setSending] = useState(null)
   const [result, setResult] = useState(null)
   const [targetEp, setTargetEp] = useState(episode.id)
@@ -565,52 +565,50 @@ function ProposedSlideCard({ episode, segment, slide, slideIdx, onSelectSlide, a
     setSending('accept')
     setResult(null)
 
-    let message
-    if (targetEp === episode.id) {
-      message = `@producer finalize "${slide.title}" in ${episode.id} ${segment.id}`
-    } else {
-      message = `@producer move "${slide.title}" from ${episode.id} ${segment.id} to ${targetEp} ${segment.id} and finalize it`
-    }
-
-    const res = await sendToProducer(message)
-    setResult(res)
-    setSending(null)
-    setShowEpPicker(false)
-
-    if (res.ok) {
+    try {
+      if (targetEp !== episode.id) {
+        await moveSlideToEpisode(slide.id, targetEp, segment.id)
+      }
+      await finalizeSlide(slide.id)
+      setResult({ ok: true })
+      setShowEpPicker(false)
+      if (onRefresh) onRefresh()
       setTimeout(() => setResult(null), 3000)
+    } catch (err) {
+      setResult({ ok: false, error: err.message })
     }
+    setSending(null)
   }
 
   const handleDelete = async () => {
     setSending('delete')
     setResult(null)
 
-    const message = `@producer remove "${slide.title}" from ${episode.id} ${segment.id}`
-
-    const res = await sendToProducer(message)
-    setResult(res)
-    setSending(null)
-    setShowEpPicker(false)
-
-    if (res.ok) {
+    try {
+      await deleteSlide(slide.id)
+      setResult({ ok: true })
+      setShowEpPicker(false)
+      if (onRefresh) onRefresh()
       setTimeout(() => setResult(null), 3000)
+    } catch (err) {
+      setResult({ ok: false, error: err.message })
     }
+    setSending(null)
   }
 
   const handleBacklog = async () => {
     setSending('backlog')
     setResult(null)
 
-    const message = `@producer move "${slide.title}" from ${episode.id} ${segment.id} to backlog ${segment.id}`
-
-    const res = await sendToProducer(message)
-    setResult(res)
-    setSending(null)
-
-    if (res.ok) {
+    try {
+      await moveSlideToEpisode(slide.id, 'backlog', segment.id)
+      setResult({ ok: true })
+      if (onRefresh) onRefresh()
       setTimeout(() => setResult(null), 3000)
+    } catch (err) {
+      setResult({ ok: false, error: err.message })
     }
+    setSending(null)
   }
 
   return (
@@ -633,7 +631,7 @@ function ProposedSlideCard({ episode, segment, slide, slideIdx, onSelectSlide, a
 
       <div className="flex items-center gap-2 mt-2 pl-1">
         <VoteButtons
-          voteKey={`${episode.id}:${segment.id}:${slideIdx}`}
+          slideId={slide.id}
           votes={votes}
           onVote={onVote}
         />
@@ -683,16 +681,13 @@ function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
   const [allEpisodes, setAllEpisodes] = useState([])
   const [loading, setLoading] = useState(true)
   const [votes, setVotes] = useState({})
+  const [filterEp, setFilterEp] = useState('all')
 
   useEffect(() => {
     if (episodes.length === 0) return
     setLoading(true)
     Promise.all(
-      episodes.map((ep) =>
-        fetch(`/episodes/${ep.id}.json`)
-          .then((r) => r.json())
-          .catch(() => null)
-      )
+      episodes.map((ep) => fetchEpisode(ep.id).catch(() => null))
     ).then((results) => {
       setAllEpisodes(results.filter(Boolean))
       setLoading(false)
@@ -703,11 +698,7 @@ function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
   useEffect(() => {
     if (allEpisodes.length === 0) return
     Promise.all(
-      allEpisodes.map((ep) =>
-        fetch(`/.netlify/functions/vote?prefix=${ep.id}`)
-          .then((r) => r.json())
-          .catch(() => ({}))
-      )
+      allEpisodes.map((ep) => fetchVotes(ep.id).catch(() => ({})))
     ).then((results) => {
       const merged = {}
       for (const r of results) Object.assign(merged, r)
@@ -715,21 +706,16 @@ function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
     })
   }, [allEpisodes])
 
-  const handleVote = useCallback(async (key, direction) => {
+  const handleVote = useCallback(async (slideId, direction) => {
     // Optimistic update
     setVotes((prev) => {
-      const current = prev[key] || { up: 0, down: 0 }
-      return { ...prev, [key]: { ...current, [direction]: current[direction] + 1 } }
+      const current = prev[slideId] || { up: 0, down: 0 }
+      return { ...prev, [slideId]: { ...current, [direction]: current[direction] + 1 } }
     })
     try {
-      const res = await fetch('/.netlify/functions/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, direction }),
-      })
-      const data = await res.json()
-      if (data.votes) {
-        setVotes((prev) => ({ ...prev, [key]: data.votes }))
+      const result = await castVote(slideId, direction)
+      if (result) {
+        setVotes((prev) => ({ ...prev, [slideId]: { up: result.up, down: result.down } }))
       }
     } catch (err) {
       console.error('Vote failed:', err)
@@ -739,7 +725,8 @@ function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
   // Collect all proposed segments that have slides, grouped by episode
   const proposedGroups = useMemo(() => {
     const groups = []
-    for (const ep of allEpisodes) {
+    const filtered = filterEp === 'all' ? allEpisodes : allEpisodes.filter((ep) => ep.id === filterEp)
+    for (const ep of filtered) {
       for (const seg of ep.segments) {
         if (seg.status !== 'final' && seg.slides.length > 0) {
           groups.push({ episode: ep, segment: seg })
@@ -747,6 +734,13 @@ function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
       }
     }
     return groups
+  }, [allEpisodes, filterEp])
+
+  // Episodes that actually have proposed content (for filter dropdown)
+  const episodesWithProposed = useMemo(() => {
+    return allEpisodes.filter((ep) =>
+      ep.segments.some((seg) => seg.status !== 'final' && seg.slides.length > 0)
+    )
   }, [allEpisodes])
 
   const totalSlides = proposedGroups.reduce((sum, g) => sum + g.segment.slides.length, 0)
@@ -770,14 +764,24 @@ function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
+    <div className="flex-1 overflow-y-auto p-3 sm:p-6">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-6 flex-wrap">
           <Circle size={12} className="text-yellow-400" />
           <h2 className="text-[var(--text-primary)] font-bold text-lg">Proposed Bank</h2>
           <span className="text-[var(--text-muted)] text-sm">
-            {totalSlides} topic{totalSlides !== 1 ? 's' : ''} across all episodes
+            {totalSlides} topic{totalSlides !== 1 ? 's' : ''}{filterEp === 'all' ? ' across all episodes' : ''}
           </span>
+          <select
+            value={filterEp}
+            onChange={(e) => setFilterEp(e.target.value)}
+            className="ml-auto px-2 py-1 rounded-lg text-xs bg-[var(--bg-subtle)] border border-[var(--border-default)] text-[var(--text-secondary)] cursor-pointer"
+          >
+            <option value="all">All episodes</option>
+            {episodesWithProposed.map((ep) => (
+              <option key={ep.id} value={ep.id}>{ep.title}</option>
+            ))}
+          </select>
         </div>
         <div className="space-y-5">
           {proposedGroups.map(({ episode, segment }) => (
@@ -834,6 +838,7 @@ export default function EpisodeBoard({ forceViewMode }) {
     )
   }, [])
   const [expandedSegments, setExpandedSegments] = useState(new Set())
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('fic-admin') === '1')
   const [showAdminPrompt, setShowAdminPrompt] = useState(false)
   const [adminInput, setAdminInput] = useState('')
@@ -898,24 +903,22 @@ export default function EpisodeBoard({ forceViewMode }) {
 
   // Load episode list
   useEffect(() => {
-    fetch('/episodes/index.json')
-      .then((r) => r.json())
-      .then((list) => {
-        setEpisodes(list)
-        if (list.length > 0) setCurrentEpId(list[0].id)
-      })
+    fetchEpisodes().then((list) => {
+      setEpisodes(list)
+      if (list.length > 0) setCurrentEpId(list[0].id)
+    })
   }, [])
 
   // Load episode data
   useEffect(() => {
     if (!currentEpId) return
-    fetch(`/episodes/${currentEpId}.json`)
-      .then((r) => r.json())
-      .then((data) => {
+    fetchEpisode(currentEpId).then((data) => {
+      if (data) {
         setEpisode(data)
         setActiveSegmentIdx(0)
         setActiveSlideIdx(0)
-      })
+      }
+    })
   }, [currentEpId])
 
   const allSegments = episode?.segments || []
@@ -943,7 +946,10 @@ export default function EpisodeBoard({ forceViewMode }) {
 
   // Stats for the current episode
   const finalCount = allSegments.filter((s) => s.status === 'final').length
-  const proposedCount = allSegments.filter((s) => s.status !== 'final').length
+  const proposedSegCount = allSegments.filter((s) => s.status !== 'final').length
+  const proposedSlideCount = allSegments
+    .filter((s) => s.status !== 'final')
+    .reduce((sum, s) => sum + s.slides.length, 0)
 
   const goNext = useCallback(() => {
     if (activeSlideIdx < slides.length - 1) {
@@ -1000,18 +1006,17 @@ export default function EpisodeBoard({ forceViewMode }) {
     setCurrentEpId(epId)
     setViewMode('prep')
     // Load episode, find the segment, jump to the specific slide
-    fetch(`/episodes/${epId}.json`)
-      .then((r) => r.json())
-      .then((data) => {
-        setEpisode(data)
-        const idx = data.segments.findIndex((s) => s.id === segId)
-        setActiveSegmentIdx(idx >= 0 ? idx : 0)
-        setActiveSlideIdx(slideIdx)
-        // Auto-expand the segment
-        if (data.segments[idx]) {
-          setExpandedSegments((prev) => new Set(prev).add(data.segments[idx].id))
-        }
-      })
+    fetchEpisode(epId).then((data) => {
+      if (!data) return
+      setEpisode(data)
+      const idx = data.segments.findIndex((s) => s.id === segId)
+      setActiveSegmentIdx(idx >= 0 ? idx : 0)
+      setActiveSlideIdx(slideIdx)
+      // Auto-expand the segment
+      if (data.segments[idx]) {
+        setExpandedSegments((prev) => new Set(prev).add(data.segments[idx].id))
+      }
+    })
   }, [])
 
   // Reset segment index when view mode changes (filtered list may be shorter)
@@ -1141,14 +1146,22 @@ export default function EpisodeBoard({ forceViewMode }) {
   }
 
   return (
-    <div className="flex-1 flex overflow-hidden">
+    <div className="flex-1 flex flex-col sm:flex-row overflow-hidden">
       {/* Left sidebar — segments */}
-      <div className="w-56 flex-shrink-0 border-r border-[var(--border-subtle)] flex flex-col">
+      {/* On mobile: collapsible panel that slides in from top; on desktop: fixed width side panel */}
+      <div className={`
+        sm:w-56 sm:flex-shrink-0 sm:border-r border-[var(--border-subtle)] flex flex-col
+        ${sidebarOpen ? 'flex' : 'hidden sm:flex'}
+        sm:relative absolute inset-x-0 top-0 z-10 sm:z-auto
+        bg-[var(--bg-primary)] sm:bg-transparent
+        border-b sm:border-b-0 border-[var(--border-subtle)]
+        max-h-[60vh] sm:max-h-none
+      `}>
         {/* Episode picker */}
         <div className="p-3 border-b border-[var(--border-subtle)] relative">
           <button
             onClick={() => setEpDropdownOpen(!epDropdownOpen)}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] text-xs font-bold tracking-wider transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2.5 sm:py-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] text-xs font-bold tracking-wider transition-colors min-h-[44px] sm:min-h-0"
           >
             <span className="truncate">{currentEp?.title || 'Select Episode'}</span>
             <ChevronDown size={14} className="text-[var(--text-tertiary)] flex-shrink-0" />
@@ -1178,9 +1191,9 @@ export default function EpisodeBoard({ forceViewMode }) {
             {VIEW_MODES.map((mode) => (
               <button
                 key={mode.id}
-                onClick={() => setViewMode(mode.id)}
+                onClick={() => { setViewMode(mode.id); setSidebarOpen(false) }}
                 title={mode.description}
-                className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all
+                className={`flex-1 px-1 sm:px-2 py-2 sm:py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all min-h-[36px] sm:min-h-0
                   ${viewMode === mode.id
                     ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -1219,10 +1232,10 @@ export default function EpisodeBoard({ forceViewMode }) {
                 <CheckCircle2 size={9} className="text-emerald-400" />
                 <span className="text-[10px] text-[var(--text-muted)]">{finalCount} final</span>
               </div>
-              {proposedCount > 0 && (
+              {proposedSegCount > 0 && (
                 <div className="flex items-center gap-1">
                   <Circle size={9} className="text-yellow-400" />
-                  <span className="text-[10px] text-[var(--text-muted)]">{proposedCount} proposed</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">{proposedSegCount} proposed{proposedSlideCount > 0 ? ` · ${proposedSlideCount} slides` : ''}</span>
                 </div>
               )}
             </div>
@@ -1348,15 +1361,41 @@ export default function EpisodeBoard({ forceViewMode }) {
 
       {/* Right area */}
       {viewMode === 'bank' ? (
-        <ProposedBank
-          episodes={episodes}
-          onSelectSlide={handleBankSelect}
-          isAdmin={isAdmin}
-        />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Mobile toolbar for bank view */}
+          <div className="sm:hidden flex items-center gap-2 px-3 py-2 border-b border-[var(--border-subtle)]">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-xs font-bold min-h-[36px]"
+            >
+              <ChevronsUpDown size={12} />
+              Segments
+            </button>
+          </div>
+          <ProposedBank
+            episodes={episodes}
+            onSelectSlide={handleBankSelect}
+            isAdmin={isAdmin}
+          />
+        </div>
       ) : (
         <div className="flex-1 flex flex-col">
-          {/* Slide header */}
-          <div className="px-6 py-3 border-b border-[var(--border-subtle)] flex items-center justify-between">
+          {/* Mobile toolbar — segment toggle button */}
+          <div className="sm:hidden flex items-center gap-2 px-3 py-2 border-b border-[var(--border-subtle)]">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-xs font-bold min-h-[36px]"
+            >
+              <ChevronsUpDown size={12} />
+              {currentSegment?.name || 'Segments'}
+            </button>
+            <span className="text-[var(--text-hint)] text-xs font-mono ml-auto">
+              {totalSlides > 0 ? `${globalSlideIdx + 1} / ${totalSlides}` : '0 / 0'}
+            </span>
+          </div>
+
+          {/* Slide header — desktop */}
+          <div className="hidden sm:flex px-6 py-3 border-b border-[var(--border-subtle)] items-center justify-between">
             <div className="flex items-center gap-3">
               <div>
                 <div className="flex items-center gap-2">
@@ -1404,8 +1443,47 @@ export default function EpisodeBoard({ forceViewMode }) {
             </div>
           </div>
 
+          {/* Mobile slide title */}
+          <div className="sm:hidden px-4 py-2 border-b border-[var(--border-subtle)]">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[#D94E2A] text-[10px] font-bold tracking-widest uppercase">
+                {currentSegment?.name}
+              </span>
+              {currentSegment && <StatusBadge status={currentSegment.status || 'proposed'} />}
+            </div>
+            <div className="flex items-center justify-between mt-0.5">
+              <h2 className="text-[var(--text-primary)] font-bold text-base leading-tight flex-1 min-w-0 pr-2 truncate">
+                {currentSlide?.title}
+              </h2>
+              {/* Compact timer on mobile */}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={toggleTimer}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-mono font-bold transition-all min-h-[36px]
+                    ${timerRunning
+                      ? 'bg-red-500/15 text-[#D94E2A]'
+                      : elapsedMs > 0
+                        ? 'bg-yellow-500/15 text-yellow-400'
+                        : 'bg-[var(--bg-subtle)] text-[var(--text-secondary)]'
+                    }`}
+                >
+                  {timerRunning ? <Pause size={14} /> : <Play size={14} />}
+                  {formatTimer(elapsedMs)}
+                </button>
+                {elapsedMs > 0 && (
+                  <button
+                    onClick={resetTimer}
+                    className="p-1.5 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-muted)] min-h-[36px] min-w-[36px] flex items-center justify-center"
+                  >
+                    <RotateCcw size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Slide content */}
-          <div className="flex-1 flex items-center justify-center p-6">
+          <div className="flex-1 flex items-center justify-center p-3 sm:p-6 overflow-hidden">
             {currentSlide ? (
               <SlideRenderer slide={currentSlide} />
             ) : (
@@ -1416,25 +1494,25 @@ export default function EpisodeBoard({ forceViewMode }) {
           </div>
 
           {/* Navigation */}
-          <div className="px-6 py-3 border-t border-[var(--border-subtle)] flex items-center justify-between">
+          <div className="px-3 sm:px-6 py-3 border-t border-[var(--border-subtle)] flex items-center justify-center gap-3">
             <button
               onClick={goPrev}
               disabled={globalSlideIdx === 0 || totalSlides === 0}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg text-sm font-semibold
                          bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all
-                         disabled:opacity-20 disabled:cursor-not-allowed"
+                         disabled:opacity-20 disabled:cursor-not-allowed min-h-[44px] sm:min-h-0"
             >
               <ChevronLeft size={16} />
               Prev
             </button>
 
             {/* Slide dots for current segment */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 overflow-x-auto max-w-[40vw] sm:max-w-none px-1">
               {slides.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveSlideIdx(i)}
-                  className={`w-2 h-2 rounded-full transition-all
+                  className={`flex-shrink-0 w-2 h-2 rounded-full transition-all min-h-[24px] flex items-center
                     ${i === activeSlideIdx ? 'bg-[#D94E2A] w-4' : 'bg-[var(--text-faint)] hover:bg-[var(--text-muted)]'}`}
                 />
               ))}
@@ -1443,9 +1521,9 @@ export default function EpisodeBoard({ forceViewMode }) {
             <button
               onClick={goNext}
               disabled={globalSlideIdx === totalSlides - 1 || totalSlides === 0}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg text-sm font-semibold
                          bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all
-                         disabled:opacity-20 disabled:cursor-not-allowed"
+                         disabled:opacity-20 disabled:cursor-not-allowed min-h-[44px] sm:min-h-0"
             >
               Next
               <ChevronRight size={16} />

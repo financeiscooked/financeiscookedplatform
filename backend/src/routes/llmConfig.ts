@@ -97,8 +97,20 @@ router.get('/', async (_req, res, next) => {
 
 // ─── GET /api/llm-config/providers — list available providers ────────
 
-router.get('/providers', async (_req, res, _next) => {
-  res.json({ ok: true, data: PROVIDERS });
+router.get('/providers', async (_req, res, next) => {
+  try {
+    // Fetch all stored API keys to show which providers have keys
+    const storedKeys = await prisma.llmApiKey.findMany();
+    const keyMap = new Map(storedKeys.map(k => [k.provider as string, k.keyPrefix]));
+
+    const data = PROVIDERS.map(p => ({
+      ...p,
+      hasKey: keyMap.has(p.id),
+      keyPrefix: keyMap.get(p.id) ?? null,
+    }));
+
+    res.json({ ok: true, data });
+  } catch (err) { next(err); }
 });
 
 // ─── PUT /api/llm-config — set provider + model ─────────────────────

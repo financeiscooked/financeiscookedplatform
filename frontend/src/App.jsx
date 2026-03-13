@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, FileText, Sun, Moon, Shield } from 'lucide-react'
+import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, FileText, Sun, Moon, Shield, GraduationCap, Hammer, Share2 } from 'lucide-react'
 import { useTheme } from './context/ThemeContext'
 import Home from './components/Home'
 import SoundBoard from './components/SoundBoard'
@@ -13,6 +13,9 @@ import AdminPanel from './components/admin/AdminPanel'
 const MAIN_TABS = [
   { id: 'home', label: 'Home', icon: HomeIcon },
   { id: 'show', label: 'The Show', icon: Tv },
+  { id: 'learn', label: 'Learn', icon: GraduationCap },
+  { id: 'build', label: 'Build', icon: Hammer },
+  { id: 'share', label: 'Share', icon: Share2 },
 ]
 
 const SHOW_TABS = [
@@ -31,6 +34,24 @@ function useIsPopout() {
     const params = new URLSearchParams(window.location.search)
     return params.get('mode') === 'live'
   }, [])
+}
+
+/* Placeholder page for new tabs */
+function PlaceholderPage({ title, description, icon: Icon }) {
+  return (
+    <div className="flex-1 flex items-center justify-center p-8">
+      <div className="text-center max-w-md">
+        <div className="w-16 h-16 rounded-2xl bg-[var(--bg-subtle)] flex items-center justify-center mx-auto mb-6">
+          <Icon size={32} className="text-[#D94E2A]" />
+        </div>
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-3">{title}</h2>
+        <p className="text-[var(--text-secondary)] text-sm leading-relaxed">{description}</p>
+        <div className="mt-6 inline-block px-4 py-2 rounded-full bg-[var(--bg-subtle)] text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">
+          Coming Soon
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function App() {
@@ -52,122 +73,169 @@ export default function App() {
   return (
     <div className="h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-[var(--border-subtle)] shrink-0">
-        <div className="flex items-center gap-4">
-          {/* ON AIR */}
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-[#D94E2A] animate-pulse shadow-lg shadow-[#D94E2A]/50" />
-            <span className="text-[#D94E2A] text-xs font-bold tracking-widest uppercase">On Air</span>
+      <header className="flex flex-col border-b border-[var(--border-subtle)] shrink-0">
+        {/* Top row */}
+        <div className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            {/* ON AIR dot — always visible; text hidden on mobile */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#D94E2A] animate-pulse shadow-lg shadow-[#D94E2A]/50" />
+              <span className="hidden sm:inline text-[#D94E2A] text-xs font-bold tracking-widest uppercase">On Air</span>
+            </div>
+
+            {/* Divider — hidden on mobile */}
+            <div className="hidden sm:block w-px h-6 bg-[var(--divider-px)] shrink-0" />
+
+            <h1 className="font-russo text-base sm:text-xl tracking-wide cursor-pointer shrink-0" onClick={() => setMainTab('home')}>
+              <span className="text-[var(--text-primary)]">finance</span>
+              <span className="text-[#D94E2A]">is</span>
+              <span className="text-[#F0A030]">cooked</span>
+            </h1>
+
+            {/* Divider — hidden on mobile */}
+            <div className="hidden sm:block w-px h-6 bg-[var(--divider-px)] shrink-0" />
+
+            {/* Main tabs — desktop */}
+            <div className="hidden sm:flex items-center gap-1 bg-[var(--bg-subtle)] rounded-xl p-1">
+              {MAIN_TABS.map((tab) => {
+                const Icon = tab.icon
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setMainTab(tab.id)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
+                      ${mainTab === tab.id
+                        ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
+                        : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                      }`}
+                  >
+                    <Icon size={14} />
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Show sub-tabs — desktop inline */}
+            {mainTab === 'show' && (
+              <>
+                <div className="hidden sm:block w-px h-6 bg-[var(--divider-px)] shrink-0" />
+                <div className="hidden sm:flex items-center gap-1 bg-[var(--bg-subtle)] rounded-xl p-1">
+                  {SHOW_TABS.map((tab) => {
+                    const Icon = tab.icon
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setShowTab(tab.id)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
+                          ${showTab === tab.id
+                            ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
+                            : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                          }`}
+                      >
+                        <Icon size={12} />
+                        {tab.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* Docs sub-tabs — desktop inline */}
+            {mainTab === 'docs' && (
+              <>
+                <div className="hidden sm:block w-px h-6 bg-[var(--divider-px)] shrink-0" />
+                <div className="hidden sm:flex items-center gap-1 bg-[var(--bg-subtle)] rounded-xl p-1">
+                  {DOC_TABS.map((tab) => {
+                    const Icon = tab.icon
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setDocTab(tab.id)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
+                          ${docTab === tab.id
+                            ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
+                            : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                          }`}
+                      >
+                        <Icon size={12} />
+                        {tab.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
           </div>
+        </div>
 
-          <div className="w-px h-6 bg-[var(--divider-px)]" />
+        {/* Mobile main tabs row */}
+        <div className="sm:hidden flex items-center gap-1 px-2 pb-2 overflow-x-auto">
+          {MAIN_TABS.map((tab) => {
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setMainTab(tab.id)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all whitespace-nowrap shrink-0 min-h-[32px]
+                  ${mainTab === tab.id
+                    ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow'
+                    : 'text-[var(--text-tertiary)]'
+                  }`}
+              >
+                <Icon size={12} />
+                {tab.label}
+              </button>
+            )
+          })}
+        </div>
 
-          <h1 className="font-russo text-xl tracking-wide cursor-pointer" onClick={() => setMainTab('home')}>
-            <span className="text-[var(--text-primary)]">finance</span>
-            <span className="text-[#D94E2A]">is</span>
-            <span className="text-[#F0A030]">cooked</span>
-          </h1>
-
-          <div className="w-px h-6 bg-[var(--divider-px)]" />
-
-          {/* Main tabs */}
-          <div className="flex items-center gap-1 bg-[var(--bg-subtle)] rounded-xl p-1">
-            {MAIN_TABS.map((tab) => {
+        {/* Mobile sub-tabs row — Show */}
+        {mainTab === 'show' && (
+          <div className="sm:hidden flex items-center gap-1 px-3 pb-2 bg-[var(--bg-subtle)] rounded-none">
+            {SHOW_TABS.map((tab) => {
               const Icon = tab.icon
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setMainTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
-                    ${mainTab === tab.id
-                      ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
-                      : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                  onClick={() => setShowTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold tracking-wider uppercase transition-all flex-1 justify-center min-h-[36px]
+                    ${showTab === tab.id
+                      ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow'
+                      : 'text-[var(--text-tertiary)]'
                     }`}
                 >
-                  <Icon size={14} />
+                  <Icon size={12} />
                   {tab.label}
                 </button>
               )
             })}
           </div>
+        )}
 
-          {/* Show sub-tabs */}
-          {mainTab === 'show' && (
-            <>
-              <div className="w-px h-6 bg-[var(--divider-px)]" />
-              <div className="flex items-center gap-1 bg-[var(--bg-subtle)] rounded-xl p-1">
-                {SHOW_TABS.map((tab) => {
-                  const Icon = tab.icon
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setShowTab(tab.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
-                        ${showTab === tab.id
-                          ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
-                          : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-                        }`}
-                    >
-                      <Icon size={12} />
-                      {tab.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </>
-          )}
-
-          {/* Docs sub-tabs */}
-          {mainTab === 'docs' && (
-            <>
-              <div className="w-px h-6 bg-[var(--divider-px)]" />
-              <div className="flex items-center gap-1 bg-[var(--bg-subtle)] rounded-xl p-1">
-                {DOC_TABS.map((tab) => {
-                  const Icon = tab.icon
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setDocTab(tab.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
-                        ${docTab === tab.id
-                          ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
-                          : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-                        }`}
-                    >
-                      <Icon size={12} />
-                      {tab.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Right-side icon buttons */}
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setMainTab('docs')}
-            className={`p-2 rounded-lg transition-all ${mainTab === 'docs' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg' : 'bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
-            title="Documentation"
-          >
-            <BookOpen size={18} />
-          </button>
-          <button
-            onClick={() => setMainTab('admin')}
-            className={`p-2 rounded-lg transition-all ${mainTab === 'admin' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg' : 'bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
-            title="Admin"
-          >
-            <Shield size={18} />
-          </button>
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-all"
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-        </div>
+        {/* Mobile sub-tabs row — Docs */}
+        {mainTab === 'docs' && (
+          <div className="sm:hidden flex items-center gap-1 px-3 pb-2 bg-[var(--bg-subtle)] rounded-none">
+            {DOC_TABS.map((tab) => {
+              const Icon = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setDocTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold tracking-wider uppercase transition-all flex-1 justify-center min-h-[36px]
+                    ${docTab === tab.id
+                      ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow'
+                      : 'text-[var(--text-tertiary)]'
+                    }`}
+                >
+                  <Icon size={12} />
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
       </header>
 
       {/* Content */}
@@ -185,7 +253,54 @@ export default function App() {
         )}
         {mainTab === 'docs' && docTab === 'mcp' && <McpDocs />}
         {mainTab === 'admin' && <AdminPanel />}
+        {mainTab === 'learn' && (
+          <PlaceholderPage
+            title="Learn"
+            icon={GraduationCap}
+            description="Courses, tutorials, and resources to help finance professionals get started with AI. From zero to building — at your own pace."
+          />
+        )}
+        {mainTab === 'build' && (
+          <PlaceholderPage
+            title="Build"
+            icon={Hammer}
+            description="Open-source tools, templates, and starter kits from the show. Download, remix, and make them yours."
+          />
+        )}
+        {mainTab === 'share' && (
+          <PlaceholderPage
+            title="Share"
+            icon={Share2}
+            description="Community submissions, featured builds, and ways to contribute back. Show us what you've cooked up."
+          />
+        )}
       </div>
+
+      {/* Bottom bar — Docs, Admin, Theme toggle (left side) */}
+      <div className="fixed bottom-0 left-0 z-40 flex items-center gap-1 p-2">
+        <button
+          onClick={() => setMainTab('docs')}
+          className={`p-2 rounded-lg transition-all ${mainTab === 'docs' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg' : 'bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+          title="Documentation"
+        >
+          <BookOpen size={16} />
+        </button>
+        <button
+          onClick={() => setMainTab('admin')}
+          className={`p-2 rounded-lg transition-all ${mainTab === 'admin' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg' : 'bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+          title="Admin"
+        >
+          <Shield size={16} />
+        </button>
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-lg bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-all"
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
+      </div>
+
       <Toast />
       <AgentChatButton />
     </div>

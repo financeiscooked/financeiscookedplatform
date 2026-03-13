@@ -4,7 +4,7 @@ import { api } from '../../lib/api';
 import AgentSelector from './AgentSelector';
 import ChatMessage from './ChatMessage';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://backend-production-0e40.up.railway.app/api';
 
 export default function AgentChatPanel({ open, onClose }) {
   const [agents, setAgents] = useState([]);
@@ -79,7 +79,7 @@ export default function AgentChatPanel({ open, onClose }) {
       const res = await fetch(`${API_BASE}/chat/${conversationId}/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ content: text }),
         signal: controller.signal,
       });
 
@@ -177,22 +177,25 @@ export default function AgentChatPanel({ open, onClose }) {
     }
   }
 
+  // Detect mobile viewport
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
   return (
     <div
       style={{
         position: 'fixed',
         top: 0,
         right: 0,
-        width: 420,
+        width: isMobile ? '100vw' : 420,
         height: '100vh',
         zIndex: 1000,
         background: 'var(--bg-primary, #fff)',
-        borderLeft: '1px solid var(--border-subtle, #e2e8f0)',
+        borderLeft: isMobile ? 'none' : '1px solid var(--border-subtle, #e2e8f0)',
         display: 'flex',
         flexDirection: 'column',
         transform: open ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform 0.3s ease',
-        boxShadow: open ? '-4px 0 24px rgba(0,0,0,0.12)' : 'none',
+        boxShadow: open ? (isMobile ? 'none' : '-4px 0 24px rgba(0,0,0,0.12)') : 'none',
       }}
     >
       {/* Header */}
@@ -303,6 +306,7 @@ export default function AgentChatPanel({ open, onClose }) {
       <div
         style={{
           padding: '12px 16px',
+          paddingBottom: isMobile ? 'max(12px, env(safe-area-inset-bottom))' : '12px',
           borderTop: '1px solid var(--border-subtle, #e2e8f0)',
           background: 'var(--bg-secondary, #f8fafc)',
         }}
@@ -328,7 +332,7 @@ export default function AgentChatPanel({ open, onClose }) {
               border: '1px solid var(--border-subtle, #e2e8f0)',
               borderRadius: 10,
               padding: '10px 14px',
-              fontSize: 14,
+              fontSize: 16, // 16px prevents iOS zoom on focus
               lineHeight: 1.5,
               background: 'var(--bg-primary, #fff)',
               color: 'var(--text-primary, #1e293b)',
@@ -341,8 +345,8 @@ export default function AgentChatPanel({ open, onClose }) {
             onClick={sendMessage}
             disabled={streaming || !input.trim() || !conversationId}
             style={{
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               borderRadius: 10,
               border: 'none',
               background:
