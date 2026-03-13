@@ -27,6 +27,7 @@ import {
   Unlock,
   ThumbsUp,
   ThumbsDown,
+  Search,
 } from 'lucide-react'
 
 function DetailsExpander({ details }) {
@@ -844,6 +845,86 @@ export default function EpisodeBoard({ forceViewMode }) {
   const [adminInput, setAdminInput] = useState('')
   const [adminError, setAdminError] = useState(false)
 
+  // Search across all episodes
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState(null)
+  const [searchCache, setSearchCache] = useState({}) // { epId: episodeData }
+  const searchTimeoutRef = useRef(null)
+
+  // Build search index from all episodes
+  const runSearch = useCallback(async (query) => {
+    if (!query.trim()) { setSearchResults(null); return }
+    const q = query.toLowerCase()
+    // Fetch all episode details (use cache when available)
+    const allEpData = await Promise.all(
+      episodes.map(async (ep) => {
+        if (searchCache[ep.id]) return searchCache[ep.id]
+        const data = await fetchEpisode(ep.id).catch(() => null)
+        if (data) setSearchCache((prev) => ({ ...prev, [ep.id]: data }))
+        return data
+      })
+    )
+    const results = []
+    for (const epData of allEpData) {
+      if (!epData) continue
+      for (const [segIdx, seg] of (epData.segments || []).entries()) {
+        // Match segment name
+        const segMatch = seg.name?.toLowerCase().includes(q)
+        for (const [slideIdx, slide] of (seg.slides || []).entries()) {
+          const titleMatch = slide.title?.toLowerCase().includes(q)
+          const notesMatch = slide.notes?.toLowerCase().includes(q)
+          const detailsMatch = slide.details?.toLowerCase().includes(q)
+          const bulletsMatch = (slide.bullets || []).some((b) => b.toLowerCase().includes(q))
+          if (titleMatch || notesMatch || detailsMatch || bulletsMatch || segMatch) {
+            results.push({
+              episodeId: epData.id,
+              episodeTitle: epData.title,
+              segmentIdx: segIdx,
+              segmentName: seg.name,
+              segmentStatus: seg.status,
+              slideIdx,
+              slideTitle: slide.title,
+              slideType: slide.type,
+              slideStatus: slide.status,
+            })
+          }
+        }
+      }
+    }
+    setSearchResults(results)
+  }, [episodes, searchCache])
+
+  // Debounced search
+  useEffect(() => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+    searchTimeoutRef.current = setTimeout(() => runSearch(searchQuery), 300)
+    return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current) }
+  }, [searchQuery, runSearch])
+
+  // Navigate to a search result
+  const goToSearchResult = useCallback((result) => {
+    setCurrentEpId(result.episodeId)
+    setSearchQuery('')
+    setSearchResults(null)
+    // Wait for episode to load, then navigate
+    fetchEpisode(result.episodeId).then((data) => {
+      if (!data) return
+      setEpisode(data)
+      // Find the right segment/slide indices based on current view mode
+      const segs = data.segments || []
+      const targetSeg = segs[result.segmentIdx]
+      if (!targetSeg) return
+      // If in show mode and segment is proposed, switch to prep
+      if ((viewMode === 'show' || viewMode === 'live') && targetSeg.status !== 'final') {
+        setViewMode('prep')
+      }
+      setActiveSegmentIdx(result.segmentIdx)
+      setActiveSlideIdx(result.slideIdx)
+      setExpandedSegments((prev) => new Set(prev).add(targetSeg.id))
+      setSidebarOpen(false)
+    })
+  }, [viewMode])
+
   const handleAdminSubmit = useCallback(() => {
     if (adminInput === 'admin123') {
       setIsAdmin(true)
@@ -1157,6 +1238,65 @@ export default function EpisodeBoard({ forceViewMode }) {
         border-b sm:border-b-0 border-[var(--border-subtle)]
         max-h-[60vh] sm:max-h-none
       `}>
+        {/* Search bar */}
+        <div className="p-2 border-b border-[var(--border-subtle)]">
+          <div className="relative">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-hint)]" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search slides..."
+              className="w-full pl-8 pr-7 py-2 sm:py-1.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs placeholder-[var(--text-hint)] focus:outline-none focus:border-[#D94E2A] transition-colors min-h-[36px] sm:min-h-0"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => { setSearchQuery(''); setSearchResults(null) }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-hint)] hover:text-[var(--text-secondary)]"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Search results overlay */}
+        {searchResults !== null ? (
+          <div className="flex-1 overflow-y-auto">
+            {searchResults.length === 0 ? (
+              <div className="px-4 py-8 text-center text-[var(--text-hint)] text-xs">
+                No results for "{searchQuery}"
+              </div>
+            ) : (
+              <div className="p-2 space-y-1">
+                <div className="px-2 py-1 text-[10px] text-[var(--text-hint)] font-bold uppercase tracking-wider">
+                  {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                </div>
+                {searchResults.map((r, i) => (
+                  <button
+                    key={i}
+                    onClick={() => goToSearchResult(r)}
+                    className="w-full text-left px-3 py-2.5 sm:py-2 rounded-lg hover:bg-[var(--bg-hover)] transition-colors group min-h-[44px] sm:min-h-0"
+                  >
+                    <div className="text-xs font-bold text-[var(--text-primary)] truncate group-hover:text-[#D94E2A] transition-colors">
+                      {r.slideTitle}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] text-[var(--text-hint)] truncate">{r.episodeTitle}</span>
+                      <span className="text-[10px] text-[var(--text-hint)]">·</span>
+                      <span className="text-[10px] text-[var(--text-muted)] truncate">{r.segmentName}</span>
+                      <span className={`text-[9px] font-bold uppercase px-1 py-0.5 rounded ${r.slideStatus === 'final' ? 'text-emerald-400 bg-emerald-400/10' : 'text-yellow-400 bg-yellow-400/10'}`}>
+                        {r.slideStatus || 'proposed'}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+        <>
+
         {/* Episode picker */}
         <div className="p-3 border-b border-[var(--border-subtle)] relative">
           <button
@@ -1356,6 +1496,9 @@ export default function EpisodeBoard({ forceViewMode }) {
               Browsing proposed segments across all episodes
             </p>
           </div>
+        )}
+
+        </>
         )}
       </div>
 
