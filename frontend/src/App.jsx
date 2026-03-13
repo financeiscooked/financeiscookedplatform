@@ -95,147 +95,106 @@ export default function App() {
             {/* Divider — hidden on mobile */}
             <div className="hidden sm:block w-px h-6 bg-[var(--divider-px)] shrink-0" />
 
-            {/* Main tabs — desktop */}
+            {/* Main tabs — desktop (accordion: sub-tabs expand inline after parent) */}
             <div className="hidden sm:flex items-center gap-1 bg-[var(--bg-subtle)] rounded-xl p-1">
               {MAIN_TABS.map((tab) => {
                 const Icon = tab.icon
+                const isActive = mainTab === tab.id
+                // Determine if this tab has sub-tabs that should expand
+                const subTabs = tab.id === 'show' ? SHOW_TABS : tab.id === 'docs' ? DOC_TABS : null
+                const subTab = tab.id === 'show' ? showTab : tab.id === 'docs' ? docTab : null
+                const setSubTab = tab.id === 'show' ? setShowTab : tab.id === 'docs' ? setDocTab : null
                 return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setMainTab(tab.id)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
-                      ${mainTab === tab.id
-                        ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
-                        : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-                      }`}
-                  >
-                    <Icon size={14} />
-                    {tab.label}
-                  </button>
+                  <React.Fragment key={tab.id}>
+                    <button
+                      onClick={() => setMainTab(tab.id)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
+                        ${isActive
+                          ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
+                          : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                        }`}
+                    >
+                      <Icon size={14} />
+                      {tab.label}
+                    </button>
+                    {/* Accordion sub-tabs expand right after the active parent */}
+                    {isActive && subTabs && (
+                      <>
+                        <div className="w-px h-4 bg-[var(--divider-px)]" />
+                        {subTabs.map((st) => {
+                          const StIcon = st.icon
+                          return (
+                            <button
+                              key={st.id}
+                              onClick={() => setSubTab(st.id)}
+                              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold tracking-wider uppercase transition-all
+                                ${subTab === st.id
+                                  ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] shadow'
+                                  : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                                }`}
+                            >
+                              <StIcon size={11} />
+                              {st.label}
+                            </button>
+                          )
+                        })}
+                        <div className="w-px h-4 bg-[var(--divider-px)]" />
+                      </>
+                    )}
+                  </React.Fragment>
                 )
               })}
-            </div>
-
-            {/* Show sub-tabs — desktop inline */}
-            {mainTab === 'show' && (
-              <>
-                <div className="hidden sm:block w-px h-6 bg-[var(--divider-px)] shrink-0" />
-                <div className="hidden sm:flex items-center gap-1 bg-[var(--bg-subtle)] rounded-xl p-1">
-                  {SHOW_TABS.map((tab) => {
-                    const Icon = tab.icon
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setShowTab(tab.id)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
-                          ${showTab === tab.id
-                            ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
-                            : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-                          }`}
-                      >
-                        <Icon size={12} />
-                        {tab.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-
-            {/* Docs sub-tabs — desktop inline */}
-            {mainTab === 'docs' && (
-              <>
-                <div className="hidden sm:block w-px h-6 bg-[var(--divider-px)] shrink-0" />
-                <div className="hidden sm:flex items-center gap-1 bg-[var(--bg-subtle)] rounded-xl p-1">
-                  {DOC_TABS.map((tab) => {
-                    const Icon = tab.icon
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setDocTab(tab.id)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
-                          ${docTab === tab.id
-                            ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
-                            : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-                          }`}
-                      >
-                        <Icon size={12} />
-                        {tab.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </>
-            )}
           </div>
         </div>
 
-        {/* Mobile main tabs row */}
+        {/* Mobile main tabs row (accordion: sub-tabs expand inline) */}
         <div className="sm:hidden flex items-center gap-1 px-2 pb-2 overflow-x-auto">
           {MAIN_TABS.map((tab) => {
             const Icon = tab.icon
+            const isActive = mainTab === tab.id
+            const subTabs = tab.id === 'show' ? SHOW_TABS : tab.id === 'docs' ? DOC_TABS : null
+            const subTab = tab.id === 'show' ? showTab : tab.id === 'docs' ? docTab : null
+            const setSubTab = tab.id === 'show' ? setShowTab : tab.id === 'docs' ? setDocTab : null
             return (
-              <button
-                key={tab.id}
-                onClick={() => setMainTab(tab.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all whitespace-nowrap shrink-0 min-h-[32px]
-                  ${mainTab === tab.id
-                    ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow'
-                    : 'text-[var(--text-tertiary)]'
-                  }`}
-              >
-                <Icon size={12} />
-                {tab.label}
-              </button>
+              <React.Fragment key={tab.id}>
+                <button
+                  onClick={() => setMainTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all whitespace-nowrap shrink-0 min-h-[32px]
+                    ${isActive
+                      ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow'
+                      : 'text-[var(--text-tertiary)]'
+                    }`}
+                >
+                  <Icon size={12} />
+                  {tab.label}
+                </button>
+                {isActive && subTabs && (
+                  <>
+                    <div className="w-px h-4 bg-[var(--divider-px)] shrink-0" />
+                    {subTabs.map((st) => {
+                      const StIcon = st.icon
+                      return (
+                        <button
+                          key={st.id}
+                          onClick={() => setSubTab(st.id)}
+                          className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all whitespace-nowrap shrink-0 min-h-[32px]
+                            ${subTab === st.id
+                              ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] shadow'
+                              : 'text-[var(--text-tertiary)]'
+                            }`}
+                        >
+                          <StIcon size={10} />
+                          {st.label}
+                        </button>
+                      )
+                    })}
+                    <div className="w-px h-4 bg-[var(--divider-px)] shrink-0" />
+                  </>
+                )}
+              </React.Fragment>
             )
           })}
         </div>
-
-        {/* Mobile sub-tabs row — Show */}
-        {mainTab === 'show' && (
-          <div className="sm:hidden flex items-center gap-1 px-3 pb-2 bg-[var(--bg-subtle)] rounded-none">
-            {SHOW_TABS.map((tab) => {
-              const Icon = tab.icon
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setShowTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold tracking-wider uppercase transition-all flex-1 justify-center min-h-[36px]
-                    ${showTab === tab.id
-                      ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow'
-                      : 'text-[var(--text-tertiary)]'
-                    }`}
-                >
-                  <Icon size={12} />
-                  {tab.label}
-                </button>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Mobile sub-tabs row — Docs */}
-        {mainTab === 'docs' && (
-          <div className="sm:hidden flex items-center gap-1 px-3 pb-2 bg-[var(--bg-subtle)] rounded-none">
-            {DOC_TABS.map((tab) => {
-              const Icon = tab.icon
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setDocTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold tracking-wider uppercase transition-all flex-1 justify-center min-h-[36px]
-                    ${docTab === tab.id
-                      ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow'
-                      : 'text-[var(--text-tertiary)]'
-                    }`}
-                >
-                  <Icon size={12} />
-                  {tab.label}
-                </button>
-              )
-            })}
-          </div>
-        )}
       </header>
 
       {/* Content */}
