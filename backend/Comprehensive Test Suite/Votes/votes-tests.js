@@ -8,6 +8,7 @@
 
 const CONFIG = {
   BASE_URL: process.env.BASE_URL || 'https://backend-production-0e40.up.railway.app',
+  ADMIN_KEY: process.env.ADMIN_KEY || 'admin123',
 };
 
 const COLORS = {
@@ -37,12 +38,11 @@ function assert(condition, testName, detail) {
   }
 }
 
-async function makeRequest(method, path, body) {
+async function makeRequest(method, path, body, { admin = false } = {}) {
   const url = `${CONFIG.BASE_URL}${path}`;
-  const options = {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-  };
+  const headers = { 'Content-Type': 'application/json' };
+  if (admin) headers['X-Admin-Key'] = CONFIG.ADMIN_KEY;
+  const options = { method, headers };
   if (body) {
     options.body = JSON.stringify(body);
   }
@@ -70,7 +70,7 @@ async function runTests() {
       slug: EP_SLUG,
       title: 'Votes Test Episode',
       sortOrder: 9996,
-    });
+    }, { admin: true });
     if (!epRes.ok) {
       console.error(`${COLORS.red}  Setup failed (episode): ${epRes.error}${COLORS.reset}`);
       process.exit(1);
@@ -81,12 +81,12 @@ async function runTests() {
       slug: 'vote-seg',
       name: 'Vote Segment',
       sortOrder: 1,
-    });
+    }, { admin: true });
     if (segRes.ok && segRes.data) segId = segRes.data.id;
 
     if (!segId) {
       console.error(`${COLORS.red}  Setup failed (segment)${COLORS.reset}`);
-      await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`);
+      await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`, null, { admin: true });
       process.exit(1);
     }
 
@@ -95,12 +95,12 @@ async function runTests() {
       type: 'text',
       title: 'Votable Slide',
       sortOrder: 1,
-    });
+    }, { admin: true });
     if (slideRes.ok && slideRes.data) slideId = slideRes.data.id;
 
     if (!slideId) {
       console.error(`${COLORS.red}  Setup failed (slide)${COLORS.reset}`);
-      await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`);
+      await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`, null, { admin: true });
       process.exit(1);
     }
   }
@@ -179,7 +179,7 @@ async function runTests() {
   // ── Cleanup ──
   {
     console.log(`${COLORS.dim}  [cleanup] Deleting temporary episode: ${EP_SLUG}${COLORS.reset}`);
-    await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`);
+    await makeRequest('DELETE', `/api/episodes/${EP_SLUG}`, null, { admin: true });
   }
 
   // ── Summary ──

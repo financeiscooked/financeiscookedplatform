@@ -114,7 +114,7 @@ async function runTests() {
 
   // ── 6. Error: get non-existent agent ──
   {
-    const res = await makeRequest('GET', '/api/agents/nonexistent-agent-id-999');
+    const res = await makeRequest('GET', '/api/agents/00000000-0000-0000-0000-000000000000');
     assert(res.ok === false, 'GET non-existent agent returns ok:false');
     assert(res.status === 404, 'Non-existent agent returns 404');
   }
