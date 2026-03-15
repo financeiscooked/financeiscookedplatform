@@ -27,8 +27,9 @@ cd frontend && npm run dev
 - Project: financeiscooked-platform
 - Deploy token: `a50a135b-4379-4970-acdb-7878a76b515c`
 - **IMPORTANT**: Always deploy from the PROJECT ROOT (both services have `rootDirectory` set on Railway)
-- Deploy backend: `RAILWAY_TOKEN=<token> railway up -s backend`
-- Deploy frontend: `RAILWAY_TOKEN=<token> railway up -s frontend`
+- Deploy backend: `RAILWAY_TOKEN=a50a135b-4379-4970-acdb-7878a76b515c railway up -s backend`
+- Deploy frontend: `RAILWAY_TOKEN=a50a135b-4379-4970-acdb-7878a76b515c railway up -s frontend`
+- **⚠️ NO AUTO-DEPLOY (temporary)**: GitHub auto-deploy is not set up yet. After every `git push`, you MUST manually deploy both services using the commands above.
 
 ## New Feature Checklist — MANDATORY
 

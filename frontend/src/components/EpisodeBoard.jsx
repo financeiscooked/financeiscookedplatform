@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { fetchEpisodes, fetchEpisode, castVote, fetchVotes, finalizeSlide, moveSlideToEpisode, deleteSlide, finalizeSegment, deleteSegment } from '../utils/api'
+import { fetchEpisodes, fetchEpisode, castVote, fetchVotes, finalizeSlide, moveSlideToEpisode, deleteSlide, finalizeSegment, deleteSegment, updateSegment, updateSlide } from '../utils/api'
 import {
   ChevronLeft,
   ChevronRight,
@@ -28,6 +28,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Search,
+  Pencil,
 } from 'lucide-react'
 
 function DetailsExpander({ details }) {
@@ -259,7 +260,93 @@ function LiveRundown({ segments, activeSegmentIdx, onJumpToSegment, formatTimer:
   )
 }
 
-function SlideRenderer({ slide }) {
+function EditableText({ value, onSave, isAdmin, className, placeholder }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value || '')
+
+  if (!isAdmin) return value ? <span className={className}>{value}</span> : null
+
+  if (editing) {
+    return (
+      <textarea
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => { if (draft !== (value || '')) onSave(draft); setEditing(false) }}
+        onKeyDown={(e) => { if (e.key === 'Escape') { setDraft(value || ''); setEditing(false) } }}
+        rows={Math.max(2, draft.split('\n').length)}
+        className={`${className} bg-[var(--bg-primary)] border border-[var(--border-default)] rounded px-2 py-1 outline-none focus:border-[#D94E2A] resize-none w-full`}
+      />
+    )
+  }
+
+  return (
+    <span
+      className={`${className} cursor-pointer hover:text-[#D94E2A] transition-colors`}
+      onClick={() => { setEditing(true); setDraft(value || '') }}
+    >
+      {value || placeholder || 'Click to edit...'}
+    </span>
+  )
+}
+
+function EditableBullets({ slide, isAdmin, onRefresh }) {
+  const [editIdx, setEditIdx] = useState(-1)
+  const [draft, setDraft] = useState('')
+
+  const saveBullet = async (idx) => {
+    if (draft !== slide.bullets[idx]) {
+      const newBullets = [...slide.bullets]
+      if (draft.trim()) {
+        newBullets[idx] = draft.trim()
+      } else {
+        newBullets.splice(idx, 1)
+      }
+      try { await updateSlide(slide.id, { bullets: newBullets }); if (onRefresh) onRefresh() } catch {}
+    }
+    setEditIdx(-1)
+  }
+
+  const addBullet = async () => {
+    const newBullets = [...(slide.bullets || []), 'New point']
+    try { await updateSlide(slide.id, { bullets: newBullets }); if (onRefresh) onRefresh() } catch {}
+  }
+
+  return (
+    <ul className="space-y-3">
+      {slide.bullets.map((bullet, i) => (
+        <li key={i} className="flex items-start gap-3">
+          <span className="text-[#D94E2A] mt-1.5 text-xs">&#9679;</span>
+          {editIdx === i ? (
+            <textarea
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={() => saveBullet(i)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveBullet(i) } if (e.key === 'Escape') setEditIdx(-1) }}
+              rows={2}
+              className="flex-1 text-[var(--text-secondary)] text-lg leading-relaxed bg-[var(--bg-primary)] border border-[var(--border-default)] rounded px-2 py-1 outline-none focus:border-[#D94E2A] resize-none"
+            />
+          ) : (
+            <span
+              className={`text-[var(--text-secondary)] text-lg leading-relaxed ${isAdmin ? 'cursor-pointer hover:text-[#D94E2A]' : ''}`}
+              onClick={() => { if (isAdmin) { setEditIdx(i); setDraft(bullet) } }}
+            >
+              {bullet}
+            </span>
+          )}
+        </li>
+      ))}
+      {isAdmin && (
+        <li>
+          <button onClick={addBullet} className="text-[var(--text-hint)] text-sm hover:text-[#D94E2A] transition-colors ml-6">+ Add point</button>
+        </li>
+      )}
+    </ul>
+  )
+}
+
+function SlideRenderer({ slide, isAdmin, onRefresh }) {
   if (slide.type === 'gallery') {
     const images = slide.images || []
     // Auto-pick grid: 2 cols for 4+, otherwise fit in a row
@@ -329,10 +416,14 @@ function SlideRenderer({ slide }) {
               </a>
             </div>
           </div>
-          {slide.notes && (
-            <p className="text-[var(--text-secondary)] text-base leading-relaxed mt-4 pl-8">
-              {slide.notes}
-            </p>
+          {(slide.notes || isAdmin) && (
+            <EditableText
+              value={slide.notes}
+              isAdmin={isAdmin}
+              placeholder="Add notes..."
+              onSave={(val) => updateSlide(slide.id, { notes: val }).then(() => onRefresh && onRefresh()).catch(() => {})}
+              className="text-[var(--text-secondary)] text-base leading-relaxed mt-4 pl-8 block"
+            />
           )}
           <DetailsExpander details={slide.details} />
         </div>
@@ -345,17 +436,16 @@ function SlideRenderer({ slide }) {
       <div className="max-w-2xl w-full">
         <div className="bg-[var(--bg-subtle)] border border-[var(--border-default)] rounded-2xl p-8">
           {slide.bullets && (
-            <ul className="space-y-3">
-              {slide.bullets.map((bullet, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className="text-[#D94E2A] mt-1.5 text-xs">&#9679;</span>
-                  <span className="text-[var(--text-secondary)] text-lg leading-relaxed">{bullet}</span>
-                </li>
-              ))}
-            </ul>
+            <EditableBullets slide={slide} isAdmin={isAdmin} onRefresh={onRefresh} />
           )}
-          {slide.notes && (
-            <p className="text-[var(--text-tertiary)] text-sm mt-6">{slide.notes}</p>
+          {(slide.notes || isAdmin) && (
+            <EditableText
+              value={slide.notes}
+              isAdmin={isAdmin}
+              placeholder="Add notes..."
+              onSave={(val) => updateSlide(slide.id, { notes: val }).then(() => onRefresh && onRefresh()).catch(() => {})}
+              className="text-[var(--text-tertiary)] text-sm mt-6 block"
+            />
           )}
           <DetailsExpander details={slide.details} />
         </div>
@@ -551,8 +641,28 @@ function ProposedSlideCard({ episode, segment, slide, slideIdx, onSelectSlide, a
   const [result, setResult] = useState(null)
   const [targetEp, setTargetEp] = useState(episode.id)
   const [showEpPicker, setShowEpPicker] = useState(false)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [editingNotes, setEditingNotes] = useState(false)
+  const [titleDraft, setTitleDraft] = useState(slide.title)
+  const [notesDraft, setNotesDraft] = useState(slide.notes || '')
+  const titleRef = useRef(null)
+  const notesRef = useRef(null)
 
   const isBacklog = episode.id === 'backlog'
+
+  const saveTitle = async () => {
+    if (titleDraft.trim() && titleDraft !== slide.title) {
+      try { await updateSlide(slide.id, { title: titleDraft.trim() }); if (onRefresh) onRefresh() } catch {}
+    }
+    setEditingTitle(false)
+  }
+
+  const saveNotes = async () => {
+    if (notesDraft !== (slide.notes || '')) {
+      try { await updateSlide(slide.id, { notes: notesDraft }); if (onRefresh) onRefresh() } catch {}
+    }
+    setEditingNotes(false)
+  }
 
   const handleAccept = async () => {
     if (!showEpPicker) {
@@ -614,21 +724,56 @@ function ProposedSlideCard({ episode, segment, slide, slideIdx, onSelectSlide, a
 
   return (
     <div className="w-full bg-[var(--bg-subtle)] border border-yellow-500/10 rounded-xl p-4 transition-all">
-      <button
-        onClick={() => onSelectSlide(episode.id, segment.id, slideIdx)}
-        className="w-full text-left hover:opacity-80 transition-opacity"
-      >
-        <div className="flex items-center gap-2 mb-1">
+      <div className="w-full text-left">
+        <div className="flex items-center gap-2 mb-1 group">
           <SlideTypeIcon type={slide.type} />
-          <span className="text-[var(--text-primary)] font-bold text-sm">{slide.title}</span>
+          {editingTitle ? (
+            <input
+              ref={titleRef}
+              autoFocus
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onBlur={saveTitle}
+              onKeyDown={(e) => { if (e.key === 'Enter') saveTitle(); if (e.key === 'Escape') { setTitleDraft(slide.title); setEditingTitle(false) } }}
+              className="flex-1 text-[var(--text-primary)] font-bold text-sm bg-[var(--bg-primary)] border border-[var(--border-default)] rounded px-2 py-0.5 outline-none focus:border-[#D94E2A]"
+            />
+          ) : (
+            <span
+              className={`text-[var(--text-primary)] font-bold text-sm ${isAdmin ? 'cursor-pointer hover:text-[#D94E2A]' : ''}`}
+              onClick={() => { if (isAdmin) { setEditingTitle(true); setTitleDraft(slide.title) } else { onSelectSlide(episode.id, segment.id, slideIdx) } }}
+            >
+              {slide.title}
+            </span>
+          )}
+          {isAdmin && !editingTitle && (
+            <Pencil size={10} className="text-[var(--text-hint)] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => { setEditingTitle(true); setTitleDraft(slide.title) }} />
+          )}
         </div>
-        {slide.notes && (
-          <p className="text-[var(--text-muted)] text-xs mt-1 line-clamp-2">{slide.notes}</p>
+        {editingNotes ? (
+          <textarea
+            ref={notesRef}
+            autoFocus
+            value={notesDraft}
+            onChange={(e) => setNotesDraft(e.target.value)}
+            onBlur={saveNotes}
+            onKeyDown={(e) => { if (e.key === 'Escape') { setNotesDraft(slide.notes || ''); setEditingNotes(false) } }}
+            rows={3}
+            className="w-full text-[var(--text-muted)] text-xs mt-1 bg-[var(--bg-primary)] border border-[var(--border-default)] rounded px-2 py-1 outline-none focus:border-[#D94E2A] resize-none"
+          />
+        ) : (
+          (slide.notes || isAdmin) && (
+            <p
+              className={`text-[var(--text-muted)] text-xs mt-1 line-clamp-2 ${isAdmin ? 'cursor-pointer hover:text-[var(--text-secondary)]' : ''}`}
+              onClick={() => { if (isAdmin) { setEditingNotes(true); setNotesDraft(slide.notes || '') } }}
+            >
+              {slide.notes || (isAdmin ? 'Click to add notes...' : '')}
+            </p>
+          )
         )}
         {slide.url && (
           <p className="text-[#4A9FD9]/50 text-[10px] mt-1 truncate">{slide.url}</p>
         )}
-      </button>
+      </div>
 
       <div className="flex items-center gap-2 mt-2 pl-1">
         <VoteButtons
@@ -678,11 +823,84 @@ function ProposedSlideCard({ episode, segment, slide, slideIdx, onSelectSlide, a
   )
 }
 
+function EditableSegmentHeader({ segment, isAdmin, onRefresh }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(segment.name)
+
+  const save = async () => {
+    if (draft.trim() && draft !== segment.name) {
+      try { await updateSegment(segment.id, { name: draft.trim() }); if (onRefresh) onRefresh() } catch {}
+    }
+    setEditing(false)
+  }
+
+  return (
+    <div className="flex items-center gap-2 mb-1 group">
+      <StatusDot status={segment.status} />
+      {editing ? (
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(segment.name); setEditing(false) } }}
+          className="text-[var(--text-secondary)] font-bold text-xs uppercase tracking-wider bg-[var(--bg-primary)] border border-[var(--border-default)] rounded px-2 py-0.5 outline-none focus:border-[#D94E2A]"
+        />
+      ) : (
+        <span
+          className={`text-[var(--text-secondary)] font-bold text-xs uppercase tracking-wider ${isAdmin ? 'cursor-pointer hover:text-[#D94E2A]' : ''}`}
+          onClick={() => { if (isAdmin) { setEditing(true); setDraft(segment.name) } }}
+        >
+          {segment.name}
+        </span>
+      )}
+      {isAdmin && !editing && (
+        <Pencil size={9} className="text-[var(--text-hint)] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => { setEditing(true); setDraft(segment.name) }} />
+      )}
+    </div>
+  )
+}
+
+function EditableSlideTitle({ slide, isAdmin, onRefresh }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(slide.title)
+
+  // Sync draft when slide changes
+  useEffect(() => { setDraft(slide.title); setEditing(false) }, [slide.id])
+
+  const save = async () => {
+    if (draft.trim() && draft !== slide.title) {
+      try { await updateSlide(slide.id, { title: draft.trim() }); if (onRefresh) onRefresh() } catch {}
+    }
+    setEditing(false)
+  }
+
+  return editing ? (
+    <input
+      autoFocus
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={save}
+      onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(slide.title); setEditing(false) } }}
+      className="text-[var(--text-primary)] font-bold text-lg mt-0.5 bg-[var(--bg-primary)] border border-[var(--border-default)] rounded px-2 py-0.5 outline-none focus:border-[#D94E2A] w-full"
+    />
+  ) : (
+    <h2
+      className={`text-[var(--text-primary)] font-bold text-lg mt-0.5 group inline-flex items-center gap-2 ${isAdmin ? 'cursor-pointer hover:text-[#D94E2A]' : ''}`}
+      onClick={() => { if (isAdmin) { setEditing(true); setDraft(slide.title) } }}
+    >
+      {slide.title}
+      {isAdmin && <Pencil size={12} className="text-[var(--text-hint)] opacity-0 group-hover:opacity-100 transition-opacity" />}
+    </h2>
+  )
+}
+
 function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
   const [allEpisodes, setAllEpisodes] = useState([])
   const [loading, setLoading] = useState(true)
   const [votes, setVotes] = useState({})
   const [filterEp, setFilterEp] = useState('all')
+  const [bankSearch, setBankSearch] = useState('')
 
   useEffect(() => {
     if (episodes.length === 0) return
@@ -693,6 +911,12 @@ function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
       setAllEpisodes(results.filter(Boolean))
       setLoading(false)
     })
+  }, [episodes])
+
+  const refreshBank = useCallback(() => {
+    Promise.all(
+      episodes.map((ep) => fetchEpisode(ep.id).catch(() => null))
+    ).then((results) => setAllEpisodes(results.filter(Boolean)))
   }, [episodes])
 
   // Fetch all votes once episodes are loaded
@@ -727,15 +951,29 @@ function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
   const proposedGroups = useMemo(() => {
     const groups = []
     const filtered = filterEp === 'all' ? allEpisodes : allEpisodes.filter((ep) => ep.id === filterEp)
+    const q = bankSearch.toLowerCase().trim()
     for (const ep of filtered) {
       for (const seg of ep.segments) {
         if (seg.status !== 'final' && seg.slides.length > 0) {
-          groups.push({ episode: ep, segment: seg })
+          if (q) {
+            const matchesSegment = seg.name.toLowerCase().includes(q)
+            const matchingSlides = seg.slides.filter((s) =>
+              s.title?.toLowerCase().includes(q) || s.notes?.toLowerCase().includes(q) || s.details?.toLowerCase().includes(q) ||
+              (s.bullets || []).some((b) => (typeof b === 'string' ? b : '').toLowerCase().includes(q))
+            )
+            if (matchesSegment) {
+              groups.push({ episode: ep, segment: seg })
+            } else if (matchingSlides.length > 0) {
+              groups.push({ episode: ep, segment: { ...seg, slides: matchingSlides } })
+            }
+          } else {
+            groups.push({ episode: ep, segment: seg })
+          }
         }
       }
     }
     return groups
-  }, [allEpisodes, filterEp])
+  }, [allEpisodes, filterEp, bankSearch])
 
   // Episodes that actually have proposed content (for filter dropdown)
   const episodesWithProposed = useMemo(() => {
@@ -767,7 +1005,7 @@ function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
   return (
     <div className="flex-1 overflow-y-auto p-3 sm:p-6">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-3 mb-6 flex-wrap">
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
           <Circle size={12} className="text-yellow-400" />
           <h2 className="text-[var(--text-primary)] font-bold text-lg">Proposed Bank</h2>
           <span className="text-[var(--text-muted)] text-sm">
@@ -784,14 +1022,28 @@ function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
             ))}
           </select>
         </div>
+        {/* Bank search */}
+        <div className="relative mb-5">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-hint)]" />
+          <input
+            type="text"
+            value={bankSearch}
+            onChange={(e) => setBankSearch(e.target.value)}
+            placeholder="Search segments, titles, notes..."
+            className="w-full pl-9 pr-8 py-2 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm placeholder-[var(--text-hint)] focus:outline-none focus:border-[#D94E2A] transition-colors"
+          />
+          {bankSearch && (
+            <button onClick={() => setBankSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-hint)] hover:text-[var(--text-secondary)]">
+              <X size={14} />
+            </button>
+          )}
+        </div>
         <div className="space-y-5">
           {proposedGroups.map(({ episode, segment }) => (
             <div key={`${episode.id}-${segment.id}`}>
               {/* Segment header */}
-              <div className="flex items-center gap-2 mb-2">
-                <StatusDot status="proposed" />
-                <span className="text-[var(--text-secondary)] font-bold text-xs uppercase tracking-wider">{segment.name}</span>
-                <span className="text-[var(--text-hint)] text-[10px]">&#183;</span>
+              <EditableSegmentHeader segment={segment} isAdmin={isAdmin} onRefresh={refreshBank} />
+              <div className="flex items-center gap-1 mb-2 ml-5">
                 <span className="text-[var(--text-hint)] text-[10px] font-mono">{episode.title}</span>
               </div>
               {/* Individual slides */}
@@ -808,6 +1060,7 @@ function ProposedBank({ episodes, onSelectSlide, isAdmin }) {
                     isAdmin={isAdmin}
                     votes={votes}
                     onVote={handleVote}
+                    onRefresh={refreshBank}
                   />
                 ))}
               </div>
@@ -840,7 +1093,7 @@ export default function EpisodeBoard({ forceViewMode }) {
   }, [])
   const [expandedSegments, setExpandedSegments] = useState(new Set())
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('fic-admin') === '1')
+  const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('fic-admin') === '1' || !!localStorage.getItem('admin-key'))
   const [showAdminPrompt, setShowAdminPrompt] = useState(false)
   const [adminInput, setAdminInput] = useState('')
   const [adminError, setAdminError] = useState(false)
@@ -1002,6 +1255,12 @@ export default function EpisodeBoard({ forceViewMode }) {
     })
   }, [currentEpId])
 
+  // Refresh current episode data (after inline edits)
+  const refreshEpisode = useCallback(() => {
+    if (!currentEpId) return
+    fetchEpisode(currentEpId).then((data) => { if (data) setEpisode(data) })
+  }, [currentEpId])
+
   const allSegments = episode?.segments || []
 
   // Filter segments based on view mode
@@ -1125,6 +1384,9 @@ export default function EpisodeBoard({ forceViewMode }) {
   useEffect(() => {
     if (viewMode === 'bank') return // no keyboard nav in bank view
     const handleKey = (e) => {
+      // Ignore keyboard shortcuts when user is typing in an input/textarea/chat
+      const tag = e.target.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return
       if (viewMode === 'live') {
         // In live mode: arrows and space move between segments
         if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
@@ -1542,14 +1804,10 @@ export default function EpisodeBoard({ forceViewMode }) {
             <div className="flex items-center gap-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[#D94E2A] text-xs font-bold tracking-widest uppercase">
-                    {currentSegment?.name}
-                  </span>
+                  {currentSegment && <EditableSegmentHeader segment={currentSegment} isAdmin={isAdmin} onRefresh={refreshEpisode} />}
                   {currentSegment && <StatusBadge status={currentSegment.status || 'proposed'} />}
                 </div>
-                <h2 className="text-[var(--text-primary)] font-bold text-lg mt-0.5">
-                  {currentSlide?.title}
-                </h2>
+                {currentSlide && <EditableSlideTitle slide={currentSlide} isAdmin={isAdmin} onRefresh={refreshEpisode} />}
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -1628,7 +1886,7 @@ export default function EpisodeBoard({ forceViewMode }) {
           {/* Slide content */}
           <div className="flex-1 flex items-center justify-center p-3 sm:p-6 overflow-hidden">
             {currentSlide ? (
-              <SlideRenderer slide={currentSlide} />
+              <SlideRenderer slide={currentSlide} isAdmin={isAdmin} onRefresh={refreshEpisode} />
             ) : (
               <div className="text-[var(--text-hint)] text-sm">
                 {segments.length === 0 ? 'No segments to display in this view' : 'No slides in this segment'}

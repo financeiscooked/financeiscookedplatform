@@ -73,6 +73,28 @@ export async function finalizeSegment(segmentUuid) {
   return data.data;
 }
 
+export async function updateSegment(segmentUuid, updates) {
+  const res = await fetch(`${API_BASE}/segments/${segmentUuid}`, {
+    method: 'PUT',
+    headers: adminHeaders,
+    body: JSON.stringify(updates),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Update segment failed');
+  return data.data;
+}
+
+export async function updateSlide(slideId, updates) {
+  const res = await fetch(`${API_BASE}/slides/${slideId}`, {
+    method: 'PUT',
+    headers: adminHeaders,
+    body: JSON.stringify(updates),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Update slide failed');
+  return data.data;
+}
+
 export async function deleteSegment(segmentUuid) {
   const res = await fetch(`${API_BASE}/segments/${segmentUuid}`, {
     method: 'DELETE',
