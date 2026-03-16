@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { fetchEpisodes } from '../utils/api';
 
 /* ------------------------------------------------------------------ */
 /*  Fade-in on scroll observer                                         */
@@ -78,8 +79,22 @@ const S = {
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
+function getYouTubeId(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
 export default function Home() {
   const [email, setEmail] = useState('');
+  const [episodes, setEpisodes] = useState([]);
+
+  useEffect(() => {
+    fetchEpisodes().then(eps => {
+      const withYt = eps.filter(e => e.youtubeUrl).sort((a, b) => b.sortOrder - a.sortOrder);
+      setEpisodes(withYt);
+    }).catch(() => {});
+  }, []);
 
   return (
     <div style={{ height: '100%', overflowY: 'auto', backgroundColor: S.bg, color: S.text, fontFamily: "'Inter', -apple-system, sans-serif" }}>
@@ -165,31 +180,64 @@ export default function Home() {
       </section>
 
       {/* ── EPISODES ── */}
-      <section style={{ padding: 'clamp(48px, 10vw, 100px) 0', background: S.bg }}>
+      <section style={{ padding: 'clamp(48px, 10vw, 100px) 0', background: `linear-gradient(135deg, ${S.darkBg} 0%, ${S.navyLight} 100%)`, color: '#fff' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 clamp(16px, 4vw, 24px)' }}>
           <FadeIn style={{ textAlign: 'center', marginBottom: 'clamp(32px, 6vw, 64px)' }}>
-            <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 16, color: S.text }}>Latest Episodes</h2>
-            <p style={{ fontSize: '1.15rem', color: S.textMuted, maxWidth: 560, margin: '0 auto' }}>New episodes drop weekly. Season 1 coming soon.</p>
+            <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 16 }}>Latest Episodes</h2>
+            <p style={{ fontSize: '1.15rem', color: 'rgba(255,255,255,0.7)', maxWidth: 560, margin: '0 auto' }}>New episodes drop weekly. Watch on YouTube.</p>
           </FadeIn>
-          {/* Featured Episode */}
-          <FadeIn style={{ padding: 36, borderRadius: 16, background: `linear-gradient(135deg, ${S.darkBg} 0%, ${S.navyLight} 100%)`, color: '#fff', marginBottom: 48 }}>
-            <span style={{ display: 'inline-block', padding: '4px 12px', background: S.primary, color: '#fff', borderRadius: 24, fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Now Live</span>
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: S.primary, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>EP 1 — PILOT</div>
-            <h3 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: 12, lineHeight: 1.3 }}>Finance Is Cooked: The Pilot</h3>
-            <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: 20 }}>The one that starts it all. Ore and Joe build a real website from scratch — live, no code — break down the week's biggest AI headlines shaking up finance, and drop their hottest takes on where the industry is headed. This is the show.</p>
-            <a href="https://youtu.be/YWj1NiRtlMc" target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-flex', padding: '12px 28px', borderRadius: 24, fontSize: '0.95rem', fontWeight: 600, background: S.primary, color: '#fff', textDecoration: 'none' }}>
-              Watch Episode 1
+
+          {episodes.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 24, marginBottom: 48 }}>
+              {episodes.map(ep => {
+                const videoId = getYouTubeId(ep.youtubeUrl);
+                const thumb = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null;
+                return (
+                  <FadeIn key={ep.id}>
+                    <a href={ep.youtubeUrl} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'block', borderRadius: 16, overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none', color: '#fff', transition: 'all 0.3s' }}>
+                      {thumb && (
+                        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', background: '#000' }}>
+                          <img src={thumb} alt={ep.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)', transition: 'all 0.3s' }}>
+                            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(217,78,42,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div style={{ padding: '16px 20px' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: S.amber, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                          {ep.id.toUpperCase().replace('-', ' ')}{ep.date ? ` — ${ep.date}` : ''}
+                        </div>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 600, lineHeight: 1.3, margin: 0 }}>{ep.title}</h3>
+                      </div>
+                    </a>
+                  </FadeIn>
+                );
+              })}
+            </div>
+          ) : (
+            <FadeIn style={{ textAlign: 'center', padding: '40px 0', marginBottom: 48 }}>
+              <p style={{ color: 'rgba(255,255,255,0.5)' }}>Episodes loading...</p>
+            </FadeIn>
+          )}
+
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <a href="https://www.youtube.com/@financeiscooked" target="_blank" rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 28px', borderRadius: 24, fontSize: '0.95rem', fontWeight: 600, background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', textDecoration: 'none', transition: 'all 0.2s' }}>
+              View All on YouTube
             </a>
-          </FadeIn>
+          </div>
+
           {/* Segments */}
-          <h3 style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: 700, marginBottom: 32, color: S.text }}>Every Episode Includes</h3>
+          <h3 style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: 700, marginBottom: 32 }}>Every Episode Includes</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 20 }}>
             {SEGMENTS.map(s => (
-              <FadeIn key={s.title} style={{ padding: 28, borderRadius: 12, border: `1px solid ${S.border}`, background: S.surface, transition: 'all 0.3s' }}>
+              <FadeIn key={s.title} style={{ padding: 28, borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', transition: 'all 0.3s' }}>
                 <span style={{ fontSize: '1.6rem', display: 'block', marginBottom: 12 }}>{s.icon}</span>
-                <h4 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: 8, color: S.text }}>{s.title}</h4>
-                <p style={{ fontSize: '0.9rem', color: S.textMuted, lineHeight: 1.6 }}>{s.desc}</p>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: 8 }}>{s.title}</h4>
+                <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>{s.desc}</p>
               </FadeIn>
             ))}
           </div>

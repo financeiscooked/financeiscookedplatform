@@ -61,13 +61,14 @@ model Session {
 }
 
 model Episode {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug      String   @unique @db.VarChar(50)
-  title     String   @db.VarChar(255)
-  date      String?  @db.VarChar(50)
-  sortOrder Int      @default(0) @map("sort_order")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug       String   @unique @db.VarChar(50)
+  title      String   @db.VarChar(255)
+  date       String?  @db.VarChar(50)
+  youtubeUrl String?  @map("youtube_url") @db.VarChar(500)
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   segments Segment[]
 
