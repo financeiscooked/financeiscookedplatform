@@ -307,6 +307,15 @@ const CATEGORIES = [
     ]
   },
   {
+    name: 'Slide Documents', slug: 'slide-documents', description: 'Upload, list, download, and delete documents attached to slides (stored in Postgres)',
+    endpoints: [
+      { method: 'POST', path: '/api/slides/:id/documents', summary: '[Admin] Upload a document to a slide (multipart form-data)', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Slide UUID' }], body: { schema: { file: { type: 'file', required: true, description: 'File to upload (multipart form-data field named "file")' }, sortOrder: { type: 'number', required: false, example: 0, description: 'Display order' } }, example: 'multipart/form-data with file field' } },
+      { method: 'GET', path: '/api/slides/:id/documents', summary: 'List documents attached to a slide (metadata only)', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Slide UUID' }], body: null },
+      { method: 'GET', path: '/api/documents/:id/download', summary: 'Download a document file', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Document UUID' }], body: null },
+      { method: 'DELETE', path: '/api/documents/:id', summary: '[Admin] Delete a document', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Document UUID' }], body: null },
+    ]
+  },
+  {
     name: 'Votes', slug: 'votes', description: 'Anonymous voting on slides',
     endpoints: [
       { method: 'POST', path: '/api/slides/:id/vote', summary: 'Cast a vote on a slide', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Slide UUID' }], body: { schema: { direction: { type: 'string', required: true, enum: ['up','down'], example: 'up', description: 'Vote direction' } }, example: { direction: 'up' } } },

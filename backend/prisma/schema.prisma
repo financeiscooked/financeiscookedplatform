@@ -105,9 +105,10 @@ model Slide {
   createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  segment Segment      @relation(fields: [segmentId], references: [id], onDelete: Cascade)
-  images  SlideImage[]
-  votes   Vote[]
+  segment   Segment         @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+  images    SlideImage[]
+  documents SlideDocument[]
+  votes     Vote[]
 
   @@map("slides")
 }
@@ -122,6 +123,23 @@ model SlideImage {
   slide Slide @relation(fields: [slideId], references: [id], onDelete: Cascade)
 
   @@map("slide_images")
+}
+
+model SlideDocument {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slideId   String   @map("slide_id") @db.Uuid
+  filename  String   @db.VarChar(500)
+  mimeType  String   @map("mime_type") @db.VarChar(255)
+  fileSize  Int      @map("file_size")
+  data      Bytes
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  slide Slide @relation(fields: [slideId], references: [id], onDelete: Cascade)
+
+  @@index([slideId])
+  @@map("slide_documents")
 }
 
 model Vote {

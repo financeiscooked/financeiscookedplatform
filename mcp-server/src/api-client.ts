@@ -128,6 +128,43 @@ export class FinanceIsCookedClient {
     return this.request<any>(`/api/slides/${encodeURIComponent(id)}/finalize`, { method: 'POST', requiresAdmin: true });
   }
 
+  // ── Slide Documents ─────────────────────────────────────────
+
+  async uploadSlideDocument(slideId: string, filename: string, mimeType: string, base64Data: string) {
+    // Build multipart form data manually
+    const boundary = '----FormBoundary' + Date.now();
+    const binaryData = Buffer.from(base64Data, 'base64');
+
+    const bodyParts = [
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: ${mimeType}\r\n\r\n`,
+    ];
+
+    const header = Buffer.from(bodyParts[0], 'utf-8');
+    const footer = Buffer.from(`\r\n--${boundary}--\r\n`, 'utf-8');
+    const body = Buffer.concat([header, binaryData, footer]);
+
+    const url = new URL(`${this.baseUrl}/api/slides/${encodeURIComponent(slideId)}/documents`);
+    const headers: Record<string, string> = {
+      'Content-Type': `multipart/form-data; boundary=${boundary}`,
+    };
+    if (this.adminKey) headers['X-Admin-Key'] = this.adminKey;
+
+    const response = await fetch(url.toString(), { method: 'POST', headers, body });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`API Error ${response.status}: ${text}`);
+    }
+    return response.json();
+  }
+
+  async listSlideDocuments(slideId: string) {
+    return this.request<any>(`/api/slides/${encodeURIComponent(slideId)}/documents`);
+  }
+
+  async deleteSlideDocument(documentId: string) {
+    return this.request<any>(`/api/documents/${encodeURIComponent(documentId)}`, { method: 'DELETE', requiresAdmin: true });
+  }
+
   // ── Votes ─────────────────────────────────────────────────
 
   async castVote(slideId: string, direction: string) {

@@ -1,8 +1,10 @@
 import { Router } from 'express';
+import multer from 'multer';
 import prisma from '../lib/prisma.js';
 import { requireAdmin } from '../middleware/admin-auth.js';
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 // POST /api/segments/:id/slides
 router.post('/segments/:id/slides', requireAdmin, async (req, res, next) => {
@@ -106,6 +108,65 @@ router.post('/slides/:id/finalize', requireAdmin, async (req, res, next) => {
     });
 
     res.json({ ok: true, data: { id: slide.id, title: slide.title, status: 'final' } });
+  } catch (err) { next(err); }
+});
+
+// ── Slide Documents ──────────────────────────────────────────────
+
+// POST /api/slides/:id/documents - upload document
+router.post('/slides/:id/documents', requireAdmin, upload.single('file'), async (req, res, next) => {
+  try {
+    const slide = await prisma.slide.findUnique({ where: { id: req.params.id as string } });
+    if (!slide) { res.status(404).json({ ok: false, error: 'Slide not found' }); return; }
+
+    const file = req.file;
+    if (!file) { res.status(400).json({ ok: false, error: 'No file uploaded' }); return; }
+
+    const doc = await prisma.slideDocument.create({
+      data: {
+        slideId: req.params.id as string,
+        filename: file.originalname,
+        mimeType: file.mimetype,
+        fileSize: file.size,
+        data: new Uint8Array(file.buffer),
+        sortOrder: req.body.sortOrder ? parseInt(req.body.sortOrder) : 0,
+      },
+      select: { id: true, slideId: true, filename: true, mimeType: true, fileSize: true, sortOrder: true, createdAt: true },
+    });
+    res.status(201).json({ ok: true, data: doc });
+  } catch (err) { next(err); }
+});
+
+// GET /api/slides/:id/documents - list documents for a slide
+router.get('/slides/:id/documents', async (req, res, next) => {
+  try {
+    const docs = await prisma.slideDocument.findMany({
+      where: { slideId: req.params.id as string },
+      select: { id: true, slideId: true, filename: true, mimeType: true, fileSize: true, sortOrder: true, createdAt: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    res.json({ ok: true, data: docs });
+  } catch (err) { next(err); }
+});
+
+// GET /api/documents/:id/download - download a document
+router.get('/documents/:id/download', async (req, res, next) => {
+  try {
+    const doc = await prisma.slideDocument.findUnique({ where: { id: req.params.id as string } });
+    if (!doc) { res.status(404).json({ ok: false, error: 'Document not found' }); return; }
+
+    res.setHeader('Content-Type', doc.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${doc.filename}"`);
+    res.setHeader('Content-Length', doc.fileSize.toString());
+    res.send(doc.data);
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/documents/:id - delete a document
+router.delete('/documents/:id', requireAdmin, async (req, res, next) => {
+  try {
+    await prisma.slideDocument.delete({ where: { id: req.params.id as string } });
+    res.json({ ok: true, data: null });
   } catch (err) { next(err); }
 });
 

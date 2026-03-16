@@ -171,6 +171,37 @@ export const tools: ToolDef[] = [
     handler: async (client, args: { id: string }) => client.finalizeSlide(args.id),
   },
 
+  // ── Slide Documents ─────────────────────────────────────────
+
+  {
+    name: 'slide_document_upload',
+    description: '[Admin] Upload a document (PDF, image, etc.) to a slide. File content must be base64-encoded.',
+    inputSchema: z.object({
+      slideId: z.string().describe('slide ID to attach document to'),
+      filename: z.string().describe('original filename (e.g. "report.pdf")'),
+      mimeType: z.string().describe('MIME type (e.g. "application/pdf", "image/png")'),
+      base64Data: z.string().describe('base64-encoded file content'),
+    }),
+    handler: async (client, args: { slideId: string; filename: string; mimeType: string; base64Data: string }) =>
+      client.uploadSlideDocument(args.slideId, args.filename, args.mimeType, args.base64Data),
+  },
+  {
+    name: 'slide_documents_list',
+    description: 'List all documents attached to a slide (metadata only, no file content)',
+    inputSchema: z.object({
+      slideId: z.string().describe('slide ID'),
+    }),
+    handler: async (client, args: { slideId: string }) => client.listSlideDocuments(args.slideId),
+  },
+  {
+    name: 'slide_document_delete',
+    description: '[Admin] Delete a document from a slide',
+    inputSchema: z.object({
+      documentId: z.string().describe('document ID'),
+    }),
+    handler: async (client, args: { documentId: string }) => client.deleteSlideDocument(args.documentId),
+  },
+
   // ── Votes ─────────────────────────────────────────────────
 
   {

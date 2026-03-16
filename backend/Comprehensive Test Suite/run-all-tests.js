@@ -27,6 +27,7 @@ const SUITES = [
   { name: 'Episodes',     file: 'Episodes/episodes-tests.js' },
   { name: 'Segments',     file: 'Segments/segments-tests.js' },
   { name: 'Slides',       file: 'Slides/slides-tests.js' },
+  { name: 'Slide Documents', file: 'SlideDocuments/slide-documents-tests.js' },
   { name: 'Votes',        file: 'Votes/votes-tests.js' },
   { name: 'Agents',       file: 'Agents/agents-tests.js' },
   { name: 'Capabilities', file: 'Capabilities/capabilities-tests.js' },

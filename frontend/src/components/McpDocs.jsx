@@ -94,6 +94,24 @@ const TOOL_DOCS = [
     ],
   },
   {
+    label: 'Slide Documents',
+    id: 'slide-documents',
+    tools: [
+      { name: 'slide_document_upload', description: '[Admin] Upload a document (PDF, image, etc.) to a slide. File content must be base64-encoded. Stored directly in Postgres. Max 20MB. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'slideId', type: 'string', required: true, description: 'Slide ID to attach document to' },
+        { name: 'filename', type: 'string', required: true, description: 'Original filename (e.g. "report.pdf")' },
+        { name: 'mimeType', type: 'string', required: true, description: 'MIME type (e.g. "application/pdf", "image/png")' },
+        { name: 'base64Data', type: 'string', required: true, description: 'Base64-encoded file content' },
+      ], example: 'await callTool("slide_document_upload", {\n  slideId: "slide-uuid",\n  filename: "research.pdf",\n  mimeType: "application/pdf",\n  base64Data: "JVBERi0xLjQg..."\n})' },
+      { name: 'slide_documents_list', description: 'List all documents attached to a slide (metadata only, no file content).', params: [
+        { name: 'slideId', type: 'string', required: true, description: 'Slide ID' },
+      ], example: 'await callTool("slide_documents_list", {\n  slideId: "slide-uuid"\n})\n// Returns: [{ id, filename, mimeType, fileSize, sortOrder, createdAt }]' },
+      { name: 'slide_document_delete', description: '[Admin] Delete a document from a slide. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'documentId', type: 'string', required: true, description: 'Document ID (UUID)' },
+      ] },
+    ],
+  },
+  {
     label: 'Votes',
     id: 'votes',
     tools: [
