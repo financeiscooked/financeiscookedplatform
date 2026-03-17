@@ -33,9 +33,10 @@ export const tools: ToolDef[] = [
       title: z.string().describe('episode title'),
       date: z.string().optional().describe('air date (ISO)'),
       youtubeUrl: z.string().optional().describe('YouTube video URL'),
+      transcript: z.string().optional().describe('episode transcript (markdown)'),
       sortOrder: z.number().optional().describe('display order'),
     }),
-    handler: async (client, args: { slug: string; title: string; date?: string; youtubeUrl?: string; sortOrder?: number }) =>
+    handler: async (client, args: { slug: string; title: string; date?: string; youtubeUrl?: string; transcript?: string; sortOrder?: number }) =>
       client.createEpisode(args),
   },
   {
@@ -46,9 +47,10 @@ export const tools: ToolDef[] = [
       title: z.string().optional().describe('new title'),
       date: z.string().optional().describe('new air date (ISO)'),
       youtubeUrl: z.string().optional().describe('YouTube video URL'),
+      transcript: z.string().optional().describe('episode transcript (markdown)'),
       sortOrder: z.number().optional().describe('new display order'),
     }),
-    handler: async (client, args: { slug: string; title?: string; date?: string; youtubeUrl?: string; sortOrder?: number }) => {
+    handler: async (client, args: { slug: string; title?: string; date?: string; youtubeUrl?: string; transcript?: string; sortOrder?: number }) => {
       const { slug, ...data } = args;
       return client.updateEpisode(slug, data);
     },

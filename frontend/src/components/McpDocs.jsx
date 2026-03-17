@@ -19,6 +19,7 @@ const TOOL_DOCS = [
         { name: 'title', type: 'string', required: true, description: 'Episode title' },
         { name: 'date', type: 'string', required: false, description: 'Air date (ISO format)' },
         { name: 'youtubeUrl', type: 'string', required: false, description: 'YouTube video URL' },
+        { name: 'transcript', type: 'string', required: false, description: 'Episode transcript (markdown)' },
         { name: 'sortOrder', type: 'number', required: false, description: 'Display order' },
       ], example: 'await callTool("episode_create", {\n  slug: "ep-pilot",\n  title: "The Pilot Episode",\n  date: "2026-03-15",\n  youtubeUrl: "https://youtu.be/abc123"\n})' },
       { name: 'episode_update', description: '[Admin] Update an existing episode. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
@@ -26,6 +27,7 @@ const TOOL_DOCS = [
         { name: 'title', type: 'string', required: false, description: 'New title' },
         { name: 'date', type: 'string', required: false, description: 'New air date (ISO)' },
         { name: 'youtubeUrl', type: 'string', required: false, description: 'YouTube video URL' },
+        { name: 'transcript', type: 'string', required: false, description: 'Episode transcript (markdown)' },
         { name: 'sortOrder', type: 'number', required: false, description: 'New display order' },
       ] },
       { name: 'episode_delete', description: '[Admin] Delete an episode and all its content (segments, slides, votes). Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [

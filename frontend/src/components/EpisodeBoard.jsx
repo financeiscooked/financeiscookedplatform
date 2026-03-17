@@ -1098,6 +1098,39 @@ export default function EpisodeBoard({ forceViewMode }) {
   const [adminInput, setAdminInput] = useState('')
   const [adminError, setAdminError] = useState(false)
 
+  // Transcript
+  const [showTranscript, setShowTranscript] = useState(false)
+  const [transcriptText, setTranscriptText] = useState('')
+  const [transcriptSaving, setTranscriptSaving] = useState(false)
+  const [transcriptDirty, setTranscriptDirty] = useState(false)
+
+  // Load transcript when episode changes
+  useEffect(() => {
+    if (episode?.transcript) {
+      setTranscriptText(episode.transcript)
+    } else {
+      setTranscriptText('')
+    }
+    setTranscriptDirty(false)
+  }, [episode?.transcript, currentEpId])
+
+  const saveTranscript = useCallback(async () => {
+    if (!currentEpId) return
+    setTranscriptSaving(true)
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://backend-production-0e40.up.railway.app/api'
+      const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || 'admin123'
+      const res = await fetch(`${API_BASE}/episodes/${currentEpId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+        body: JSON.stringify({ transcript: transcriptText }),
+      })
+      const data = await res.json()
+      if (data.ok) setTranscriptDirty(false)
+    } catch (e) { /* ignore */ }
+    setTranscriptSaving(false)
+  }, [currentEpId, transcriptText])
+
   // Search across all episodes
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState(null)
@@ -1642,6 +1675,19 @@ export default function EpisodeBoard({ forceViewMode }) {
               )}
             </div>
           )}
+          {/* Transcript button */}
+          {viewMode !== 'bank' && (
+            <button
+              onClick={() => setShowTranscript(true)}
+              className="flex items-center gap-1.5 mt-2 px-1 text-[10px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+            >
+              <FileText size={10} />
+              <span className="font-bold uppercase tracking-wider">
+                {transcriptText ? 'View Transcript' : 'Add Transcript'}
+              </span>
+              {transcriptText && <span className="text-emerald-400">●</span>}
+            </button>
+          )}
         </div>
 
         {/* Segment list (hidden in bank view) */}
@@ -1967,6 +2013,65 @@ export default function EpisodeBoard({ forceViewMode }) {
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Transcript panel */}
+      {showTranscript && (
+        <div className="fixed inset-0 z-50 flex items-stretch bg-black/60 backdrop-blur-sm">
+          <div className="flex-1" onClick={() => setShowTranscript(false)} />
+          <div className="w-full max-w-2xl bg-[var(--bg-primary)] border-l border-[var(--border-default)] flex flex-col shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-subtle)]">
+              <div className="flex items-center gap-2">
+                <FileText size={16} className="text-[var(--text-muted)]" />
+                <h3 className="text-[var(--text-primary)] font-bold text-sm">
+                  Transcript — {currentEp?.title || 'Episode'}
+                </h3>
+                {transcriptDirty && <span className="text-[10px] text-yellow-400 font-bold uppercase">unsaved</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <button
+                    onClick={saveTranscript}
+                    disabled={transcriptSaving || !transcriptDirty}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      transcriptDirty
+                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/25'
+                        : 'bg-[var(--bg-subtle)] text-[var(--text-hint)] border border-[var(--border-subtle)]'
+                    }`}
+                  >
+                    {transcriptSaving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                    {transcriptSaving ? 'Saving...' : 'Save'}
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowTranscript(false)}
+                  className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-5">
+              {isAdmin ? (
+                <textarea
+                  value={transcriptText}
+                  onChange={(e) => { setTranscriptText(e.target.value); setTranscriptDirty(true) }}
+                  placeholder="Paste transcript here (supports markdown)..."
+                  className="w-full h-full min-h-[400px] bg-[var(--bg-subtle)] border border-[var(--border-default)] rounded-xl p-4 text-sm text-[var(--text-secondary)] leading-relaxed resize-none outline-none focus:border-[#D94E2A]/30 placeholder:text-[var(--text-hint)] font-mono"
+                />
+              ) : transcriptText ? (
+                <div className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap font-mono">
+                  {transcriptText}
+                </div>
+              ) : (
+                <div className="text-center text-[var(--text-hint)] text-sm py-16">
+                  No transcript available for this episode yet.
+                </div>
+              )}
             </div>
           </div>
         </div>

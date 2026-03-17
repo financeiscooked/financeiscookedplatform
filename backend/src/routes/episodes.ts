@@ -22,6 +22,7 @@ router.get('/episodes', async (req, res, next) => {
       title: ep.title,
       date: ep.date,
       youtubeUrl: ep.youtubeUrl,
+      hasTranscript: !!ep.transcript,
       sortOrder: ep.sortOrder,
       segmentCount: ep._count.segments,
       slideCount: ep.segments.reduce((sum, seg) => sum + seg._count.slides, 0),
@@ -60,6 +61,7 @@ router.get('/episodes/:slug', async (req, res, next) => {
       title: episode.title,
       date: episode.date,
       youtubeUrl: episode.youtubeUrl,
+      transcript: episode.transcript,
       segments: episode.segments.map(seg => ({
         id: seg.slug,
         uuid: seg.id,
@@ -89,9 +91,9 @@ router.get('/episodes/:slug', async (req, res, next) => {
 // POST /api/episodes - create
 router.post('/episodes', requireAdmin, async (req, res, next) => {
   try {
-    const { slug, title, date, youtubeUrl, sortOrder } = req.body;
+    const { slug, title, date, youtubeUrl, transcript, sortOrder } = req.body;
     const episode = await prisma.episode.create({
-      data: { slug, title, date, youtubeUrl, sortOrder: sortOrder ?? 0 },
+      data: { slug, title, date, youtubeUrl, transcript, sortOrder: sortOrder ?? 0 },
     });
     res.status(201).json({ ok: true, data: { id: episode.slug, title: episode.title } });
   } catch (err) { next(err); }
@@ -100,13 +102,14 @@ router.post('/episodes', requireAdmin, async (req, res, next) => {
 // PUT /api/episodes/:slug - update
 router.put('/episodes/:slug', requireAdmin, async (req, res, next) => {
   try {
-    const { title, date, youtubeUrl, sortOrder } = req.body;
+    const { title, date, youtubeUrl, transcript, sortOrder } = req.body;
     const episode = await prisma.episode.update({
       where: { slug: req.params.slug as string },
       data: {
         ...(title !== undefined && { title }),
         ...(date !== undefined && { date }),
         ...(youtubeUrl !== undefined && { youtubeUrl }),
+        ...(transcript !== undefined && { transcript }),
         ...(sortOrder !== undefined && { sortOrder }),
       },
     });

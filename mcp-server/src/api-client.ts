@@ -70,11 +70,11 @@ export class FinanceIsCookedClient {
     return this.request<any>(`/api/episodes/${encodeURIComponent(slug)}`);
   }
 
-  async createEpisode(data: { slug: string; title: string; date?: string; youtubeUrl?: string; sortOrder?: number }) {
+  async createEpisode(data: { slug: string; title: string; date?: string; youtubeUrl?: string; transcript?: string; sortOrder?: number }) {
     return this.request<any>('/api/episodes', { method: 'POST', body: data, requiresAdmin: true });
   }
 
-  async updateEpisode(slug: string, data: { title?: string; date?: string; youtubeUrl?: string; sortOrder?: number }) {
+  async updateEpisode(slug: string, data: { title?: string; date?: string; youtubeUrl?: string; transcript?: string; sortOrder?: number }) {
     return this.request<any>(`/api/episodes/${encodeURIComponent(slug)}`, { method: 'PUT', body: data, requiresAdmin: true });
   }
 

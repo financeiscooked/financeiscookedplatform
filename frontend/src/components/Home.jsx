@@ -117,16 +117,30 @@ export default function Home() {
               <p style={{ fontSize: '1.15rem', lineHeight: 1.7, color: 'rgba(255,255,255,0.7)', marginBottom: 40 }}>
                 AI is changing everything in finance, and it's moving fast. Every week, we build real things, break down what matters, and share the hottest takes so you stay ahead. All signal, no noise. Just two finance pros cooking with AI live.
               </p>
-              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 48 }}>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
                 <a href="https://youtu.be/YWj1NiRtlMc" target="_blank" rel="noopener noreferrer"
                   style={{ display: 'inline-flex', alignItems: 'center', padding: '12px 28px', borderRadius: 24, fontSize: '0.95rem', fontWeight: 600, background: S.primary, color: '#fff', textDecoration: 'none', transition: 'all 0.2s' }}>
-                  Watch Episode 1
+                  Watch Latest Episode
                 </a>
                 <a href="https://www.youtube.com/channel/UCoPOUK-XcrxaMQc_siSwVZA?sub_confirmation=1" target="_blank" rel="noopener noreferrer"
                   style={{ display: 'inline-flex', alignItems: 'center', padding: '12px 28px', borderRadius: 24, fontSize: '0.95rem', fontWeight: 600, background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', textDecoration: 'none', transition: 'all 0.2s' }}>
                   Subscribe on YouTube
                 </a>
               </div>
+              {episodes.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 48 }}>
+                  <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600, marginRight: 4 }}>EPISODES</span>
+                  {[...episodes].sort((a, b) => a.sortOrder - b.sortOrder).map((ep, i) => (
+                    <span key={ep.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      {i > 0 && <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.8rem' }}>|</span>}
+                      <a href={ep.youtubeUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: '0.8rem', fontWeight: 600, color: S.amber, textDecoration: 'none', transition: 'color 0.2s' }}>
+                        {ep.id.toUpperCase().replace('-', ' ')}
+                      </a>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <img src="/images/hero-full.png" alt="Finance is Cooked" style={{ maxWidth: '100%', height: 'auto', borderRadius: 16, filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.3))' }} />
