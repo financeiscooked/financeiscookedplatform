@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { fetchEpisodes, fetchEpisode, castVote, fetchVotes, finalizeSlide, moveSlideToEpisode, deleteSlide, finalizeSegment, deleteSegment, updateSegment, updateSlide } from '../utils/api'
+import { fetchEpisodes, fetchEpisode, castVote, fetchVotes, finalizeSlide, moveSlideToEpisode, deleteSlide, finalizeSegment, deleteSegment, updateSegment, updateSlide, createSlide } from '../utils/api'
 import {
   ChevronLeft,
   ChevronRight,
@@ -29,6 +29,7 @@ import {
   ThumbsDown,
   Search,
   Pencil,
+  Plus,
 } from 'lucide-react'
 
 function DetailsExpander({ details }) {
@@ -346,7 +347,80 @@ function EditableBullets({ slide, isAdmin, onRefresh }) {
   )
 }
 
-const API_IMG_BASE = (import.meta.env.VITE_API_URL || 'https://backend-production-0e40.up.railway.app/api').replace(/\/api$/, '')
+function AddSlideButton({ segmentUuid, onRefresh }) {
+  const [showForm, setShowForm] = useState(false)
+  const [title, setTitle] = useState('')
+  const [type, setType] = useState('text')
+  const [creating, setCreating] = useState(false)
+
+  const handleCreate = async () => {
+    if (!title.trim() || !segmentUuid) return
+    setCreating(true)
+    try {
+      await createSlide(segmentUuid, { type, title: title.trim() })
+      setTitle('')
+      setShowForm(false)
+      if (onRefresh) onRefresh()
+    } catch (e) { /* ignore */ }
+    setCreating(false)
+  }
+
+  if (!showForm) {
+    return (
+      <button
+        onClick={() => setShowForm(true)}
+        className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[#D94E2A]/10 text-[#D94E2A] border border-[#D94E2A]/20 hover:bg-[#D94E2A]/20 transition-all"
+      >
+        <Plus size={12} />
+        Add Slide
+      </button>
+    )
+  }
+
+  return (
+    <div className="bg-[var(--bg-subtle)] border border-[var(--border-default)] rounded-xl p-4 max-w-sm w-full">
+      <div className="flex items-center gap-2 mb-3">
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          className="px-2 py-1.5 rounded-lg text-xs font-bold bg-[var(--bg-primary)] border border-[var(--border-default)] text-[var(--text-primary)] outline-none"
+        >
+          <option value="text">Text</option>
+          <option value="link">Link</option>
+          <option value="image">Image</option>
+          <option value="gallery">Gallery</option>
+        </select>
+      </div>
+      <input
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+        placeholder="Slide title..."
+        autoFocus
+        className="w-full px-3 py-2 rounded-lg text-sm bg-[var(--bg-primary)] border border-[var(--border-default)] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-hint)] mb-3"
+      />
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleCreate}
+          disabled={creating || !title.trim()}
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#D94E2A]/15 text-[#D94E2A] border border-[#D94E2A]/20 hover:bg-[#D94E2A]/25 transition-all disabled:opacity-40"
+        >
+          {creating ? <Loader2 size={10} className="animate-spin" /> : <Plus size={10} />}
+          Create
+        </button>
+        <button
+          onClick={() => { setShowForm(false); setTitle('') }}
+          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)] hover:text-[var(--text-secondary)] transition-all"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const API_IMG_BASE =(import.meta.env.VITE_API_URL || 'https://backend-production-0e40.up.railway.app/api').replace(/\/api$/, '')
 
 function resolveImgSrc(src) {
   if (!src) return ''
@@ -2007,8 +2081,13 @@ export default function EpisodeBoard({ forceViewMode }) {
             {currentSlide ? (
               <SlideRenderer slide={currentSlide} isAdmin={isAdmin} onRefresh={refreshEpisode} />
             ) : (
-              <div className="text-[var(--text-hint)] text-sm">
-                {segments.length === 0 ? 'No segments to display in this view' : 'No slides in this segment'}
+              <div className="text-center">
+                <div className="text-[var(--text-hint)] text-sm mb-4">
+                  {segments.length === 0 ? 'No segments to display in this view' : 'No slides in this segment'}
+                </div>
+                {segments.length > 0 && isAdmin && (
+                  <AddSlideButton segmentUuid={segments[activeSegmentIdx]?.uuid} onRefresh={refreshEpisode} />
+                )}
               </div>
             )}
           </div>
@@ -2048,6 +2127,9 @@ export default function EpisodeBoard({ forceViewMode }) {
               Next
               <ChevronRight size={16} />
             </button>
+            {isAdmin && segments[activeSegmentIdx] && (
+              <AddSlideButton segmentUuid={segments[activeSegmentIdx].uuid} onRefresh={refreshEpisode} />
+            )}
           </div>
         </div>
       )}

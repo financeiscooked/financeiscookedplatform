@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { BrainCircuit, X, Plus, Send } from 'lucide-react';
+import { BrainCircuit, X, Plus, Send, Square } from 'lucide-react';
 import { api } from '../../lib/api';
 import AgentSelector from './AgentSelector';
 import ChatMessage from './ChatMessage';
@@ -341,32 +341,55 @@ export default function AgentChatPanel({ open, onClose }) {
               fontFamily: 'inherit',
             }}
           />
-          <button
-            onClick={sendMessage}
-            disabled={streaming || !input.trim() || !conversationId}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 10,
-              border: 'none',
-              background:
-                streaming || !input.trim()
-                  ? 'var(--bg-subtle, #e2e8f0)'
-                  : 'linear-gradient(135deg, #D94E2A, #F0A030)',
-              color:
-                streaming || !input.trim()
-                  ? 'var(--text-secondary, #94a3b8)'
-                  : '#fff',
-              cursor: streaming || !input.trim() ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              transition: 'background 0.2s',
-            }}
-          >
-            <Send size={18} />
-          </button>
+          {streaming ? (
+            <button
+              onClick={() => abortRef.current?.abort()}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 10,
+                border: '2px solid #ef4444',
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#ef4444',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                transition: 'all 0.2s',
+              }}
+              title="Stop generating"
+            >
+              <Square size={16} fill="#ef4444" />
+            </button>
+          ) : (
+            <button
+              onClick={sendMessage}
+              disabled={!input.trim() || !conversationId}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 10,
+                border: 'none',
+                background:
+                  !input.trim()
+                    ? 'var(--bg-subtle, #e2e8f0)'
+                    : 'linear-gradient(135deg, #D94E2A, #F0A030)',
+                color:
+                  !input.trim()
+                    ? 'var(--text-secondary, #94a3b8)'
+                    : '#fff',
+                cursor: !input.trim() ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                transition: 'background 0.2s',
+              }}
+            >
+              <Send size={18} />
+            </button>
+          )}
         </div>
       </div>
     </div>

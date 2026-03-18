@@ -95,6 +95,17 @@ export async function updateSlide(slideId, updates) {
   return data.data;
 }
 
+export async function createSlide(segmentUuid, slideData) {
+  const res = await fetch(`${API_BASE}/segments/${segmentUuid}/slides`, {
+    method: 'POST',
+    headers: adminHeaders,
+    body: JSON.stringify(slideData),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Create slide failed');
+  return data.data;
+}
+
 export async function deleteSegment(segmentUuid) {
   const res = await fetch(`${API_BASE}/segments/${segmentUuid}`, {
     method: 'DELETE',
