@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import type { LLMMessage } from './llm/types.js';
+import type { LLMMessage, LLMImage } from './llm/types.js';
 import { getRagContext } from './ragService.js';
 import { getMemoryRecall } from './memoryService.js';
 
@@ -10,6 +10,7 @@ export async function buildContext(params: {
   agentId: string;
   conversationId: string;
   userMessage: string;
+  images?: LLMImage[];
   historyLimit?: number;
   openaiApiKey?: string;
 }): Promise<{
@@ -94,8 +95,12 @@ export async function buildContext(params: {
     });
   }
 
-  // Append the new user message
-  messages.push({ role: 'user', content: params.userMessage });
+  // Append the new user message (with optional images)
+  messages.push({
+    role: 'user',
+    content: params.userMessage,
+    ...(params.images && params.images.length > 0 ? { images: params.images } : {}),
+  });
 
   return {
     messages,

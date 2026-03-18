@@ -150,7 +150,19 @@ export class ClaudeProvider implements LLMProvider {
 
     for (const msg of messages) {
       if (msg.role === 'user') {
-        result.push({ role: 'user', content: msg.content });
+        if (msg.images && msg.images.length > 0) {
+          const content: any[] = [];
+          for (const img of msg.images) {
+            content.push({
+              type: 'image',
+              source: { type: 'base64', media_type: img.mimeType, data: img.data },
+            });
+          }
+          content.push({ type: 'text', text: msg.content });
+          result.push({ role: 'user', content });
+        } else {
+          result.push({ role: 'user', content: msg.content });
+        }
       } else if (msg.role === 'assistant') {
         if (msg.toolCalls && msg.toolCalls.length > 0) {
           // Assistant message with tool use blocks

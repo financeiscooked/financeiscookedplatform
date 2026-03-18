@@ -1,6 +1,12 @@
+export interface LLMImage {
+  data: string;      // base64-encoded
+  mimeType: string;  // e.g. "image/png"
+}
+
 export interface LLMMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
+  images?: LLMImage[];
   toolCallId?: string;
   toolCalls?: ToolCall[];
 }

@@ -7,7 +7,7 @@ import { executeWithTools, streamWithTools } from '../services/toolExecutor.js';
 import { DEEP_TOOLS } from '../services/deepTools.js';
 import { MEMORY_TOOLS } from '../services/memoryTools.js';
 import { PLATFORM_TOOLS } from '../services/platformTools.js';
-import type { Tool } from '../services/llm/types.js';
+import type { Tool, LLMImage } from '../services/llm/types.js';
 
 const router = Router();
 
@@ -188,12 +188,20 @@ router.get('/:conversationId', async (req, res, next) => {
 
 router.post('/:conversationId/stream', async (req, res, next) => {
   try {
-    const { content } = req.body;
+    const { content, images } = req.body;
 
     if (!content) {
       res.status(400).json({ ok: false, error: 'content is required' });
       return;
     }
+
+    // Parse images if provided: [{ data: "base64...", mimeType: "image/png" }]
+    const llmImages: LLMImage[] | undefined = Array.isArray(images) && images.length > 0
+      ? images.filter((img: any) => img.data && img.mimeType).map((img: any) => ({
+          data: img.data,
+          mimeType: img.mimeType,
+        }))
+      : undefined;
 
     const conversation = await prisma.conversation.findUnique({
       where: { publicId: req.params.conversationId as string },
@@ -230,6 +238,7 @@ router.post('/:conversationId/stream', async (req, res, next) => {
       agentId: conversation.agentId,
       conversationId: conversation.id,
       userMessage: content,
+      images: llmImages,
       openaiApiKey: await resolveApiKey('openai') ?? undefined,
     });
 

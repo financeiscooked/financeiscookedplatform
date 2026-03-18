@@ -58,7 +58,7 @@ function injectKeyframes() {
   document.head.appendChild(style);
 }
 
-export default function ChatMessage({ role, content, streaming }) {
+export default function ChatMessage({ role, content, streaming, images }) {
   useMemo(() => {
     if (streaming) injectKeyframes();
   }, [streaming]);
@@ -71,6 +71,13 @@ export default function ChatMessage({ role, content, streaming }) {
         {isUser ? '\uD83D\uDC64' : '\uD83E\uDD16'}
       </div>
       <div style={styles.content}>
+        {images && images.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+            {images.map((src, i) => (
+              <img key={i} src={src} alt="" style={{ maxHeight: 120, borderRadius: 8, border: '1px solid var(--border-subtle, #e2e8f0)' }} />
+            ))}
+          </div>
+        )}
         {content}
         {streaming && <span style={styles.cursor} />}
       </div>

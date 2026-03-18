@@ -149,10 +149,14 @@ export class GeminiProvider implements LLMProvider {
 
     for (const msg of messages) {
       if (msg.role === 'user') {
-        result.push({
-          role: 'user',
-          parts: [{ text: msg.content }],
-        });
+        const parts: Part[] = [];
+        if (msg.images && msg.images.length > 0) {
+          for (const img of msg.images) {
+            parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } } as Part);
+          }
+        }
+        parts.push({ text: msg.content });
+        result.push({ role: 'user', parts });
       } else if (msg.role === 'assistant') {
         if (msg.toolCalls && msg.toolCalls.length > 0) {
           // Assistant message with function calls

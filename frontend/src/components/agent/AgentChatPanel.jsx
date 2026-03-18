@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { BrainCircuit, X, Plus, Send, Square } from 'lucide-react';
+import { BrainCircuit, X, Plus, Send, Square, Paperclip, ImageIcon } from 'lucide-react';
 import { api } from '../../lib/api';
 import AgentSelector from './AgentSelector';
 import ChatMessage from './ChatMessage';
@@ -16,6 +16,8 @@ export default function AgentChatPanel({ open, onClose }) {
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const abortRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [attachedImages, setAttachedImages] = useState([]); // [{ data, mimeType, preview, filename }]
 
   // Auto-scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -61,12 +63,37 @@ export default function AgentChatPanel({ open, onClose }) {
     }
   }
 
+  function handleFileSelect(e) {
+    const files = Array.from(e.target.files || []);
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result.split(',')[1];
+        setAttachedImages((prev) => [...prev, {
+          data: base64,
+          mimeType: file.type,
+          preview: reader.result,
+          filename: file.name,
+        }]);
+      };
+      reader.readAsDataURL(file);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
   async function sendMessage() {
     const text = input.trim();
     if (!text || !conversationId || streaming) return;
 
+    const imagesToSend = attachedImages.length > 0
+      ? attachedImages.map(({ data, mimeType }) => ({ data, mimeType }))
+      : undefined;
+    const imagePreviews = attachedImages.map(img => img.preview);
+
     setInput('');
-    setMessages((prev) => [...prev, { role: 'user', content: text }]);
+    setAttachedImages([]);
+    setMessages((prev) => [...prev, { role: 'user', content: text, images: imagePreviews }]);
     setStreaming(true);
 
     // Add empty assistant message that we'll stream into
@@ -79,7 +106,7 @@ export default function AgentChatPanel({ open, onClose }) {
       const res = await fetch(`${API_BASE}/chat/${conversationId}/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text }),
+        body: JSON.stringify({ content: text, images: imagesToSend }),
         signal: controller.signal,
       });
 
@@ -296,6 +323,7 @@ export default function AgentChatPanel({ open, onClose }) {
             key={i}
             role={msg.role}
             content={msg.content}
+            images={msg.images}
             streaming={streaming && i === messages.length - 1 && msg.role === 'assistant'}
           />
         ))}
@@ -311,6 +339,25 @@ export default function AgentChatPanel({ open, onClose }) {
           background: 'var(--bg-secondary, #f8fafc)',
         }}
       >
+        {/* Image previews */}
+        {attachedImages.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+            {attachedImages.map((img, i) => (
+              <div key={i} style={{ position: 'relative' }}>
+                <img src={img.preview} alt={img.filename} style={{ height: 48, borderRadius: 8, border: '1px solid var(--border-subtle, #e2e8f0)' }} />
+                <button
+                  onClick={() => setAttachedImages(prev => prev.filter((_, j) => j !== i))}
+                  style={{
+                    position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%',
+                    background: '#ef4444', color: '#fff', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700,
+                  }}
+                >×</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelect} style={{ display: 'none' }} />
         <div
           style={{
             display: 'flex',
@@ -318,6 +365,27 @@ export default function AgentChatPanel({ open, onClose }) {
             alignItems: 'flex-end',
           }}
         >
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={streaming}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 8,
+              border: '1px solid var(--border-subtle, #e2e8f0)',
+              background: 'var(--bg-primary, #fff)',
+              color: 'var(--text-secondary, #64748b)',
+              cursor: streaming ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              opacity: streaming ? 0.4 : 1,
+            }}
+            title="Attach image"
+          >
+            <Paperclip size={16} />
+          </button>
           <textarea
             ref={textareaRef}
             value={input}
