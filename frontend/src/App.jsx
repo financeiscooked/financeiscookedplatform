@@ -107,7 +107,7 @@ export default function App() {
                 return (
                   <React.Fragment key={tab.id}>
                     <button
-                      onClick={() => setMainTab(tab.id)}
+                      onClick={() => setMainTab(isActive ? 'home' : tab.id)}
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all
                         ${isActive
                           ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-lg'
@@ -159,7 +159,7 @@ export default function App() {
             return (
               <React.Fragment key={tab.id}>
                 <button
-                  onClick={() => setMainTab(tab.id)}
+                  onClick={() => setMainTab(isActive ? 'home' : tab.id)}
                   className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all whitespace-nowrap shrink-0 min-h-[32px]
                     ${isActive
                       ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow'

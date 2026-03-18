@@ -1435,10 +1435,20 @@ export default function EpisodeBoard({ forceViewMode }) {
     })
   }, [currentEpId])
 
-  // Refresh current episode data (after inline edits)
-  const refreshEpisode = useCallback(() => {
+  // Refresh current episode data (after inline edits or agent changes)
+  const [refreshing, setRefreshing] = useState(false)
+  const refreshEpisode = useCallback(async () => {
     if (!currentEpId) return
-    fetchEpisode(currentEpId).then((data) => { if (data) setEpisode(data) })
+    setRefreshing(true)
+    try {
+      const [epData, epList] = await Promise.all([
+        fetchEpisode(currentEpId),
+        fetchEpisodes(),
+      ])
+      if (epData) setEpisode(epData)
+      if (epList) setEpisodes(epList)
+    } catch {}
+    setRefreshing(false)
   }, [currentEpId])
 
   const allSegments = episode?.segments || []
@@ -1762,7 +1772,7 @@ export default function EpisodeBoard({ forceViewMode }) {
           </button>
           <button
             onClick={refreshEpisode}
-            className="p-2.5 sm:p-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[#D94E2A] transition-all flex-shrink-0 min-h-[44px] sm:min-h-0 flex items-center justify-center"
+            className={`p-2.5 sm:p-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[#D94E2A] transition-all flex-shrink-0 min-h-[44px] sm:min-h-0 flex items-center justify-center ${refreshing ? 'animate-spin' : ''}`}
             title="Refresh episode data"
           >
             <RotateCcw size={14} />
