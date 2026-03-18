@@ -307,6 +307,15 @@ const CATEGORIES = [
     ]
   },
   {
+    name: 'Slide Images', slug: 'slide-images', description: 'Upload, list, serve, and delete images attached to slides (stored in Postgres)',
+    endpoints: [
+      { method: 'POST', path: '/api/slides/:id/images', summary: '[Admin] Upload an image to a slide (multipart form-data)', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', description: 'Slide UUID' }], body: { schema: { file: { type: 'file', required: true, description: 'Image file (multipart form-data)' }, alt: { type: 'string', required: false, description: 'Alt text' }, sortOrder: { type: 'number', required: false, description: 'Display order' } }, example: 'multipart/form-data with file field' } },
+      { method: 'GET', path: '/api/slides/:id/images', summary: 'List images attached to a slide (metadata only)', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', description: 'Slide UUID' }], body: null },
+      { method: 'GET', path: '/api/slide-images/:id/file', summary: 'Serve image binary (use as img src)', auth: false, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', description: 'Image UUID' }], body: null },
+      { method: 'DELETE', path: '/api/slide-images/:id', summary: '[Admin] Delete an image', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', description: 'Image UUID' }], body: null },
+    ]
+  },
+  {
     name: 'Slide Documents', slug: 'slide-documents', description: 'Upload, list, download, and delete documents attached to slides (stored in Postgres)',
     endpoints: [
       { method: 'POST', path: '/api/slides/:id/documents', summary: '[Admin] Upload a document to a slide (multipart form-data)', auth: true, params: [{ name: 'id', in: 'path', required: true, type: 'uuid', example: '550e8400-e29b-41d4-a716-446655440000', description: 'Slide UUID' }], body: { schema: { file: { type: 'file', required: true, description: 'File to upload (multipart form-data field named "file")' }, sortOrder: { type: 'number', required: false, example: 0, description: 'Display order' } }, example: 'multipart/form-data with file field' } },

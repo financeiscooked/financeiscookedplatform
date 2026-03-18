@@ -98,6 +98,25 @@ const TOOL_DOCS = [
     ],
   },
   {
+    label: 'Slide Images',
+    id: 'slide-images',
+    tools: [
+      { name: 'slide_image_upload', description: '[Admin] Upload an image file to a slide. Stored in Postgres, served via API. File content must be base64-encoded. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'slideId', type: 'string', required: true, description: 'Slide ID to attach image to' },
+        { name: 'filename', type: 'string', required: true, description: 'Original filename (e.g. "chart.png")' },
+        { name: 'mimeType', type: 'string', required: true, description: 'MIME type (e.g. "image/png")' },
+        { name: 'base64Data', type: 'string', required: true, description: 'Base64-encoded image content' },
+        { name: 'alt', type: 'string', required: false, description: 'Alt text for the image' },
+      ], example: 'await callTool("slide_image_upload", {\n  slideId: "slide-uuid",\n  filename: "chart.png",\n  mimeType: "image/png",\n  base64Data: "iVBORw0KGgo..."\n})' },
+      { name: 'slide_images_list', description: 'List all images attached to a slide (metadata only).', params: [
+        { name: 'slideId', type: 'string', required: true, description: 'Slide ID' },
+      ], example: 'await callTool("slide_images_list", {\n  slideId: "slide-uuid"\n})' },
+      { name: 'slide_image_delete', description: '[Admin] Delete an image from a slide. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'imageId', type: 'string', required: true, description: 'Image ID (UUID)' },
+      ] },
+    ],
+  },
+  {
     label: 'Slide Documents',
     id: 'slide-documents',
     tools: [

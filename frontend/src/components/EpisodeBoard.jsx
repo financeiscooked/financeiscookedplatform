@@ -346,6 +346,54 @@ function EditableBullets({ slide, isAdmin, onRefresh }) {
   )
 }
 
+const API_IMG_BASE = (import.meta.env.VITE_API_URL || 'https://backend-production-0e40.up.railway.app/api').replace(/\/api$/, '')
+
+function resolveImgSrc(src) {
+  if (!src) return ''
+  if (src.startsWith('/api/')) return `${API_IMG_BASE}${src}`
+  return src
+}
+
+function ImageUploadButton({ slideId, onRefresh }) {
+  const fileRef = useRef(null)
+  const [uploading, setUploading] = useState(false)
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://backend-production-0e40.up.railway.app/api'
+      const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || 'admin123'
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('alt', file.name)
+      await fetch(`${API_BASE}/slides/${slideId}/images`, {
+        method: 'POST',
+        headers: { 'x-admin-key': ADMIN_KEY },
+        body: formData,
+      })
+      if (onRefresh) onRefresh()
+    } catch (err) { /* ignore */ }
+    setUploading(false)
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  return (
+    <>
+      <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+      <button
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-[var(--bg-subtle)] border border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--border-hover)] transition-all"
+      >
+        {uploading ? <Loader2 size={10} className="animate-spin" /> : <ImageIcon size={10} />}
+        {uploading ? 'Uploading...' : 'Add Image'}
+      </button>
+    </>
+  )
+}
+
 function SlideRenderer({ slide, isAdmin, onRefresh }) {
   if (slide.type === 'gallery') {
     const images = slide.images || []
@@ -363,7 +411,7 @@ function SlideRenderer({ slide, isAdmin, onRefresh }) {
               className="rounded-xl overflow-hidden border border-[var(--border-default)] shadow-lg bg-[var(--img-border-bg)]"
             >
               <img
-                src={img.src}
+                src={resolveImgSrc(img.src)}
                 alt={img.alt || slide.title}
                 className="w-full h-full object-contain max-h-[35vh]"
                 draggable={false}
@@ -371,6 +419,7 @@ function SlideRenderer({ slide, isAdmin, onRefresh }) {
             </div>
           ))}
         </div>
+        {isAdmin && <ImageUploadButton slideId={slide.id} onRefresh={onRefresh} />}
         {slide.notes && (
           <p className="text-[var(--text-tertiary)] text-sm max-w-xl text-center">{slide.notes}</p>
         )}
@@ -380,16 +429,24 @@ function SlideRenderer({ slide, isAdmin, onRefresh }) {
   }
 
   if (slide.type === 'image') {
+    const imgSrc = slide.images?.[0]?.src || slide.url || slide.src
     return (
       <div className="flex flex-col items-center gap-4 w-full">
-        <div className="max-h-[60vh] rounded-xl overflow-hidden border border-[var(--border-default)] shadow-2xl">
-          <img
-            src={slide.src}
-            alt={slide.title}
-            className="max-h-[60vh] max-w-full object-contain"
-            draggable={false}
-          />
-        </div>
+        {imgSrc ? (
+          <div className="max-h-[60vh] rounded-xl overflow-hidden border border-[var(--border-default)] shadow-2xl">
+            <img
+              src={resolveImgSrc(imgSrc)}
+              alt={slide.title}
+              className="max-h-[60vh] max-w-full object-contain"
+              draggable={false}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center w-full h-48 rounded-xl border-2 border-dashed border-[var(--border-default)] text-[var(--text-hint)] text-sm">
+            No image attached
+          </div>
+        )}
+        {isAdmin && <ImageUploadButton slideId={slide.id} onRefresh={onRefresh} />}
         {slide.notes && (
           <p className="text-[var(--text-tertiary)] text-sm max-w-xl text-center">{slide.notes}</p>
         )}
@@ -416,6 +473,14 @@ function SlideRenderer({ slide, isAdmin, onRefresh }) {
               </a>
             </div>
           </div>
+          {slide.images?.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4 pl-8">
+              {slide.images.map((img, i) => (
+                <img key={i} src={resolveImgSrc(img.src)} alt={img.alt || ''} className="max-h-32 rounded-lg border border-[var(--border-default)]" />
+              ))}
+            </div>
+          )}
+          {isAdmin && <div className="mt-3 pl-8"><ImageUploadButton slideId={slide.id} onRefresh={onRefresh} /></div>}
           {(slide.notes || isAdmin) && (
             <EditableText
               value={slide.notes}
@@ -438,6 +503,14 @@ function SlideRenderer({ slide, isAdmin, onRefresh }) {
           {slide.bullets && (
             <EditableBullets slide={slide} isAdmin={isAdmin} onRefresh={onRefresh} />
           )}
+          {slide.images?.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {slide.images.map((img, i) => (
+                <img key={i} src={resolveImgSrc(img.src)} alt={img.alt || ''} className="max-h-32 rounded-lg border border-[var(--border-default)]" />
+              ))}
+            </div>
+          )}
+          {isAdmin && <div className="mt-3"><ImageUploadButton slideId={slide.id} onRefresh={onRefresh} /></div>}
           {(slide.notes || isAdmin) && (
             <EditableText
               value={slide.notes}

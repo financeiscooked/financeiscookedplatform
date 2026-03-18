@@ -120,6 +120,10 @@ model SlideImage {
   slideId   String  @map("slide_id") @db.Uuid
   src       String
   alt       String? @db.VarChar(255)
+  filename  String? @db.VarChar(500)
+  mimeType  String? @map("mime_type") @db.VarChar(255)
+  fileSize  Int?    @map("file_size")
+  data      Bytes?
   sortOrder Int     @default(0) @map("sort_order")
 
   slide Slide @relation(fields: [slideId], references: [id], onDelete: Cascade)

@@ -175,6 +175,38 @@ export const tools: ToolDef[] = [
     handler: async (client, args: { id: string }) => client.finalizeSlide(args.id),
   },
 
+  // ── Slide Images ────────────────────────────────────────────
+
+  {
+    name: 'slide_image_upload',
+    description: '[Admin] Upload an image file to a slide. Image is stored in Postgres and served via API. File content must be base64-encoded.',
+    inputSchema: z.object({
+      slideId: z.string().describe('slide ID to attach image to'),
+      filename: z.string().describe('original filename (e.g. "chart.png")'),
+      mimeType: z.string().describe('MIME type (e.g. "image/png", "image/jpeg")'),
+      base64Data: z.string().describe('base64-encoded image content'),
+      alt: z.string().optional().describe('alt text for the image'),
+    }),
+    handler: async (client, args: { slideId: string; filename: string; mimeType: string; base64Data: string; alt?: string }) =>
+      client.uploadSlideImage(args.slideId, args.filename, args.mimeType, args.base64Data, args.alt),
+  },
+  {
+    name: 'slide_images_list',
+    description: 'List all images attached to a slide (metadata only, no binary)',
+    inputSchema: z.object({
+      slideId: z.string().describe('slide ID'),
+    }),
+    handler: async (client, args: { slideId: string }) => client.listSlideImages(args.slideId),
+  },
+  {
+    name: 'slide_image_delete',
+    description: '[Admin] Delete an image from a slide',
+    inputSchema: z.object({
+      imageId: z.string().describe('image ID'),
+    }),
+    handler: async (client, args: { imageId: string }) => client.deleteSlideImage(args.imageId),
+  },
+
   // ── Slide Documents ─────────────────────────────────────────
 
   {

@@ -111,6 +111,71 @@ router.post('/slides/:id/finalize', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── Slide Images ─────────────────────────────────────────────────
+
+// POST /api/slides/:id/images - upload image file
+router.post('/slides/:id/images', requireAdmin, upload.single('file'), async (req, res, next) => {
+  try {
+    const slide = await prisma.slide.findUnique({ where: { id: req.params.id as string } });
+    if (!slide) { res.status(404).json({ ok: false, error: 'Slide not found' }); return; }
+
+    const file = req.file;
+    if (!file) { res.status(400).json({ ok: false, error: 'No file uploaded' }); return; }
+
+    const img = await prisma.slideImage.create({
+      data: {
+        slideId: req.params.id as string,
+        src: '', // placeholder, updated below
+        alt: req.body.alt || file.originalname,
+        filename: file.originalname,
+        mimeType: file.mimetype,
+        fileSize: file.size,
+        data: new Uint8Array(file.buffer),
+        sortOrder: req.body.sortOrder ? parseInt(req.body.sortOrder) : 0,
+      },
+      select: { id: true, slideId: true, filename: true, mimeType: true, fileSize: true, alt: true, sortOrder: true },
+    });
+
+    // Set src to the serve endpoint
+    const src = `/api/slide-images/${img.id}/file`;
+    await prisma.slideImage.update({ where: { id: img.id }, data: { src } });
+
+    res.status(201).json({ ok: true, data: { ...img, src } });
+  } catch (err) { next(err); }
+});
+
+// GET /api/slides/:id/images - list images for a slide
+router.get('/slides/:id/images', async (req, res, next) => {
+  try {
+    const imgs = await prisma.slideImage.findMany({
+      where: { slideId: req.params.id as string },
+      select: { id: true, slideId: true, src: true, alt: true, filename: true, mimeType: true, fileSize: true, sortOrder: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    res.json({ ok: true, data: imgs });
+  } catch (err) { next(err); }
+});
+
+// GET /api/slide-images/:id/file - serve image binary
+router.get('/slide-images/:id/file', async (req, res, next) => {
+  try {
+    const img = await prisma.slideImage.findUnique({ where: { id: req.params.id as string } });
+    if (!img || !img.data) { res.status(404).json({ ok: false, error: 'Image not found' }); return; }
+
+    res.setHeader('Content-Type', img.mimeType || 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    res.send(img.data);
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/slide-images/:id - delete an image
+router.delete('/slide-images/:id', requireAdmin, async (req, res, next) => {
+  try {
+    await prisma.slideImage.delete({ where: { id: req.params.id as string } });
+    res.json({ ok: true, data: null });
+  } catch (err) { next(err); }
+});
+
 // ── Slide Documents ──────────────────────────────────────────────
 
 // POST /api/slides/:id/documents - upload document
