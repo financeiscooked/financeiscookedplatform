@@ -1617,13 +1617,14 @@ export default function EpisodeBoard({ forceViewMode }) {
                 Back
               </button>
             )}
-            {/* Episode dropdown */}
+            {/* Episode dropdown + refresh */}
+            <div className="flex items-center gap-1.5">
             <div className="relative">
               <button
                 onClick={() => setEpDropdownOpen(!epDropdownOpen)}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] text-xs font-bold tracking-wider transition-colors"
               >
-                <span className="truncate max-w-[160px]">{currentEp?.title || 'Select Episode'}</span>
+                <span className="truncate max-w-[140px]">{currentEp?.title || 'Select Episode'}</span>
                 <ChevronDown size={12} className="text-[var(--text-tertiary)] flex-shrink-0" />
               </button>
               {epDropdownOpen && (
@@ -1644,17 +1645,17 @@ export default function EpisodeBoard({ forceViewMode }) {
                 </div>
               )}
             </div>
-          </div>
-          {/* Refresh + Pop-out */}
-          <div className="flex items-center gap-1.5 px-3 pb-1">
             <button
               onClick={refreshEpisode}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-xs font-bold transition-all"
+              className="p-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[#D94E2A] transition-all flex-shrink-0"
               title="Refresh episode data"
             >
-              <RotateCcw size={12} />
-              Refresh
+              <RotateCcw size={14} />
             </button>
+            </div>
+          </div>
+          {/* Pop-out */}
+          <div className="flex items-center gap-1.5 px-3 pb-1">
           {!forceViewMode && (
             <button
               onClick={popOutLive}
@@ -1751,13 +1752,22 @@ export default function EpisodeBoard({ forceViewMode }) {
 
         {/* Episode picker */}
         <div className="p-3 border-b border-[var(--border-subtle)] relative">
+          <div className="flex items-center gap-1.5">
           <button
             onClick={() => setEpDropdownOpen(!epDropdownOpen)}
-            className="w-full flex items-center justify-between px-3 py-2.5 sm:py-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] text-xs font-bold tracking-wider transition-colors min-h-[44px] sm:min-h-0"
+            className="flex-1 flex items-center justify-between px-3 py-2.5 sm:py-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] text-xs font-bold tracking-wider transition-colors min-h-[44px] sm:min-h-0"
           >
             <span className="truncate">{currentEp?.title || 'Select Episode'}</span>
             <ChevronDown size={14} className="text-[var(--text-tertiary)] flex-shrink-0" />
           </button>
+          <button
+            onClick={refreshEpisode}
+            className="p-2.5 sm:p-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[#D94E2A] transition-all flex-shrink-0 min-h-[44px] sm:min-h-0 flex items-center justify-center"
+            title="Refresh episode data"
+          >
+            <RotateCcw size={14} />
+          </button>
+          </div>
           {epDropdownOpen && (
             <div className="absolute top-full left-3 right-3 mt-1 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg shadow-2xl z-20 overflow-hidden">
               {episodes.map((ep) => (
