@@ -1645,7 +1645,16 @@ export default function EpisodeBoard({ forceViewMode }) {
               )}
             </div>
           </div>
-          {/* Pop-out button */}
+          {/* Refresh + Pop-out */}
+          <div className="flex items-center gap-1.5 px-3 pb-1">
+            <button
+              onClick={refreshEpisode}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-xs font-bold transition-all"
+              title="Refresh episode data"
+            >
+              <RotateCcw size={12} />
+              Refresh
+            </button>
           {!forceViewMode && (
             <button
               onClick={popOutLive}
@@ -1656,6 +1665,7 @@ export default function EpisodeBoard({ forceViewMode }) {
               Pop Out
             </button>
           )}
+          </div>
         </div>
 
         <LiveRundown
