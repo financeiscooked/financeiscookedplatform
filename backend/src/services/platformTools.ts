@@ -76,6 +76,8 @@ export const PLATFORM_TOOLS: Tool[] = [
         slug: { type: 'string', description: 'URL-friendly slug for the episode' },
         title: { type: 'string', description: 'Episode title' },
         date: { type: 'string', description: 'Air date (ISO format, optional)' },
+        youtubeUrl: { type: 'string', description: 'YouTube video URL (optional)' },
+        transcript: { type: 'string', description: 'Episode transcript in markdown (optional)' },
         sortOrder: { type: 'number', description: 'Display order (optional)' },
       },
       required: ['slug', 'title'],
@@ -90,6 +92,8 @@ export const PLATFORM_TOOLS: Tool[] = [
         slug: { type: 'string', description: 'Episode slug to update' },
         title: { type: 'string', description: 'New title (optional)' },
         date: { type: 'string', description: 'New air date ISO (optional)' },
+        youtubeUrl: { type: 'string', description: 'YouTube video URL (optional)' },
+        transcript: { type: 'string', description: 'Episode transcript in markdown (optional)' },
         sortOrder: { type: 'number', description: 'New display order (optional)' },
       },
       required: ['slug'],
@@ -226,6 +230,85 @@ export const PLATFORM_TOOLS: Tool[] = [
       required: ['id'],
     },
   },
+
+  // ── Slide Image Tools ───────────────────────────────────────
+
+  {
+    name: 'platform__slide_image_upload',
+    description: '[Admin] Upload a base64-encoded image to a slide. Stored in Postgres.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slideId: { type: 'string', description: 'Slide ID to attach image to' },
+        filename: { type: 'string', description: 'Original filename (e.g. "chart.png")' },
+        mimeType: { type: 'string', description: 'MIME type (e.g. "image/png")' },
+        base64Data: { type: 'string', description: 'Base64-encoded image content' },
+        alt: { type: 'string', description: 'Alt text (optional)' },
+      },
+      required: ['slideId', 'filename', 'mimeType', 'base64Data'],
+    },
+  },
+  {
+    name: 'platform__slide_images_list',
+    description: 'List all images attached to a slide (metadata only, no binary).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slideId: { type: 'string', description: 'Slide ID' },
+      },
+      required: ['slideId'],
+    },
+  },
+  {
+    name: 'platform__slide_image_delete',
+    description: '[Admin] Delete an image from a slide.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        imageId: { type: 'string', description: 'Image ID to delete' },
+      },
+      required: ['imageId'],
+    },
+  },
+
+  // ── Slide Document Tools ────────────────────────────────────
+
+  {
+    name: 'platform__slide_document_upload',
+    description: '[Admin] Upload a base64-encoded document (PDF, etc.) to a slide. Stored in Postgres.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slideId: { type: 'string', description: 'Slide ID to attach document to' },
+        filename: { type: 'string', description: 'Original filename (e.g. "report.pdf")' },
+        mimeType: { type: 'string', description: 'MIME type (e.g. "application/pdf")' },
+        base64Data: { type: 'string', description: 'Base64-encoded file content' },
+      },
+      required: ['slideId', 'filename', 'mimeType', 'base64Data'],
+    },
+  },
+  {
+    name: 'platform__slide_documents_list',
+    description: 'List all documents attached to a slide (metadata only).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slideId: { type: 'string', description: 'Slide ID' },
+      },
+      required: ['slideId'],
+    },
+  },
+  {
+    name: 'platform__slide_document_delete',
+    description: '[Admin] Delete a document from a slide.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        documentId: { type: 'string', description: 'Document ID to delete' },
+      },
+      required: ['documentId'],
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -253,6 +336,8 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
         slug: ep.slug,
         title: ep.title,
         date: ep.date,
+        youtubeUrl: ep.youtubeUrl,
+        hasTranscript: !!ep.transcript,
         sortOrder: ep.sortOrder,
         segmentCount: ep._count.segments,
         slideCount: ep.segments.reduce((sum, s) => sum + s._count.slides, 0),
@@ -282,6 +367,8 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
         slug: episode.slug,
         title: episode.title,
         date: episode.date,
+        youtubeUrl: episode.youtubeUrl,
+        transcript: episode.transcript,
         segments: episode.segments.map(seg => ({
           id: seg.id,
           slug: seg.slug,
@@ -375,6 +462,8 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
             slug: input.slug,
             title: input.title,
             date: input.date || null,
+            youtubeUrl: input.youtubeUrl || null,
+            transcript: input.transcript || null,
             sortOrder: input.sortOrder ?? 0,
           },
         });
@@ -393,6 +482,8 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
       const data: any = {};
       if (input.title !== undefined) data.title = input.title;
       if (input.date !== undefined) data.date = input.date || null;
+      if (input.youtubeUrl !== undefined) data.youtubeUrl = input.youtubeUrl || null;
+      if (input.transcript !== undefined) data.transcript = input.transcript || null;
       if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
 
       const updated = await prisma.episode.update({ where: { slug: input.slug }, data });
@@ -563,6 +654,100 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
       });
 
       return JSON.stringify({ success: true, id: input.id, status: 'final' });
+    }
+
+    // ── Slide Image Handlers ─────────────────────────────────
+
+    case 'platform__slide_image_upload': {
+      if (!input.slideId || !input.filename || !input.mimeType || !input.base64Data) {
+        return JSON.stringify({ error: 'slideId, filename, mimeType, and base64Data are required' });
+      }
+
+      const slide = await prisma.slide.findUnique({ where: { id: input.slideId } });
+      if (!slide) return JSON.stringify({ error: `Slide ${input.slideId} not found` });
+
+      const buffer = Buffer.from(input.base64Data, 'base64');
+      const img = await prisma.slideImage.create({
+        data: {
+          slideId: input.slideId,
+          src: '',
+          alt: input.alt || input.filename,
+          filename: input.filename,
+          mimeType: input.mimeType,
+          fileSize: buffer.length,
+          data: new Uint8Array(buffer),
+        },
+      });
+      const src = `/api/slide-images/${img.id}/file`;
+      await prisma.slideImage.update({ where: { id: img.id }, data: { src } });
+
+      return JSON.stringify({ success: true, id: img.id, src, filename: input.filename, fileSize: buffer.length });
+    }
+
+    case 'platform__slide_images_list': {
+      if (!input.slideId) return JSON.stringify({ error: 'slideId is required' });
+
+      const images = await prisma.slideImage.findMany({
+        where: { slideId: input.slideId },
+        select: { id: true, src: true, alt: true, filename: true, mimeType: true, fileSize: true, sortOrder: true },
+        orderBy: { sortOrder: 'asc' },
+      });
+      return JSON.stringify({ images });
+    }
+
+    case 'platform__slide_image_delete': {
+      if (!input.imageId) return JSON.stringify({ error: 'imageId is required' });
+
+      const img = await prisma.slideImage.findUnique({ where: { id: input.imageId } });
+      if (!img) return JSON.stringify({ error: `Image ${input.imageId} not found` });
+
+      await prisma.slideImage.delete({ where: { id: input.imageId } });
+      return JSON.stringify({ success: true, deleted: input.imageId });
+    }
+
+    // ── Slide Document Handlers ───────────────────────────────
+
+    case 'platform__slide_document_upload': {
+      if (!input.slideId || !input.filename || !input.mimeType || !input.base64Data) {
+        return JSON.stringify({ error: 'slideId, filename, mimeType, and base64Data are required' });
+      }
+
+      const slide = await prisma.slide.findUnique({ where: { id: input.slideId } });
+      if (!slide) return JSON.stringify({ error: `Slide ${input.slideId} not found` });
+
+      const buffer = Buffer.from(input.base64Data, 'base64');
+      const doc = await prisma.slideDocument.create({
+        data: {
+          slideId: input.slideId,
+          filename: input.filename,
+          mimeType: input.mimeType,
+          fileSize: buffer.length,
+          data: new Uint8Array(buffer),
+        },
+      });
+
+      return JSON.stringify({ success: true, id: doc.id, filename: input.filename, fileSize: buffer.length });
+    }
+
+    case 'platform__slide_documents_list': {
+      if (!input.slideId) return JSON.stringify({ error: 'slideId is required' });
+
+      const docs = await prisma.slideDocument.findMany({
+        where: { slideId: input.slideId },
+        select: { id: true, filename: true, mimeType: true, fileSize: true, sortOrder: true, createdAt: true },
+        orderBy: { sortOrder: 'asc' },
+      });
+      return JSON.stringify({ documents: docs });
+    }
+
+    case 'platform__slide_document_delete': {
+      if (!input.documentId) return JSON.stringify({ error: 'documentId is required' });
+
+      const doc = await prisma.slideDocument.findUnique({ where: { id: input.documentId } });
+      if (!doc) return JSON.stringify({ error: `Document ${input.documentId} not found` });
+
+      await prisma.slideDocument.delete({ where: { id: input.documentId } });
+      return JSON.stringify({ success: true, deleted: input.documentId });
     }
 
     default:
