@@ -73,8 +73,47 @@
 - [x] Well-known server entry documented: `{ id: 'mcp-financeiscooked', name: 'financeiscooked', npmPackage: '__bundled__', category: 'media', envVars: [] }`
 - [x] Token mapping documented: token1 = optional base URL override (no auth required)
 
+## Phase 8: MCPLive Demo Integration
+- [x] SERVERS entry added to MCPLive build.js
+- [x] PAGE_CODES entry added to MCPLive build.js (code: FIC1)
+- [x] Template C injection pattern added to build.js for this docs template
+- [x] npm run build executed in MCPLive
+- [x] public/financeiscooked/index.html generated
+- [x] public/financeiscooked/financeiscooked-mcp-server.zip created
+- [x] Landing page updated with new card
+- [x] Chat button injected in docs
+- [x] GitHub button injected in docs
+- [x] Download ZIP button injected in docs
+- [ ] Committed and pushed to agenticledger/financeMCPsLive (pending user approval)
+
+## Phase 8.5: AgentHub Integration
+- [ ] BLOCKED — AgentHub repo not on this Mac
+- [ ] BLOCKED — AgentHub admin API key rejected (service needs env var re-set)
+- **Action needed:** On Windows, copy source files to AgentHub, push, and use /opDeployPaths to fix admin API key
+
+## Phase 8.7: Claude Code Registration
+- [x] dist/index.js exists
+- [x] .env.example reviewed (no required env vars — public API)
+- [x] Entry added to /Users/oreph/.mcp.json as "financeiscooked-mcp"
+- [x] Naming convention: financeiscooked-mcp (kebab-case + -mcp suffix)
+
+## Phase 9: PlatformAuth Catalog Registration
+- [x] POST /api/mcp-servers/admin/register called
+- [x] MCP appears in catalog (id: 3caf72e5-f1aa-42e8-8ee7-157bac805a53)
+- [x] All metadata correct (category: Media, toolCount: 18, authType: None)
+- [x] docsUrl: https://financemcps.agenticledger.ai/financeiscooked/
+- [x] downloadUrl: https://financemcps.agenticledger.ai/financeiscooked/financeiscooked-mcp-server.zip
+
+## Phase 10: Release Summary
+- [x] BUILD_CHECKLIST.md fully updated
+- [x] MCP code verified (18 tools, 83.3% pass rate)
+- [x] MCPLive demo page generated
+- [ ] AgentHub bundle — BLOCKED (see Phase 8.5)
+- [x] Claude Code .mcp.json registered
+- [x] PlatformAuth catalog listed
+
 ## Completion
-- **Finished:** 2026-03-12
+- **Finished:** 2026-03-20
 - **Total tools:** 18
 - **Pass rate:** 83.3%
-- **Status:** COMPLETE
+- **Status:** MOSTLY COMPLETE (AgentHub blocked — needs Windows + API key fix)
