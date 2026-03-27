@@ -269,6 +269,7 @@ export default function TheGrill() {
   const [expandedAnalysis, setExpandedAnalysis] = useState(null)
   const [editingQuarter, setEditingQuarter] = useState(null)   // key of quarter being edited
   const [preEditPositions, setPreEditPositions] = useState(null) // snapshot to restore on cancel
+  const [saveDialog, setSaveDialog] = useState(null)            // null = closed, { name, quarterKey }
   const scrollTopRef = useRef(null)
 
   const grillRef = useRef(null)
@@ -282,25 +283,28 @@ export default function TheGrill() {
 
   // ── Drag ──
   const handlePointerDown = useCallback((e, id) => {
-    if (revealedIds.includes(id)) {
-      setSpotlight(prev => prev === id ? null : id)
-      return
-    }
-    dragRef.current = { id, startX: e.clientX, startPos: positions[id] }
+    dragRef.current = { id, startX: e.clientX, startPos: positions[id], moved: false }
     e.currentTarget.setPointerCapture(e.pointerId)
     e.preventDefault()
-  }, [revealedIds, positions])
+  }, [positions])
 
   const handlePointerMove = useCallback((e, id) => {
     if (!dragRef.current || dragRef.current.id !== id) return
     const grill = grillRef.current
     if (!grill) return
     const dx = e.clientX - dragRef.current.startX
+    if (Math.abs(dx) > 4) dragRef.current.moved = true
     const newPos = Math.max(0.03, Math.min(0.97, dragRef.current.startPos + dx / grill.offsetWidth))
     setPositions(prev => ({ ...prev, [id]: newPos }))
   }, [])
 
-  const handlePointerUp = useCallback(() => { dragRef.current = null }, [])
+  const handlePointerUp = useCallback(() => {
+    if (dragRef.current && !dragRef.current.moved && revealedIds.includes(dragRef.current.id)) {
+      const id = dragRef.current.id
+      setSpotlight(prev => prev === id ? null : id)
+    }
+    dragRef.current = null
+  }, [revealedIds])
 
   // ── Cheat: reveal one at a time ──
   const handleCheat = useCallback(() => {
@@ -344,15 +348,30 @@ export default function TheGrill() {
     setTimeout(() => setIsResetting(false), 600)
   }, [])
 
-  // ── Save Quarter ──
+  // ── Save Quarter (opens dialog) ──
   const handleSaveQuarter = useCallback(() => {
-    const q = getCurrentQuarter()
-    const updated = { ...savedQuarters, [q.key]: { positions: { ...positions }, hostPositions: hostPositions ? { ...hostPositions } : null, anyRevealed, savedAt: new Date().toISOString() } }
+    setSaveDialog({ name: '', quarterKey: getCurrentQuarter().key })
+  }, [])
+
+  const handleConfirmSave = useCallback(() => {
+    if (!saveDialog) return
+    const { name, quarterKey } = saveDialog
+    const updated = {
+      ...savedQuarters,
+      [quarterKey]: {
+        name: name.trim() || getQuarterLabel(quarterKey),
+        positions: { ...positions },
+        hostPositions: hostPositions ? { ...hostPositions } : null,
+        anyRevealed,
+        savedAt: new Date().toISOString(),
+      },
+    }
     setSavedQuarters(updated)
     localStorage.setItem('fic_grill_quarters', JSON.stringify(updated))
+    setSaveDialog(null)
     setSaveFlash(true)
     setTimeout(() => setSaveFlash(false), 1500)
-  }, [positions, hostPositions, anyRevealed, savedQuarters])
+  }, [positions, hostPositions, anyRevealed, savedQuarters, saveDialog])
 
   const handleDeleteQuarter = useCallback((key) => {
     const updated = { ...savedQuarters }; delete updated[key]
@@ -458,7 +477,7 @@ export default function TheGrill() {
                 <div key={fn.id} className="relative flex items-center" style={{ height: '56px', margin: '2px 0', zIndex: 6 }}>
                   <div className="absolute inset-x-0" style={{ height: '8px', top: '50%', transform: 'translateY(-50%)', background: 'linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(140,140,140,0.45) 20%,rgba(70,70,70,0.75) 55%,rgba(30,30,30,0.85) 85%)', borderRadius: '4px', boxShadow: '0 3px 8px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.1)', zIndex: 1 }} />
                   <div
-                    className={`absolute flex items-center gap-2 rounded-xl select-none${isSizzling && isRevealed ? ' card-sizzle' : ''}${isRevealed ? ' cursor-pointer' : ' cursor-grab'}`}
+                    className={`absolute flex items-center gap-2 rounded-xl select-none cursor-grab${isSizzling && isRevealed ? ' card-sizzle' : ''}`}
                     style={{ left: `${pos * 100}%`, transform: 'translateX(-50%)', height: '44px', minWidth: '115px', maxWidth: '170px', padding: '0 10px', background: cs.bg, border: `1.5px solid ${isSpotlit ? cs.color : isRevealed ? cs.border : 'rgba(255,255,255,0.12)'}`, boxShadow: isSpotlit ? `${cs.shadow},0 0 0 2px ${cs.color}44` : isRevealed ? cs.shadow : 'none', backdropFilter: 'blur(12px)', zIndex: isSpotlit ? 20 : 10, transition: cardTransition || undefined, opacity: isRevealed ? 1 : 0.85 }}
                     onPointerDown={(e) => handlePointerDown(e, fn.id)}
                     onPointerMove={(e) => handlePointerMove(e, fn.id)}
@@ -525,6 +544,52 @@ export default function TheGrill() {
             </>
           )}
         </div>
+
+        {/* Save dialog */}
+        {saveDialog && (
+          <div className="mt-4 rounded-2xl p-4" style={{ background: 'var(--bg-subtle)', border: '1px solid rgba(240,160,48,0.35)', animation: 'grillFadeUp 0.2s ease' }}>
+            <p className="text-sm font-bold text-[var(--text-primary)] mb-3">💾 Save this assessment</p>
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1 block">Name (optional)</label>
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="e.g. After AI Summer, Mid-year check…"
+                  value={saveDialog.name}
+                  onChange={e => setSaveDialog(prev => ({ ...prev, name: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter') handleConfirmSave(); if (e.key === 'Escape') setSaveDialog(null) }}
+                  className="w-full px-3 py-2 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-default)', color: 'var(--text-primary)' }}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-1 block">Quarter</label>
+                <div className="flex gap-2 flex-wrap">
+                  {[1,2,3,4].map(q => {
+                    const key = `q${q}_${new Date().getFullYear()}`
+                    const isSelected = saveDialog.quarterKey === key
+                    return (
+                      <button key={key} onClick={() => setSaveDialog(prev => ({ ...prev, quarterKey: key }))}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                        style={{ background: isSelected ? 'rgba(240,160,48,0.2)' : 'var(--bg-primary)', color: isSelected ? '#F0A030' : 'var(--text-tertiary)', border: isSelected ? '1px solid rgba(240,160,48,0.5)' : '1px solid var(--border-default)' }}>
+                        Q{q} {new Date().getFullYear()}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end pt-1">
+                <button onClick={() => setSaveDialog(null)} className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                  style={{ border: '1px solid var(--border-default)' }}>Cancel</button>
+                <button onClick={handleConfirmSave} className="px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                  style={{ background: 'linear-gradient(135deg,#F0A030,#b36a00)', color: '#fff', border: 'none', boxShadow: '0 6px 20px rgba(240,160,48,0.3)' }}>
+                  Save {getQuarterLabel(saveDialog.quarterKey)}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Spotlight */}
         {anyRevealed && spotlightFn && spotlightAI && (
@@ -687,7 +752,7 @@ export default function TheGrill() {
               return (
                 <div key={key} className="mb-4 rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
-                    <span className="font-bold text-sm text-[var(--text-primary)]">🗓 {getQuarterLabel(key)}</span>
+                    <span className="font-bold text-sm text-[var(--text-primary)]">🗓 {getQuarterLabel(key)}{snap.name && snap.name !== getQuarterLabel(key) ? <span className="ml-2 text-[10px] font-normal text-[var(--text-tertiary)]">— {snap.name}</span> : null}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-[var(--text-tertiary)]">{new Date(snap.savedAt).toLocaleDateString()}</span>
                       <button onClick={() => handleEditQuarter(key)} className="text-[10px] text-[var(--text-tertiary)] hover:text-[#F0A030] transition-colors px-1.5 py-0.5 rounded" style={{ border: '1px solid var(--border-subtle)' }}>✏️ Edit</button>
