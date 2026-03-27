@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react'
-import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, FileText, Sun, Moon, Shield, GraduationCap, Hammer, Share2 } from 'lucide-react'
+import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, FileText, Sun, Moon, Shield, GraduationCap, Hammer, Share2, Newspaper } from 'lucide-react'
 import { useTheme } from './context/ThemeContext'
 import Home from './components/Home'
 import SoundBoard from './components/SoundBoard'
 import MemeBoard from './components/MemeBoard'
 import EpisodeBoard from './components/EpisodeBoard'
 import McpDocs from './components/McpDocs'
+import NewsPage from './components/learn/NewsPage'
 import Toast from './components/Toast'
 import AgentChatButton from './components/agent/AgentChatButton'
 import AdminPanel from './components/admin/AdminPanel'
@@ -27,6 +28,10 @@ const SHOW_TABS = [
 const DOC_TABS = [
   { id: 'api', label: 'API Docs', icon: FileText },
   { id: 'mcp', label: 'MCP Docs', icon: BookOpen },
+]
+
+const LEARN_TABS = [
+  { id: 'news', label: 'News', icon: Newspaper },
 ]
 
 function useIsPopout() {
@@ -59,6 +64,7 @@ export default function App() {
   const [mainTab, setMainTab] = useState('home')
   const [showTab, setShowTab] = useState('episodes')
   const [docTab, setDocTab] = useState('api')
+  const [learnTab, setLearnTab] = useState('news')
   const { theme, toggleTheme } = useTheme()
 
   if (isPopout) {
@@ -101,9 +107,9 @@ export default function App() {
                 const Icon = tab.icon
                 const isActive = mainTab === tab.id
                 // Determine if this tab has sub-tabs that should expand
-                const subTabs = tab.id === 'show' ? SHOW_TABS : tab.id === 'docs' ? DOC_TABS : null
-                const subTab = tab.id === 'show' ? showTab : tab.id === 'docs' ? docTab : null
-                const setSubTab = tab.id === 'show' ? setShowTab : tab.id === 'docs' ? setDocTab : null
+                const subTabs = tab.id === 'show' ? SHOW_TABS : tab.id === 'docs' ? DOC_TABS : tab.id === 'learn' ? LEARN_TABS : null
+                const subTab = tab.id === 'show' ? showTab : tab.id === 'docs' ? docTab : tab.id === 'learn' ? learnTab : null
+                const setSubTab = tab.id === 'show' ? setShowTab : tab.id === 'docs' ? setDocTab : tab.id === 'learn' ? setLearnTab : null
                 return (
                   <React.Fragment key={tab.id}>
                     <button
@@ -153,9 +159,9 @@ export default function App() {
           {MAIN_TABS.map((tab) => {
             const Icon = tab.icon
             const isActive = mainTab === tab.id
-            const subTabs = tab.id === 'show' ? SHOW_TABS : tab.id === 'docs' ? DOC_TABS : null
-            const subTab = tab.id === 'show' ? showTab : tab.id === 'docs' ? docTab : null
-            const setSubTab = tab.id === 'show' ? setShowTab : tab.id === 'docs' ? setDocTab : null
+            const subTabs = tab.id === 'show' ? SHOW_TABS : tab.id === 'docs' ? DOC_TABS : tab.id === 'learn' ? LEARN_TABS : null
+            const subTab = tab.id === 'show' ? showTab : tab.id === 'docs' ? docTab : tab.id === 'learn' ? learnTab : null
+            const setSubTab = tab.id === 'show' ? setShowTab : tab.id === 'docs' ? setDocTab : tab.id === 'learn' ? setLearnTab : null
             return (
               <React.Fragment key={tab.id}>
                 <button
@@ -213,13 +219,7 @@ export default function App() {
         )}
         {mainTab === 'docs' && docTab === 'mcp' && <McpDocs />}
         {mainTab === 'admin' && <AdminPanel />}
-        {mainTab === 'learn' && (
-          <PlaceholderPage
-            title="Learn"
-            icon={GraduationCap}
-            description="Courses, tutorials, and resources to help finance professionals get started with AI. From zero to building — at your own pace."
-          />
-        )}
+        {mainTab === 'learn' && learnTab === 'news' && <NewsPage />}
         {mainTab === 'build' && (
           <PlaceholderPage
             title="Build"

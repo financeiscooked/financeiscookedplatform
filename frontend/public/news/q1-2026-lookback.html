@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Timeline · Q1 2026 · Finance Is Cooked</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══ DESIGN TOKENS ═══════════════════════════════════════════════ */
+:root {
+  --cyan: #22d3ee;
+  --cyan-dim: rgba(34,211,238,.12);
+  --cyan-border: rgba(34,211,238,.28);
+  --gold: #f59e0b;
+  --gold-dim: rgba(245,158,11,.12);
+  --gold-border: rgba(245,158,11,.28);
+  --green: #4ade80;
+  --green-dim: rgba(74,222,128,.12);
+  --green-border: rgba(74,222,128,.28);
+}
+
+/* ─── DARK MODE ─── */
+[data-theme="dark"] {
+  --bg: #070d1a;
+  --surface: #0c1526;
+  --surface2: #111f3a;
+  --border: rgba(255,255,255,.07);
+  --border-hover: rgba(255,255,255,.14);
+  --text: rgba(255,255,255,.92);
+  --text-dim: rgba(255,255,255,.58);
+  --text-muted: rgba(255,255,255,.3);
+  --month-line: rgba(56,189,248,.1);
+  --dot-glow: 0 0 8px;
+}
+
+/* ─── LIGHT MODE ─── */
+[data-theme="light"] {
+  --bg: #f0f4ff;
+  --surface: #ffffff;
+  --surface2: #e4eaf7;
+  --border: rgba(0,0,0,.08);
+  --border-hover: rgba(0,0,0,.18);
+  --text: #0f172a;
+  --text-dim: #475569;
+  --text-muted: #94a3b8;
+  --month-line: rgba(34,211,238,.3);
+  --dot-glow: 0 0 6px;
+}
+
+/* ═══ RESET ════════════════════════════════════════════════════════ */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background .3s, color .3s;
+}
+
+/* ═══ STICKY HEADER ════════════════════════════════════════════════ */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: 14px 24px 10px;
+}
+
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.header-brand { flex: 1; min-width: 0; }
+
+.site-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 2px;
+}
+
+.site-title {
+  font-size: clamp(17px, 2.5vw, 24px);
+  font-weight: 900;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+
+.site-subtitle {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 3px;
+  font-weight: 400;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.theme-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: .2s;
+  flex-shrink: 0;
+}
+.theme-toggle:hover { border-color: var(--cyan); color: var(--cyan); }
+
+/* ─── FILTERS ─── */
+.filters {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: .2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.filter-btn:hover { border-color: var(--border-hover); color: var(--text-dim); }
+
+/* Active states per type */
+.filter-btn.active                          { color: var(--text); border-color: var(--border-hover); background: var(--surface2); }
+.filter-btn[data-type="model"].active       { background: var(--cyan-dim); border-color: var(--cyan-border); color: var(--cyan); }
+.filter-btn[data-type="company"].active     { background: var(--gold-dim); border-color: var(--gold-border); color: var(--gold); }
+.filter-btn[data-type="opensource"].active  { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
+
+.cnt {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--text-muted);
+}
+
+/* ═══ MAIN LAYOUT ══════════════════════════════════════════════════ */
+.timeline-wrap {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+}
+
+/* ═══ QUARTER BANNER ═══════════════════════════════════════════════ */
+.quarter-banner {
+  text-align: center;
+  padding: 36px 20px 28px;
+  position: relative;
+}
+.quarter-banner::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 28px;
+  background: linear-gradient(to bottom, var(--cyan-border), transparent);
+}
+.q-eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 8px;
+}
+.q-title {
+  font-size: clamp(24px, 5vw, 42px);
+  font-weight: 900;
+  letter-spacing: -.025em;
+  line-height: 1.05;
+}
+.q-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ═══ MONTH SECTION ════════════════════════════════════════════════ */
+.month-section { margin-bottom: 4px; }
+
+.month-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 0 10px;
+}
+.month-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.month-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.month-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ═══ EVENT ITEM ═══════════════════════════════════════════════════ */
+.event-list { display: flex; flex-direction: column; gap: 3px; }
+
+.event-item {
+  --accent:        var(--cyan);
+  --accent-dim:    var(--cyan-dim);
+  --accent-border: var(--cyan-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color .18s, background .18s;
+}
+.event-item.type-company   { --accent: var(--gold);  --accent-dim: var(--gold-dim);  --accent-border: var(--gold-border); }
+.event-item.type-opensource { --accent: var(--green); --accent-dim: var(--green-dim); --accent-border: var(--green-border); }
+
+.event-item:hover { border-color: var(--accent-border); background: var(--accent-dim); }
+.event-item.open  { border-color: var(--accent-border); background: var(--accent-dim); }
+.event-item[data-hidden="true"] { display: none; }
+
+/* ─── EVENT ROW ─── */
+.event-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  user-select: none;
+}
+
+.event-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  box-shadow: var(--dot-glow) var(--accent);
+  transition: box-shadow .2s;
+}
+.event-item.open .event-dot { box-shadow: 0 0 14px var(--accent); }
+
+.event-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 42px;
+}
+
+.event-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+  line-height: 1.3;
+  transition: color .18s;
+}
+.event-item:hover .event-title,
+.event-item.open  .event-title { color: var(--accent); }
+
+.type-badge {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-dim);
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: none; /* hidden on mobile, shown on wider screens */
+}
+
+.chevron {
+  font-size: 9px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform .22s, color .18s;
+}
+.event-item.open .chevron { transform: rotate(90deg); color: var(--accent); }
+
+/* ─── EXPANDED BODY ─── */
+.event-body {
+  display: none;
+  padding: 2px 14px 14px 33px;
+}
+.event-item.open .event-body { display: block; }
+
+.event-body-inner {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.event-desc {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.72;
+  margin-bottom: 12px;
+}
+
+.source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 5px 12px;
+  border: 1px solid var(--accent-border);
+  border-radius: 6px;
+  background: var(--accent-dim);
+  transition: .2s;
+}
+.source-link:hover { background: var(--accent); color: var(--bg); }
+
+.no-source {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ═══ EMPTY STATE ══════════════════════════════════════════════════ */
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--text-muted);
+  font-size: 13px;
+  display: none;
+}
+.empty-state.visible { display: block; }
+
+/* ═══ FOOTER ═══════════════════════════════════════════════════════ */
+.site-footer {
+  text-align: center;
+  padding: 28px 24px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: .06em;
+}
+.site-footer span { color: var(--cyan); }
+
+/* ═══ RESPONSIVE ═══════════════════════════════════════════════════ */
+@media (min-width: 560px) {
+  .type-badge { display: inline-block; }
+  .event-title { font-size: 13.5px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  HEADER                                                         -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-top">
+    <div class="header-brand">
+      <div class="site-label">Finance Is Cooked</div>
+      <div class="site-title">AI Timeline 2026</div>
+      <div class="site-subtitle">Major AI events, releases & company news — updated as it happens</div>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode">🌙</button>
+    </div>
+  </div>
+  <div class="filters" id="filterBar">
+    <button class="filter-btn active" data-type="all">All <span class="cnt" id="cnt-all"></span></button>
+    <button class="filter-btn" data-type="model">⚡ Models &amp; Features <span class="cnt" id="cnt-model"></span></button>
+    <button class="filter-btn" data-type="company">🏢 Company News <span class="cnt" id="cnt-company"></span></button>
+    <button class="filter-btn" data-type="opensource">🔓 Open Source <span class="cnt" id="cnt-opensource"></span></button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  TIMELINE                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="timeline-wrap">
+
+  <div class="quarter-banner">
+    <div class="q-eyebrow">Quarter One · 2026</div>
+    <div class="q-title">When AI Got Serious</div>
+    <div class="q-desc" id="qDesc">January → March 2026</div>
+  </div>
+
+  <div id="timelineContent"></div>
+  <div class="empty-state" id="emptyState">No events match this filter.</div>
+
+</div>
+
+<footer class="site-footer">
+  Last updated <span>March 2026</span> &nbsp;·&nbsp; Finance Is Cooked &nbsp;·&nbsp; New events added as they happen
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  SCRIPT                                                          -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  EVENTS DATA
+//  ─────────────────────────────────────────────────────────────────
+//  TO ADD A NEW EVENT: copy any block below and fill in the fields.
+//  The timeline renders automatically — no other changes needed.
+//
+//  FIELDS:
+//    date       "YYYY-MM-DD"  used for sort order and display
+//    title      Short name shown on the timeline row
+//    type       "model" | "company" | "opensource"
+//    desc       2-4 sentence summary shown when expanded
+//    url        Full URL to source (or "" if none yet)
+//    source     Short source name, e.g. "TechCrunch" (or "")
+// ════════════════════════════════════════════════════════════════════
+
+const EVENTS = [
+
+  // ── JANUARY 2026 ─────────────────────────────────────────────────
+
+  {
+    date: "2026-01-05",
+    title: "CES 2026 — AI Hardware Takes Over",
+    type: "company",
+    desc: "CES 2026 marked the mainstream arrival of AI hardware. Google showed Gemini on smart TVs; Rokid debuted AI smartglasses with ChatGPT and DeepSeek built in; every major tech company led with AI. The show set the tone for the entire year — AI is no longer a software story, it's in every device.",
+    url: "https://techcrunch.com/2026/01/05/google-previews-new-gemini-features-for-tv-at-ces-2026/",
+    source: "TechCrunch"
+  },
+  {
+    date: "2026-01-05",
+    title: "Gemini 3 Pro Launches",
+    type: "model",
+    desc: "Google launched Gemini 3 Pro — its new flagship model with state-of-the-art reasoning, multimodal understanding, and significantly improved agentic and coding capabilities. The model became Google's answer to GPT-5 and quickly made Gemini 2.5 obsolete.",
+    url: "https://ai.google.dev/gemini-api/docs/changelog",
+    source: "Google AI"
+  },
+  {
+    date: "2026-01-10",
+    title: "DeepSeek Drops New Efficient Training Paper",
+    type: "opensource",
+    desc: "One year after their R1 model shocked the world by matching frontier performance at a fraction of the cost, China's DeepSeek released a new research paper on efficient AI training methods. The paper showed open-source teams can continue to close the gap with trillion-dollar labs using clever engineering.",
+    url: "https://o-mega.ai/articles/top-10-open-source-llms-the-deepseek-revolution-2026",
+    source: "o-mega.ai"
+  },
+  {
+    date: "2026-01-15",
+    title: "Dario Amodei: 'The Adolescence of Technology'",
+    type: "company",
+    desc: "Anthropic CEO Dario Amodei published a 20,000-word essay on AI's trajectory — acknowledging serious risks (AI-powered cyberweapons, psychological manipulation) while arguing AI is still humanity's best path forward. The essay became required reading for anyone in AI leadership and sparked major industry debate.",
+    url: "https://www.anthropic.com",
+    source: "Anthropic"
+  },
+  {
+    date: "2026-01-20",
+    title: "OpenAI FrontierScience — AI Solves PhD-Level Problems",
+    type: "model",
+    desc: "OpenAI released FrontierScience, a new benchmark showing AI models can now reliably solve PhD-level scientific problems across math, biology, chemistry, and physics. This was a major milestone — AI moving from undergraduate-level assistance to genuine expert-tier reasoning.",
+    url: "https://openai.com/index/introducing-gpt-5/",
+    source: "OpenAI"
+  },
+  {
+    date: "2026-01-22",
+    title: "ChatGPT App Store Opens — 900M Users",
+    type: "company",
+    desc: "OpenAI opened the ChatGPT App Store, allowing third-party developers to build and distribute AI apps to 900 million users — making it larger than Apple's App Store at launch. This transformed ChatGPT from a chat product into a full developer platform with revenue sharing.",
+    url: "https://openai.com/",
+    source: "OpenAI"
+  },
+  {
+    date: "2026-01-12",
+    title: "Anthropic Launches Claude Cowork",
+    type: "model",
+    desc: "Anthropic launched Cowork on January 12 — a GUI-based productivity agent similar to Claude Code but designed for non-technical users. Available to Max subscribers in research preview. Cowork can manage files, work across documents, and execute multi-step tasks autonomously. TechCrunch called it 'Claude Code without the code' — a major step toward AI that any office worker can use.",
+    url: "https://techcrunch.com/2026/01/12/anthropics-new-cowork-tool-offers-claude-code-without-the-code/",
+    source: "TechCrunch"
+  },
+  {
+    date: "2026-01-30",
+    title: "OpenClaw Rebrands & Launches Publicly",
+    type: "opensource",
+    desc: "The open-source AI agent platform known as Clawdbot (then Moltbot) officially launched as OpenClaw. It provides open infrastructure for building, running, and orchestrating AI agents — positioned as the community alternative to Nvidia's NemoClaw and Anthropic's agent APIs. Free to self-host.",
+    url: "https://openclaw.ai",
+    source: "OpenClaw"
+  },
+
+  // ── FEBRUARY 2026 ────────────────────────────────────────────────
+
+  {
+    date: "2026-02-04",
+    title: "Anthropic: Claude Will Never Show Ads",
+    type: "company",
+    desc: "Anthropic publicly committed that Claude will never display advertisements — a business model statement as much as an ethics one. The announcement drew a sharp line between Anthropic's subscription/API model and ad-driven AI competitors. It reinforced Claude's positioning for enterprise and regulated industry use.",
+    url: "https://www.anthropic.com",
+    source: "Anthropic"
+  },
+  {
+    date: "2026-02-05",
+    title: "Claude Opus 4.6 — 1M Token Context",
+    type: "model",
+    desc: "Anthropic released Claude Opus 4.6 with a 1 million token context window now available at standard pricing — equivalent to 750,000 words or ~3,000 pages in a single prompt. New 'agent teams' feature enables coordinated multi-agent workflows. For finance: imagine feeding an entire audit file, all workpapers, and all financials into one prompt.",
+    url: "https://www.anthropic.com/news/claude-opus-4-6",
+    source: "Anthropic"
+  },
+  {
+    date: "2026-02-06",
+    title: "Goldman Sachs Deploys Claude for Trade Accounting",
+    type: "company",
+    desc: "Goldman Sachs revealed it had spent six months with embedded Anthropic engineers building Claude-powered agents for trade accounting and client onboarding. Results: 30% faster onboarding, 20%+ dev productivity gains. Goldman said they were 'surprised' at how well Claude handled accounting-specific tasks — not just code generation.",
+    url: "https://www.cnbc.com/2026/02/06/anthropic-goldman-sachs-ai-model-accounting.html",
+    source: "CNBC"
+  },
+  {
+    date: "2026-02-10",
+    title: "Gemini 3.1 + Deep Think Mode",
+    type: "model",
+    desc: "Google released Gemini 3.1 with significantly improved reasoning and the new 'Deep Think' mode — a specialized extended-thinking setting designed for complex science and engineering problems. Available for Google AI Ultra subscribers. Google's direct answer to OpenAI's Extended Thinking.",
+    url: "https://blog.google/innovation-and-ai/products/gemini-app/gemini-drop-february-2026/",
+    source: "Google"
+  },
+  {
+    date: "2026-02-17",
+    title: "Claude Sonnet 4.6 Released",
+    type: "model",
+    desc: "Anthropic released Claude Sonnet 4.6 — the mid-tier model in their lineup — at the same price as Sonnet 4.5. Significant improvements in reasoning, instruction-following, and coding. For high-volume use cases this became the default choice: near-Opus quality at a fraction of the cost.",
+    url: "https://www.anthropic.com",
+    source: "Anthropic"
+  },
+  {
+    date: "2026-02-19",
+    title: "Stacks Raises $23M for Autonomous Finance Close",
+    type: "company",
+    desc: "London-based Stacks raised a $23M Series A for AI agents that run month-end close, reconciliations, journal entries, and variance analysis autonomously. One of several agentic finance startups proving enterprises will pay real money for AI that handles the complete accounting close cycle.",
+    url: "https://stacks.ai/resources/stacks-raises-23-million-to-reinvent-finance-operations-with-agentic-ai",
+    source: "Stacks.ai"
+  },
+  {
+    date: "2026-02-20",
+    title: "Intuit Partners with Anthropic — TurboTax + Claude",
+    type: "company",
+    desc: "Intuit (TurboTax, QuickBooks, Mint) announced a major partnership with Anthropic to integrate Claude across its product suite. For finance professionals this means the tools used by 100M+ people for tax and accounting are getting agentic AI upgrades — starting with guided tax prep and bookkeeping assistance.",
+    url: "https://www.intuit.com/anthropic/",
+    source: "Intuit"
+  },
+  {
+    date: "2026-02-20",
+    title: "Pilot Launches Fully Autonomous AI Bookkeeper",
+    type: "company",
+    desc: "Pilot, the startup accounting firm, launched an AI bookkeeper that handles bookkeeping end-to-end without human intervention — classifying transactions, reconciling accounts, and flagging anomalies. This marked the transition from 'AI-assisted bookkeeping' to 'AI-run bookkeeping' for the SMB market.",
+    url: "https://www.accountingtoday.com/news/pilot-launches-fully-autonomous-ai-bookkeeper",
+    source: "Accounting Today"
+  },
+  {
+    date: "2026-02-20",
+    title: "PwC Posts for AI Engineers — LangGraph, Multi-Agent",
+    type: "company",
+    desc: "PwC began a major hiring push for AI Engineers with specific skills in LangGraph, LangChain, and multi-agent orchestration. The Big 4 signal is clear: the largest professional services firms are building internal agent infrastructure, not just licensing off-the-shelf AI tools.",
+    url: "",
+    source: ""
+  },
+  {
+    date: "2026-02-21",
+    title: "Mistral 3 Large — Open Source, 92% of GPT-5.2 at 15% Cost",
+    type: "opensource",
+    desc: "Mistral AI released the Mistral 3 family, led by Large 3 — a 675B parameter Mixture-of-Experts model delivering 92% of GPT-5.2's performance at roughly 15% of the price. Open weights released alongside the commercial version. Made enterprise-grade AI dramatically cheaper to self-host on private infrastructure.",
+    url: "https://www.machinebrief.com/analysis/open-source-llm-comparison-2026-deepseek-llama-mistral-qwen",
+    source: "Machinebrief"
+  },
+  {
+    date: "2026-02-22",
+    title: "GPT-5.2 + Extended Thinking Released",
+    type: "model",
+    desc: "OpenAI released GPT-5.2 with Extended Thinking — a reasoning mode that gives the model more time to think through complex problems before responding. Showed significant gains on math, coding, and multi-step reasoning. The 5.2-Codex variant became OpenAI's most capable agent for coding tasks.",
+    url: "https://openai.com/index/introducing-gpt-5/",
+    source: "OpenAI"
+  },
+  {
+    date: "2026-02-22",
+    title: "AI Tax Return Benchmark — GPT-5.4 Leads at 57%",
+    type: "model",
+    desc: "A viral benchmark tested which AI models complete tax returns perfectly. Results: GPT-5.4 led at 56.86%, Claude Opus 4.6 at 52.94%, Gemini 3.1 Pro at 49.02%. No model cleared 60% — confirming that AI still needs human review on complex tax work, but the capability is advancing fast.",
+    url: "https://www.linkedin.com/posts/michaelrbock_the-rivalry-between-openai-anthropic-continues-activity-7435697215009955840-8y7E",
+    source: "LinkedIn"
+  },
+  {
+    date: "2026-02-22",
+    title: "FloQast Launches AI Agent Builder for Accounting Teams",
+    type: "company",
+    desc: "FloQast, an established accounting close platform, launched an agent builder letting accounting teams build and deploy custom AI agents without writing code. When an incumbent accounting software player ships an agent-builder, it signals the feature is becoming table stakes across the industry.",
+    url: "https://www.floqast.com/ai-agents",
+    source: "FloQast"
+  },
+  {
+    date: "2026-02-24",
+    title: "Claude Cowork Enterprise — Google Drive, Gmail, DocuSign",
+    type: "model",
+    desc: "Anthropic expanded Cowork to enterprise on February 24, adding integrations with Google Drive, Gmail, DocuSign, and FactSet. Companies can now connect Cowork directly to their document workflows. For finance teams this means AI that can read contracts in Drive, process invoices from Gmail, and look up financial data from FactSet — all in one agent.",
+    url: "https://www.cnbc.com/2026/02/24/anthropic-claude-cowork-office-worker.html",
+    source: "CNBC"
+  },
+  {
+    date: "2026-02-27",
+    title: "OpenAI Raises $110B — Amazon, Nvidia, SoftBank In",
+    type: "company",
+    desc: "OpenAI closed the largest private funding round in history: $110 billion. Amazon: $50B. Nvidia: $30B. SoftBank: $30B. Valuation hit $730 billion — more than JPMorgan Chase. The round made OpenAI systemically important to the tech economy: if it fails, it takes the biggest companies in the world with it.",
+    url: "https://news.crunchbase.com/venture/record-setting-global-funding-february-2026-openai-anthropic/",
+    source: "Crunchbase"
+  },
+  {
+    date: "2026-02-25",
+    title: "Perplexity Computer — 19 AI Models, One Agent",
+    type: "model",
+    desc: "Perplexity launched Perplexity Computer — a multi-model agent orchestrating 19 AI models for long-running research and analysis tasks. Users assign a goal and the agent works autonomously over hours, choosing the right model for each sub-task. The first major consumer product to offer truly multi-model agentic workflows.",
+    url: "https://www.perplexity.ai",
+    source: "Perplexity"
+  },
+  {
+    date: "2026-02-25",
+    title: "Anthropic Acquires Vercept — AI Computer Use",
+    type: "company",
+    desc: "Anthropic acquired Vercept, a startup that enables AI to control graphical user interfaces like a human would — clicking, typing, and navigating any app. The acquisition dramatically enhanced Claude's computer use capabilities, enabling agents that can work inside existing software without API integration.",
+    url: "https://www.anthropic.com",
+    source: "Anthropic"
+  },
+  {
+    date: "2026-02-26",
+    title: "Anthropic Rejects Pentagon's Final Offer",
+    type: "company",
+    desc: "Anthropic publicly rejected the Pentagon's final contract offer, holding firm on two red lines: no mass surveillance of US citizens, no autonomous weapons. 'We cannot in good conscience accede to their request.' A $200M+ government contract hung in the balance. The stage was set for a historic standoff.",
+    url: "https://www.cnn.com/2026/02/26/tech/anthropic-rejects-pentagon-offer",
+    source: "CNN"
+  },
+  {
+    date: "2026-02-26",
+    title: "Block Lays Off 40% — Jack Dorsey Blames AI",
+    type: "company",
+    desc: "Jack Dorsey's Block (Square, Cash App, Afterpay) cut ~4,000 employees — nearly half the company. Dorsey publicly credited AI: 'A significantly smaller team, using the tools we're building, can do more and do it better.' Block's stock surged 20%+ on the news. Dorsey predicted most companies would follow within a year.",
+    url: "https://fortune.com/2026/02/27/block-jack-dorsey-ceo-xyz-stock-square-4000-ai-layoffs/",
+    source: "Fortune"
+  },
+
+  // ── MARCH 2026 ───────────────────────────────────────────────────
+
+  {
+    date: "2026-03-01",
+    title: "US Treasury Releases AI Risk Framework — 230 Controls",
+    type: "company",
+    desc: "The US Treasury released the Financial Services AI Risk Management Framework (FS AI RMF): 230 control objectives mapped across the full AI lifecycle, organized into Govern / Map / Measure / Manage. Currently voluntary — but this is how audit standards are made. Every CFO, CPA, and risk officer should have seen this by now.",
+    url: "https://home.treasury.gov/news/press-releases/sb0401",
+    source: "US Treasury"
+  },
+  {
+    date: "2026-02-24",
+    title: "Basis Raises $100M — First AI Accounting Unicorn",
+    type: "company",
+    desc: "Basis raised a $100M Series B at a $1.15B valuation — becoming the first AI accounting unicorn. Backed by Accel, Google Ventures, and former Goldman CEO Lloyd Blankfein. 30% of the top 25 US accounting firms already use Basis. They demonstrated the first AI agent to autonomously complete an end-to-end 1065 partnership tax return.",
+    url: "https://www.pymnts.com/news/investment-tracker/2026/basis-raises-100-million-to-build-up-ai-in-accounting",
+    source: "PYMNTS"
+  },
+  {
+    date: "2026-03-07",
+    title: "Karpathy's AI Job Exposure Visualizer",
+    type: "model",
+    desc: "Andrej Karpathy (ex-OpenAI, ex-Tesla) released an interactive treemap scoring 342 US occupations on 'Digital AI Exposure' (0-10 scale), built with an LLM-powered pipeline. Accounting, tax prep, data entry, and financial analysis ranked among the highest-exposure roles — a wake-up call for the finance profession.",
+    url: "https://karpathy.ai/jobs/",
+    source: "Karpathy.ai"
+  },
+  {
+    date: "2026-03-09",
+    title: "Pentagon Bans Anthropic — Designates 'Supply Chain Risk'",
+    type: "company",
+    desc: "The Trump administration banned federal agencies from working with Anthropic, designating it a 'supply chain risk' — a label historically reserved for foreign adversaries like Huawei. The same day, Anthropic sued the administration, calling the designation 'unprecedented and unlawful.' The model that was first deployed on classified Pentagon networks is now banned from them.",
+    url: "https://www.cnbc.com/2026/03/09/anthropic-was-the-pentagons-choice-for-ai-now-its-banned-and-experts-are-worried.html",
+    source: "CNBC"
+  },
+  {
+    date: "2026-03-09",
+    title: "Microsoft Copilot Cowork — Claude in Excel & Teams",
+    type: "model",
+    desc: "Microsoft launched Copilot Cowork, bringing Anthropic's Claude and OpenAI models natively into Microsoft 365: Excel, Outlook, Teams, SharePoint. For finance professionals this is the most immediately relevant release of the quarter — Claude-level AI inside the tools accountants and CFOs already use every day, with enterprise compliance controls built in.",
+    url: "https://www.microsoft.com/en-us/microsoft-365/blog/2026/03/09/powering-frontier-transformation-with-copilot-and-agents/",
+    source: "Microsoft"
+  },
+  {
+    date: "2026-03-09",
+    title: "Yann LeCun's AMI Labs Raises $1B Seed Round",
+    type: "company",
+    desc: "Turing Award winner Yann LeCun left Meta and raised $1.03 billion in a seed round — the largest in European history — at a $3.5B pre-money valuation, just four months after founding. Nvidia and Bezos Expeditions are investors. AMI Labs is building 'world models': AI that learns from physical reality, not just internet text.",
+    url: "https://techcrunch.com/2026/03/09/yann-lecuns-ami-labs-raises-1-03-billion-to-build-world-models/",
+    source: "TechCrunch"
+  },
+  {
+    date: "2026-03-10",
+    title: "Gemini in Chrome — Generally Available",
+    type: "model",
+    desc: "Google made Gemini in Chrome generally available for all Workspace plans and personal Google accounts — available in 50+ languages. Gemini can now summarize pages, answer questions about web content, help draft text, and assist with research natively inside the world's most-used browser.",
+    url: "https://blog.google/innovation-and-ai/products/gemini-app/gemini-drop-february-2026/",
+    source: "Google"
+  },
+  {
+    date: "2026-03-11",
+    title: "Perplexity Personal Computer — Local AI on Your Device",
+    type: "model",
+    desc: "Perplexity launched the Perplexity Personal Computer (starting with Mac Mini) — a local AI agent running 24/7 on your own hardware, never sending sensitive data to the cloud. The device reads your email, calendar, and files to proactively surface insights. The first major consumer product for fully local AI agents.",
+    url: "https://www.perplexity.ai",
+    source: "Perplexity"
+  },
+  {
+    date: "2026-03-12",
+    title: "Rox AI Hits $1.2B Valuation — AI Sales Agents",
+    type: "company",
+    desc: "Rox, the autonomous AI sales agent startup, reached a $1.2B valuation backed by General Catalyst — unicorn status in under two years. Part of the broader pattern: function-specific AI agent companies (sales, accounting, legal, HR) are all hitting billion-dollar valuations in the same quarter.",
+    url: "https://techcrunch.com/2026/03/12/sales-automation-startup-rox-ai-hits-1-2b-valuation-sources-say/",
+    source: "TechCrunch"
+  },
+  {
+    date: "2026-03-13",
+    title: "WSJ: Finance Pros Push Back on AI Disrupting Bloomberg",
+    type: "company",
+    desc: "The Wall Street Journal reported that finance professionals are resisting AI tools trying to replace the Bloomberg Terminal. While Perplexity and others offer similar data access, Bloomberg's compliance integrations, network effects, and chat functionality have proven stickier than expected. A good reminder that disruption takes longer than demos suggest.",
+    url: "https://www.wsj.com/tech/ai/bloomberg-terminal-perplexity-vibe-coding-e37a95f8",
+    source: "WSJ"
+  },
+  {
+    date: "2026-03-16",
+    title: "Nvidia GTC 2026 — $1 Trillion in Orders",
+    type: "company",
+    desc: "Jensen Huang's GTC keynote was the biggest tech event of Q1. Nvidia announced $1 trillion in expected purchase orders through 2027 across Blackwell and Vera Rubin chips. Jensen declared: 'The era of AI agents will be larger than the era of AI models.' 17 enterprise partners — Adobe, Salesforce, SAP, Palantir and more — joined the Agent Toolkit at launch.",
+    url: "https://www.cnbc.com/2026/03/16/nvidia-gtc-2026-ceo-jensen-huang-keynote-blackwell-vera-rubin.html",
+    source: "CNBC"
+  },
+  {
+    date: "2026-03-16",
+    title: "NemoClaw — Nvidia's Open-Source Secure Agent Runtime",
+    type: "opensource",
+    desc: "At GTC, Nvidia announced NemoClaw — an open-source secure agent runtime that enforces policy-based security, network controls, and privacy guardrails for enterprise AI agents. Part of the Agent Toolkit. Gives enterprises a vetted open-source layer to deploy autonomous agents on their own infrastructure without sending data to Nvidia's cloud.",
+    url: "https://www.globenewswire.com/news-release/2026/03/16/3256734/0/en/NVIDIA-Ignites-the-Next-Industrial-Revolution-in-Knowledge-Work-With-Open-Agent-Development-Platform.html",
+    source: "Nvidia / GlobeNewswire"
+  },
+  {
+    date: "2026-03-18",
+    title: "DoD: Anthropic's Ethics Are a 'National Security Risk'",
+    type: "company",
+    desc: "The Department of Defense formally declared Anthropic's red lines make it an 'unacceptable risk to national security.' The Pentagon's Chief Digital and AI Officer confirmed they are actively building alternatives. The standoff has no historical precedent in US tech-government relations — and no clear resolution in sight.",
+    url: "https://techcrunch.com/2026/03/18/dod-says-anthropics-red-lines-make-it-an-unacceptable-risk-to-national-security/",
+    source: "TechCrunch"
+  },
+  {
+    date: "2026-03-22",
+    title: "OpenClaw v2026.3.22 — ClawHub & Major Update",
+    type: "opensource",
+    desc: "OpenClaw's biggest update of 2026: ClawHub (a centralized registry for sharing and reusing agent configurations), 30+ security patches, improved multi-model orchestration, and performance upgrades. ClawHub lets teams publish agent templates the way npm lets devs share packages. Cemented OpenClaw as the leading open-source agent platform.",
+    url: "https://openclaw.ai",
+    source: "OpenClaw"
+  }
+
+]; // ← END OF EVENTS — add new events above this line
+
+// ════════════════════════════════════════════════════════════════════
+//  RUNTIME — no edits needed below
+// ════════════════════════════════════════════════════════════════════
+
+const TYPE_CONFIG = {
+  model:      { label: "Model & Feature", icon: "⚡" },
+  company:    { label: "Company News",    icon: "🏢" },
+  opensource: { label: "Open Source",     icon: "🔓" }
+};
+
+// ─── THEME TOGGLE ──────────────────────────────────────────────────
+const htmlEl = document.documentElement;
+const themeBtn = document.getElementById('themeToggle');
+themeBtn.addEventListener('click', () => {
+  const dark = htmlEl.dataset.theme === 'dark';
+  htmlEl.dataset.theme = dark ? 'light' : 'dark';
+  themeBtn.textContent = dark ? '☀️' : '🌙';
+});
+
+// ─── HELPERS ───────────────────────────────────────────────────────
+function monthName(dateStr) {
+  return new Date(dateStr + 'T12:00:00').toLocaleString('en-US', { month: 'long' }).toUpperCase();
+}
+function displayDate(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return (d.getMonth() + 1) + '/' + String(d.getDate()).padStart(2, '0');
+}
+
+// ─── BUILD ─────────────────────────────────────────────────────────
+function buildTimeline() {
+  const sorted = [...EVENTS].sort((a, b) => a.date.localeCompare(b.date));
+
+  // Count by type
+  const counts = { model: 0, company: 0, opensource: 0 };
+  sorted.forEach(e => counts[e.type]++);
+
+  // Update header badges
+  document.getElementById('cnt-all').textContent = sorted.length;
+  document.getElementById('cnt-model').textContent = counts.model;
+  document.getElementById('cnt-company').textContent = counts.company;
+  document.getElementById('cnt-opensource').textContent = counts.opensource;
+  document.getElementById('qDesc').textContent =
+    `January → March 2026 · ${sorted.length} events`;
+
+  // Group by month
+  const byMonth = {};
+  sorted.forEach(ev => {
+    const m = monthName(ev.date);
+    if (!byMonth[m]) byMonth[m] = [];
+    byMonth[m].push(ev);
+  });
+
+  const container = document.getElementById('timelineContent');
+  container.innerHTML = '';
+
+  Object.entries(byMonth).forEach(([month, events]) => {
+    const section = document.createElement('div');
+    section.className = 'month-section';
+
+    const header = document.createElement('div');
+    header.className = 'month-header';
+    header.innerHTML = `
+      <div class="month-label">${month}</div>
+      <div class="month-line"></div>
+      <div class="month-count">${events.length} EVENT${events.length !== 1 ? 'S' : ''}</div>
+    `;
+    section.appendChild(header);
+
+    const list = document.createElement('div');
+    list.className = 'event-list';
+
+    events.forEach(ev => {
+      const tc = TYPE_CONFIG[ev.type];
+      const item = document.createElement('div');
+      item.className = `event-item type-${ev.type}`;
+      item.dataset.type = ev.type;
+
+      const sourceHtml = ev.url
+        ? `<a class="source-link" href="${ev.url}" target="_blank" rel="noopener noreferrer">→ ${ev.source || 'Source'} ↗</a>`
+        : `<span class="no-source">Source not yet linked</span>`;
+
+      item.innerHTML = `
+        <div class="event-header">
+          <div class="event-dot"></div>
+          <div class="event-date">${displayDate(ev.date)}</div>
+          <div class="event-title">${ev.title}</div>
+          <div class="type-badge">${tc.icon} ${tc.label}</div>
+          <div class="chevron">▶</div>
+        </div>
+        <div class="event-body">
+          <div class="event-body-inner">
+            <p class="event-desc">${ev.desc}</p>
+            ${sourceHtml}
+          </div>
+        </div>
+      `;
+
+      item.querySelector('.event-header').addEventListener('click', () => {
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.event-item.open').forEach(el => el.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+      });
+
+      list.appendChild(item);
+    });
+
+    section.appendChild(list);
+    container.appendChild(section);
+  });
+}
+
+// ─── FILTER ────────────────────────────────────────────────────────
+let activeFilter = 'all';
+
+document.getElementById('filterBar').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  activeFilter = btn.dataset.type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+});
+
+function applyFilter() {
+  let visible = 0;
+  document.querySelectorAll('.event-item').forEach(item => {
+    const show = activeFilter === 'all' || item.dataset.type === activeFilter;
+    item.dataset.hidden = show ? 'false' : 'true';
+    if (show) visible++;
+  });
+  document.querySelectorAll('.month-section').forEach(section => {
+    const hasVisible = section.querySelectorAll('.event-item:not([data-hidden="true"])').length > 0;
+    section.style.display = hasVisible ? '' : 'none';
+  });
+  document.getElementById('emptyState').classList.toggle('visible', visible === 0);
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────
+buildTimeline();
+</script>
+</body>
+</html>

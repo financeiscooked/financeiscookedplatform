@@ -35,6 +35,8 @@ cd frontend && npm run dev
 
 Every new API endpoint or feature MUST update ALL of these:
 
+**⚠️ TWO SEPARATE TOOL SYSTEMS**: MCP server tools (`mcp-server/src/tools.ts`) are for Claude Desktop; platform tools (`backend/src/services/platformTools.ts`) are for the on-site AI agent. Both must be updated for every new feature or the website agent won't have it.
+
 1. **Backend route** — Add/modify route in `backend/src/routes/`
 2. **API docs** — Update `backend/src/api-docs/api-docs.html` with the new endpoint
 3. **Comprehensive tests** — Add tests to `backend/Comprehensive Test Suite/{Domain}/`
