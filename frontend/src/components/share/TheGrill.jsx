@@ -267,6 +267,9 @@ export default function TheGrill() {
   const [savedQuarters, setSavedQuarters] = useState(loadSavedQuarters)
   const [saveFlash, setSaveFlash] = useState(false)
   const [expandedAnalysis, setExpandedAnalysis] = useState(null)
+  const [editingQuarter, setEditingQuarter] = useState(null)   // key of quarter being edited
+  const [preEditPositions, setPreEditPositions] = useState(null) // snapshot to restore on cancel
+  const scrollTopRef = useRef(null)
 
   const grillRef = useRef(null)
   const canvasRef = useRef(null)
@@ -357,6 +360,37 @@ export default function TheGrill() {
     localStorage.setItem('fic_grill_quarters', JSON.stringify(updated))
   }, [savedQuarters])
 
+  // ── Edit saved quarter ──
+  const handleEditQuarter = useCallback((key) => {
+    setPreEditPositions({ ...positions })
+    setPositions({ ...savedQuarters[key].positions })
+    setEditingQuarter(key)
+    setRevealedIds([])
+    setShowScore(false)
+    setSpotlight(null)
+    setHostPositions(null)
+    scrollTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [positions, savedQuarters])
+
+  const handleResaveQuarter = useCallback(() => {
+    const updated = {
+      ...savedQuarters,
+      [editingQuarter]: { ...savedQuarters[editingQuarter], positions: { ...positions }, savedAt: new Date().toISOString() },
+    }
+    setSavedQuarters(updated)
+    localStorage.setItem('fic_grill_quarters', JSON.stringify(updated))
+    setEditingQuarter(null)
+    setPreEditPositions(null)
+    setSaveFlash(true)
+    setTimeout(() => setSaveFlash(false), 1500)
+  }, [positions, editingQuarter, savedQuarters])
+
+  const handleCancelEdit = useCallback(() => {
+    if (preEditPositions) setPositions(preEditPositions)
+    setEditingQuarter(null)
+    setPreEditPositions(null)
+  }, [preEditPositions])
+
   const currentQ = getCurrentQuarter()
   const savedKeys = Object.keys(savedQuarters).sort()
   const spotlightFn = spotlight ? FUNCTIONS.find(f => f.id === spotlight) : null
@@ -365,7 +399,7 @@ export default function TheGrill() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="w-full px-2 sm:px-4 py-5">
+      <div ref={scrollTopRef} className="w-full px-2 sm:px-4 py-5">
 
         {/* Header */}
         <div className="text-center mb-5">
@@ -376,8 +410,17 @@ export default function TheGrill() {
             <span className="text-[#F0A030]">finance function?</span>
           </h2>
           <p className="text-[var(--text-secondary)] text-xs sm:text-sm">
-            {anyRevealed ? 'Click a revealed card to see the AI\'s reasoning · unrevealed cards still draggable' : 'Drag each card to rate how cooked it is — then reveal the AI\'s take'}
+            {editingQuarter
+              ? `Editing ${getQuarterLabel(editingQuarter)} — drag cards to adjust, then resave`
+              : anyRevealed ? 'Click a revealed card to see the AI\'s reasoning · unrevealed cards still draggable'
+              : 'Drag each card to rate how cooked it is — then reveal the AI\'s take'}
           </p>
+          {editingQuarter && (
+            <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+              style={{ background: 'rgba(240,160,48,0.12)', color: '#F0A030', border: '1px solid rgba(240,160,48,0.35)' }}>
+              ✏️ Editing {getQuarterLabel(editingQuarter)}
+            </div>
+          )}
         </div>
 
         {/* Zone labels */}
@@ -439,31 +482,48 @@ export default function TheGrill() {
 
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
-          <button onClick={handleReset}
-            className="px-4 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-            style={{ border: '1px solid var(--border-default)' }}>
-            ↺ Reset
-          </button>
+          {editingQuarter ? (
+            // ── Edit mode controls ──
+            <>
+              <button onClick={handleCancelEdit}
+                className="px-4 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                style={{ border: '1px solid var(--border-default)' }}>
+                ✕ Cancel
+              </button>
+              <button onClick={handleResaveQuarter}
+                className="px-6 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all"
+                style={{ background: 'linear-gradient(135deg,#F0A030,#b36a00)', color: '#fff', boxShadow: '0 8px 30px rgba(240,160,48,0.35)', border: 'none' }}>
+                💾 Resave {getQuarterLabel(editingQuarter)}
+              </button>
+            </>
+          ) : (
+            // ── Normal controls ──
+            <>
+              <button onClick={handleReset}
+                className="px-4 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                style={{ border: '1px solid var(--border-default)' }}>
+                ↺ Reset
+              </button>
 
-          {/* Cheat button */}
-          <button onClick={handleCheat} disabled={allRevealed}
-            className="px-4 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: 'rgba(240,160,48,0.12)', color: '#F0A030', border: '1px solid rgba(240,160,48,0.35)' }}>
-            🎯 Cheat {cheatCount > 0 && !allRevealed ? `(${cheatCount}/${FUNCTIONS.length})` : ''}
-          </button>
+              <button onClick={handleCheat} disabled={allRevealed}
+                className="px-4 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: 'rgba(240,160,48,0.12)', color: '#F0A030', border: '1px solid rgba(240,160,48,0.35)' }}>
+                🎯 Cheat {cheatCount > 0 && !allRevealed ? `(${cheatCount}/${FUNCTIONS.length})` : ''}
+              </button>
 
-          {/* Show All button */}
-          <button onClick={handleShowAll} disabled={allRevealed}
-            className="px-5 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all disabled:cursor-not-allowed"
-            style={{ background: allRevealed ? 'var(--bg-subtle)' : 'linear-gradient(135deg,#D94E2A,#8b1a00)', color: allRevealed ? 'var(--text-tertiary)' : '#fff', boxShadow: allRevealed ? 'none' : '0 8px 30px rgba(217,78,42,0.35)', border: 'none', opacity: allRevealed ? 0.6 : 1 }}>
-            {allRevealed ? '✅ All Shown' : anyRevealed ? `🤖 Show Remaining (${FUNCTIONS.length - cheatCount})` : '🤖 Show All'}
-          </button>
+              <button onClick={handleShowAll} disabled={allRevealed}
+                className="px-5 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all disabled:cursor-not-allowed"
+                style={{ background: allRevealed ? 'var(--bg-subtle)' : 'linear-gradient(135deg,#D94E2A,#8b1a00)', color: allRevealed ? 'var(--text-tertiary)' : '#fff', boxShadow: allRevealed ? 'none' : '0 8px 30px rgba(217,78,42,0.35)', border: 'none', opacity: allRevealed ? 0.6 : 1 }}>
+                {allRevealed ? '✅ All Shown' : anyRevealed ? `🤖 Show Remaining (${FUNCTIONS.length - cheatCount})` : '🤖 Show All'}
+              </button>
 
-          <button onClick={handleSaveQuarter}
-            className="px-4 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all"
-            style={{ background: saveFlash ? 'rgba(240,160,48,0.2)' : 'var(--bg-subtle)', color: saveFlash ? '#F0A030' : 'var(--text-secondary)', border: saveFlash ? '1px solid rgba(240,160,48,0.5)' : '1px solid var(--border-default)', transition: 'all 0.3s' }}>
-            {saveFlash ? `✅ ${currentQ.label} Saved!` : `💾 Save ${currentQ.label}`}
-          </button>
+              <button onClick={handleSaveQuarter}
+                className="px-4 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all"
+                style={{ background: saveFlash ? 'rgba(240,160,48,0.2)' : 'var(--bg-subtle)', color: saveFlash ? '#F0A030' : 'var(--text-secondary)', border: saveFlash ? '1px solid rgba(240,160,48,0.5)' : '1px solid var(--border-default)', transition: 'all 0.3s' }}>
+                {saveFlash ? `✅ ${currentQ.label} Saved!` : `💾 Save ${currentQ.label}`}
+              </button>
+            </>
+          )}
         </div>
 
         {/* Spotlight */}
@@ -630,8 +690,17 @@ export default function TheGrill() {
                     <span className="font-bold text-sm text-[var(--text-primary)]">🗓 {getQuarterLabel(key)}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-[var(--text-tertiary)]">{new Date(snap.savedAt).toLocaleDateString()}</span>
+                      <button onClick={() => handleEditQuarter(key)} className="text-[10px] text-[var(--text-tertiary)] hover:text-[#F0A030] transition-colors px-1.5 py-0.5 rounded" style={{ border: '1px solid var(--border-subtle)' }}>✏️ Edit</button>
                       <button onClick={() => handleDeleteQuarter(key)} className="text-[10px] text-[var(--text-tertiary)] hover:text-red-400 transition-colors px-1.5 py-0.5 rounded" style={{ border: '1px solid var(--border-subtle)' }}>✕</button>
                     </div>
+                  </div>
+                  {/* Mini zone labels */}
+                  <div className="grid grid-cols-7 gap-px px-0" style={{ background: 'var(--bg-subtle)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    {ZONES.map(z => (
+                      <div key={z.id} className="text-center py-0.5">
+                        <span className="text-[7px] font-bold tracking-wider uppercase" style={{ color: z.color }}>{z.label}</span>
+                      </div>
+                    ))}
                   </div>
                   <div className="relative" style={{ background: 'linear-gradient(90deg,#0a1520 0%,#111215 12%,#1f0e06 25%,#3d1a04 38%,#6b2c00 52%,#9b4000 65%,#c05500 78%,#200400 91%,#0d0100 100%)', padding: '8px 0' }}>
                     {ZONES.slice(1).map(z => (
