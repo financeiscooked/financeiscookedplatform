@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, FileText, Sun, Moon, Shield, GraduationCap, Hammer, Share2, Newspaper } from 'lucide-react'
+import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, FileText, Sun, Moon, Shield, GraduationCap, Hammer, Share2, Newspaper, Flame } from 'lucide-react'
 import { useTheme } from './context/ThemeContext'
 import Home from './components/Home'
 import SoundBoard from './components/SoundBoard'
@@ -7,6 +7,7 @@ import MemeBoard from './components/MemeBoard'
 import EpisodeBoard from './components/EpisodeBoard'
 import McpDocs from './components/McpDocs'
 import NewsPage from './components/learn/NewsPage'
+import TheGrill from './components/share/TheGrill'
 import Toast from './components/Toast'
 import AgentChatButton from './components/agent/AgentChatButton'
 import AdminPanel from './components/admin/AdminPanel'
@@ -32,6 +33,10 @@ const DOC_TABS = [
 
 const LEARN_TABS = [
   { id: 'news', label: 'News', icon: Newspaper },
+]
+
+const SHARE_TABS = [
+  { id: 'grill', label: 'The Grill', icon: Flame },
 ]
 
 function useIsPopout() {
@@ -65,6 +70,7 @@ export default function App() {
   const [showTab, setShowTab] = useState('episodes')
   const [docTab, setDocTab] = useState('api')
   const [learnTab, setLearnTab] = useState('news')
+  const [shareTab, setShareTab] = useState('grill')
   const { theme, toggleTheme } = useTheme()
 
   if (isPopout) {
@@ -107,9 +113,9 @@ export default function App() {
                 const Icon = tab.icon
                 const isActive = mainTab === tab.id
                 // Determine if this tab has sub-tabs that should expand
-                const subTabs = tab.id === 'show' ? SHOW_TABS : tab.id === 'docs' ? DOC_TABS : tab.id === 'learn' ? LEARN_TABS : null
-                const subTab = tab.id === 'show' ? showTab : tab.id === 'docs' ? docTab : tab.id === 'learn' ? learnTab : null
-                const setSubTab = tab.id === 'show' ? setShowTab : tab.id === 'docs' ? setDocTab : tab.id === 'learn' ? setLearnTab : null
+                const subTabs = tab.id === 'show' ? SHOW_TABS : tab.id === 'docs' ? DOC_TABS : tab.id === 'learn' ? LEARN_TABS : tab.id === 'share' ? SHARE_TABS : null
+                const subTab = tab.id === 'show' ? showTab : tab.id === 'docs' ? docTab : tab.id === 'learn' ? learnTab : tab.id === 'share' ? shareTab : null
+                const setSubTab = tab.id === 'show' ? setShowTab : tab.id === 'docs' ? setDocTab : tab.id === 'learn' ? setLearnTab : tab.id === 'share' ? setShareTab : null
                 return (
                   <React.Fragment key={tab.id}>
                     <button
@@ -159,9 +165,9 @@ export default function App() {
           {MAIN_TABS.map((tab) => {
             const Icon = tab.icon
             const isActive = mainTab === tab.id
-            const subTabs = tab.id === 'show' ? SHOW_TABS : tab.id === 'docs' ? DOC_TABS : tab.id === 'learn' ? LEARN_TABS : null
-            const subTab = tab.id === 'show' ? showTab : tab.id === 'docs' ? docTab : tab.id === 'learn' ? learnTab : null
-            const setSubTab = tab.id === 'show' ? setShowTab : tab.id === 'docs' ? setDocTab : tab.id === 'learn' ? setLearnTab : null
+            const subTabs = tab.id === 'show' ? SHOW_TABS : tab.id === 'docs' ? DOC_TABS : tab.id === 'learn' ? LEARN_TABS : tab.id === 'share' ? SHARE_TABS : null
+            const subTab = tab.id === 'show' ? showTab : tab.id === 'docs' ? docTab : tab.id === 'learn' ? learnTab : tab.id === 'share' ? shareTab : null
+            const setSubTab = tab.id === 'show' ? setShowTab : tab.id === 'docs' ? setDocTab : tab.id === 'learn' ? setLearnTab : tab.id === 'share' ? setShareTab : null
             return (
               <React.Fragment key={tab.id}>
                 <button
@@ -227,13 +233,7 @@ export default function App() {
             description="Open-source tools, templates, and starter kits from the show. Download, remix, and make them yours."
           />
         )}
-        {mainTab === 'share' && (
-          <PlaceholderPage
-            title="Share"
-            icon={Share2}
-            description="Community submissions, featured builds, and ways to contribute back. Show us what you've cooked up."
-          />
-        )}
+        {mainTab === 'share' && shareTab === 'grill' && <TheGrill />}
       </div>
 
       {/* Bottom bar — Docs, Admin, Theme toggle (left side) */}
