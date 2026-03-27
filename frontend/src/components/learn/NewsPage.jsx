@@ -1,5 +1,10 @@
 import React, { useState } from 'react'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import q1Html from './q1-2026-lookback.html?raw'
+
+const HTML_CONTENT = {
+  'q1-2026': q1Html,
+}
 
 const QUARTERS = [
   {
@@ -8,7 +13,6 @@ const QUARTERS = [
     title: 'When AI Got Serious',
     subtitle: 'January → March 2026',
     description: '40+ major AI events — model releases, company moves, open-source milestones, and the finance sector getting disrupted in real time.',
-    url: '/news/q1-2026-lookback.html',
     live: true,
     stats: ['40+ events', '3 months', 'Finance focus'],
   },
@@ -49,10 +53,10 @@ export default function NewsPage() {
 
   const activeQuarter = QUARTERS.find(q => q.id === viewing)
 
-  if (viewing && activeQuarter?.url) {
+  if (viewing && HTML_CONTENT[viewing]) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* iframe toolbar */}
+        {/* toolbar */}
         <div className="flex items-center gap-3 px-4 py-2 border-b border-[var(--border-subtle)] shrink-0 bg-[var(--bg-secondary)]">
           <button
             onClick={() => setViewing(null)}
@@ -65,19 +69,9 @@ export default function NewsPage() {
           <span className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
             {activeQuarter.label} Lookback
           </span>
-          <div className="flex-1" />
-          <a
-            href={activeQuarter.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[#D94E2A] transition-colors"
-          >
-            <ExternalLink size={11} />
-            Open in tab
-          </a>
         </div>
         <iframe
-          src={activeQuarter.url}
+          srcDoc={HTML_CONTENT[viewing]}
           className="flex-1 w-full border-0"
           title={`${activeQuarter.label} AI Timeline`}
         />
