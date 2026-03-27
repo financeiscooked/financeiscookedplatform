@@ -261,7 +261,6 @@ export default function TheGrill() {
   const [positions, setPositions] = useState(initPositions)
   const [revealedIds, setRevealedIds] = useState([])       // ordered list of AI-revealed function IDs
   const [hostPositions, setHostPositions] = useState(null) // saved when first reveal happens
-  const [showScore, setShowScore] = useState(false)
   const [spotlight, setSpotlight] = useState(null)
   const [isResetting, setIsResetting] = useState(false)
   const [savedQuarters, setSavedQuarters] = useState(loadSavedQuarters)
@@ -314,7 +313,6 @@ export default function TheGrill() {
     setRevealedIds(prev => [...prev, nextFn.id])
     setPositions(prev => ({ ...prev, [nextFn.id]: AI_DEFAULTS[nextFn.id].pos }))
     setSpotlight(nextFn.id)
-    if (revealedIds.length + 1 === FUNCTIONS.length) setTimeout(() => setShowScore(true), 1400)
   }, [revealedIds, positions, anyRevealed])
 
   // ── Show All ──
@@ -333,7 +331,6 @@ export default function TheGrill() {
     })
     setTimeout(() => {
       setSpotlight(unrevealed[0]?.id || FUNCTIONS[0].id)
-      setShowScore(true)
     }, unrevealed.length * 160 + 1400)
   }, [revealedIds, positions, anyRevealed, allRevealed])
 
@@ -341,7 +338,6 @@ export default function TheGrill() {
   const handleReset = useCallback(() => {
     setIsResetting(true)
     setRevealedIds([])
-    setShowScore(false)
     setSpotlight(null)
     setHostPositions(null)
     setPositions(initPositions())
@@ -385,7 +381,6 @@ export default function TheGrill() {
     setPositions({ ...savedQuarters[key].positions })
     setEditingQuarter(key)
     setRevealedIds([])
-    setShowScore(false)
     setSpotlight(null)
     setHostPositions(null)
     scrollTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -614,37 +609,6 @@ export default function TheGrill() {
           <p className="text-center text-[var(--text-hint)] text-xs mt-3">tap a revealed card to see the AI's reasoning</p>
         )}
 
-        {/* Score grid */}
-        {showScore && hostPositions && (
-          <div className="mt-5" style={{ animation: 'grillFadeUp 0.5s ease' }}>
-            <div className="text-center mb-3">
-              <span className="text-[var(--text-tertiary)] text-[10px] font-bold uppercase tracking-widest">Hosts vs AI</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              {FUNCTIONS.map(fn => {
-                const hostZone = getZone(hostPositions[fn.id])
-                const aiZone = getZone(AI_DEFAULTS[fn.id].pos)
-                const diff = Math.abs(hostPositions[fn.id] - AI_DEFAULTS[fn.id].pos)
-                const match = hostZone.id === aiZone.id
-                const close = !match && diff < 0.143
-                const emoji = match ? '✅' : close ? '🟡' : '❌'
-                const isSelected = spotlight === fn.id
-                return (
-                  <div key={fn.id} onClick={() => { if (revealedIds.includes(fn.id)) setSpotlight(prev => prev === fn.id ? null : fn.id) }}
-                    className="rounded-xl p-2.5 transition-all"
-                    style={{ background: isSelected ? 'rgba(217,78,42,0.08)' : 'var(--bg-subtle)', border: isSelected ? '1px solid rgba(217,78,42,0.3)' : '1px solid var(--border-subtle)', cursor: revealedIds.includes(fn.id) ? 'pointer' : 'default' }}>
-                    <div className="text-sm mb-0.5">{revealedIds.includes(fn.id) ? emoji : '⬜'}</div>
-                    <div className="text-[10px] font-bold text-[var(--text-primary)] mb-0.5 leading-tight">{fn.icon} {fn.name}</div>
-                    <div className="text-[9px] text-[var(--text-tertiary)]">You: {hostZone.label}</div>
-                    <div className="text-[9px]" style={{ color: revealedIds.includes(fn.id) ? '#D94E2A' : 'var(--text-hint)' }}>
-                      {revealedIds.includes(fn.id) ? `AI: ${aiZone.label}` : 'Not revealed'}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
 
         {/* ── Full Analysis ─────────────────────────────────────────────────── */}
         <div className="mt-10">
