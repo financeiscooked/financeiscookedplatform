@@ -60,12 +60,40 @@ export const DEEP_TOOLS: Tool[] = [
 registerToolHandler('deep__', async (toolName, input, _context) => {
   switch (toolName) {
     case 'deep__web_search': {
-      // Placeholder — web search not yet connected to a provider
-      return JSON.stringify({
-        message: 'Web search not configured. To enable, connect a search provider (e.g. Brave Search, Google Custom Search) in the platform settings.',
-        query: input.query,
-        results: [],
-      });
+      if (!input.query) return JSON.stringify({ error: 'query is required' });
+
+      const apiKey = process.env.BRAVE_SEARCH_API_KEY;
+      if (!apiKey) {
+        return JSON.stringify({ error: 'BRAVE_SEARCH_API_KEY not configured' });
+      }
+
+      try {
+        const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(input.query)}&count=8&text_decorations=false`;
+        const response = await fetch(url, {
+          headers: {
+            'Accept': 'application/json',
+            'Accept-Encoding': 'gzip',
+            'X-Subscription-Token': apiKey,
+          },
+          signal: AbortSignal.timeout(10_000),
+        });
+
+        if (!response.ok) {
+          return JSON.stringify({ error: `Brave Search API error: ${response.status} ${response.statusText}` });
+        }
+
+        const data: any = await response.json();
+        const results = (data?.web?.results || []).map((r: any) => ({
+          title: r.title,
+          url: r.url,
+          description: r.description,
+          published: r.page_age || null,
+        }));
+
+        return JSON.stringify({ query: input.query, count: results.length, results });
+      } catch (err: any) {
+        return JSON.stringify({ error: `Search failed: ${err.message || 'Unknown error'}` });
+      }
     }
 
     case 'deep__web_fetch': {
