@@ -93,7 +93,7 @@ router.get('/', requireAdmin, async (_req, res) => {
 // ─── PUT /api/settings/:key — save or update a setting ───────────────
 
 router.put('/:key', requireAdmin, async (req, res) => {
-  const { key } = req.params;
+  const key = req.params['key'] as string;
   const { value } = req.body;
 
   if (!value || typeof value !== 'string') {
@@ -115,7 +115,7 @@ router.put('/:key', requireAdmin, async (req, res) => {
 // ─── DELETE /api/settings/:key — remove a setting ────────────────────
 
 router.delete('/:key', requireAdmin, async (req, res) => {
-  const { key } = req.params;
+  const key = req.params['key'] as string;
 
   const existing = await prisma.platformSetting.findUnique({ where: { key } });
   if (!existing) {
