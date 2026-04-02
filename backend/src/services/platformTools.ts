@@ -1,6 +1,7 @@
 import { registerToolHandler } from './toolExecutor.js';
 import type { Tool } from './llm/types.js';
 import prisma from '../lib/prisma.js';
+import { getSettingValue } from '../routes/settings.js';
 
 // ---------------------------------------------------------------------------
 // Platform Tools — full access to financeiscooked show content
@@ -307,6 +308,23 @@ export const PLATFORM_TOOLS: Tool[] = [
         documentId: { type: 'string', description: 'Document ID to delete' },
       },
       required: ['documentId'],
+    },
+  },
+
+  // ── Email Tool ──────────────────────────────────────────────────
+
+  {
+    name: 'platform__email_send',
+    description: 'Send an email via Resend. Use this to email episode summaries, rundowns, or any content to hosts or team members. Requires Resend API key to be configured in Admin → Settings.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        to: { type: 'string', description: 'Recipient email address' },
+        subject: { type: 'string', description: 'Email subject line' },
+        body: { type: 'string', description: 'Email body in plain text or simple HTML' },
+        cc: { type: 'string', description: 'CC email address (optional)' },
+      },
+      required: ['to', 'subject', 'body'],
     },
   },
 ];
@@ -748,6 +766,47 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
 
       await prisma.slideDocument.delete({ where: { id: input.documentId } });
       return JSON.stringify({ success: true, deleted: input.documentId });
+    }
+
+    case 'platform__email_send': {
+      if (!input.to || !input.subject || !input.body) {
+        return JSON.stringify({ error: 'to, subject, and body are required' });
+      }
+
+      const resendKey = await getSettingValue('RESEND_API_KEY');
+      if (!resendKey) {
+        return JSON.stringify({ error: 'Resend API key not configured. Add it in Admin → Settings.' });
+      }
+
+      try {
+        const payload: any = {
+          from: 'Finance Is Cooked <noreply@financeiscooked.com>',
+          to: [input.to],
+          subject: input.subject,
+          html: input.body.includes('<') ? input.body : input.body.replace(/\n/g, '<br>'),
+        };
+        if (input.cc) payload.cc = [input.cc];
+
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(15_000),
+        });
+
+        const result: any = await response.json();
+
+        if (!response.ok) {
+          return JSON.stringify({ error: `Resend error: ${result.message || response.statusText}` });
+        }
+
+        return JSON.stringify({ success: true, id: result.id, to: input.to, subject: input.subject });
+      } catch (err: any) {
+        return JSON.stringify({ error: `Email failed: ${err.message || 'Unknown error'}` });
+      }
     }
 
     default:
