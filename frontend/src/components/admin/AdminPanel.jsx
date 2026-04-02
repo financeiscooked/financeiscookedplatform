@@ -52,6 +52,7 @@ const ADMIN_TABS = [
   { id: 'agents', label: 'Agents', icon: Bot },
   { id: 'mcp', label: 'MCP Hub', icon: Plug },
   { id: 'llm', label: 'LLM Config', icon: Cpu },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
 // ─── Auth Gate ───────────────────────────────────────────────────────
@@ -1146,6 +1147,131 @@ function LlmConfig({ api }) {
   )
 }
 
+// ─── Settings Tab ────────────────────────────────────────────────────
+function SettingsTab({ api }) {
+  const [settings, setSettings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState({})
+  const [values, setValues] = useState({})
+  const [showKey, setShowKey] = useState({})
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await api.get('/settings')
+      setSettings(res.data || [])
+    } catch (e) { toast('Failed to load settings: ' + e.message) }
+    finally { setLoading(false) }
+  }, [api])
+
+  useEffect(() => { load() }, [load])
+
+  const save = async (key) => {
+    const value = values[key]?.trim()
+    if (!value) { toast('Enter a value first'); return }
+    setSaving(s => ({ ...s, [key]: true }))
+    try {
+      await api.put(`/settings/${key}`, { value })
+      setValues(v => ({ ...v, [key]: '' }))
+      toast('Saved')
+      load()
+    } catch (e) { toast('Error: ' + e.message) }
+    finally { setSaving(s => ({ ...s, [key]: false })) }
+  }
+
+  const remove = async (key) => {
+    if (!confirm(`Remove ${key}?`)) return
+    try {
+      await api.delete(`/settings/${key}`)
+      toast('Removed')
+      load()
+    } catch (e) { toast('Error: ' + e.message) }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={20} className="animate-spin text-[var(--text-tertiary)]" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-6 max-w-2xl mx-auto">
+      <div className="mb-6">
+        <h2 className="text-base font-black text-[var(--text-primary)] tracking-tight">Integration Settings</h2>
+        <p className="text-xs text-[var(--text-tertiary)] mt-1">API keys for external services. Keys are encrypted at rest.</p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {settings.map((s) => (
+          <div key={s.key} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-sm font-bold text-[var(--text-primary)]">{s.label}</span>
+                  {s.configured ? (
+                    <span className="text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      Configured
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full bg-[var(--bg-subtle)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                      Not set
+                    </span>
+                  )}
+                  {s.source === 'env' && (
+                    <span className="text-[9px] font-bold text-[var(--text-muted)]">via env</span>
+                  )}
+                </div>
+                <p className="text-xs text-[var(--text-tertiary)]">{s.description}</p>
+                {s.configured && s.keyPrefix && s.source === 'db' && (
+                  <p className="text-[10px] font-mono text-[var(--text-muted)] mt-1">{s.keyPrefix}</p>
+                )}
+              </div>
+              {s.configured && s.source === 'db' && (
+                <button
+                  onClick={() => remove(s.key)}
+                  className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-all"
+                  title="Remove key"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type={showKey[s.key] ? 'text' : 'password'}
+                  placeholder={s.configured ? 'Enter new key to replace...' : 'Enter API key...'}
+                  value={values[s.key] || ''}
+                  onChange={e => setValues(v => ({ ...v, [s.key]: e.target.value }))}
+                  onKeyDown={e => e.key === 'Enter' && save(s.key)}
+                  className="w-full px-3 py-2 pr-9 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-xs font-mono placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#D94E2A]/50"
+                />
+                <button
+                  onClick={() => setShowKey(k => ({ ...k, [s.key]: !k[s.key] }))}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                >
+                  <Eye size={12} />
+                </button>
+              </div>
+              <button
+                onClick={() => save(s.key)}
+                disabled={saving[s.key] || !values[s.key]?.trim()}
+                className="px-4 py-2 rounded-lg text-xs font-bold bg-[#D94E2A] text-white hover:bg-[#c04020] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
+              >
+                {saving[s.key] ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
+                Save
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Admin Panel ────────────────────────────────────────────────
 export default function AdminPanel() {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem('admin-key') || '')
@@ -1226,6 +1352,7 @@ export default function AdminPanel() {
         {adminTab === 'agents' && <AgentGrid api={api} />}
         {adminTab === 'mcp' && <McpHub api={api} />}
         {adminTab === 'llm' && <LlmConfig api={api} />}
+        {adminTab === 'settings' && <SettingsTab api={api} />}
       </div>
     </div>
   )

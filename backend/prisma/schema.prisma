@@ -364,3 +364,13 @@ model LlmApiKey {
   @@unique([provider])
   @@map("llm_api_keys")
 }
+
+model PlatformSetting {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key            String   @unique @db.VarChar(100)
+  encryptedValue String   @map("encrypted_value") @db.Text
+  keyPrefix      String?  @map("key_prefix") @db.VarChar(20)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("platform_settings")
+}

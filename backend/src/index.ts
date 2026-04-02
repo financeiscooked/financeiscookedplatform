@@ -14,6 +14,7 @@ import agentDocumentsRouter from './routes/agentDocuments.js';
 import agentMemoryRouter from './routes/agentMemory.js';
 import capabilitiesRouter from './routes/capabilities.js';
 import agentCapabilitiesRouter from './routes/agentCapabilities.js';
+import settingsRouter from './routes/settings.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,6 +43,7 @@ app.use('/api/agents', agentDocumentsRouter);
 app.use('/api/agents', agentMemoryRouter);
 app.use('/api/capabilities', capabilitiesRouter);
 app.use('/api/agents', agentCapabilitiesRouter);
+app.use('/api/settings', settingsRouter);
 
 // Error handler
 app.use(errorHandler);
