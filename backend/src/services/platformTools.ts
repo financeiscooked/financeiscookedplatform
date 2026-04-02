@@ -780,7 +780,7 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
 
       try {
         const payload: any = {
-          from: 'Finance Is Cooked <noreply@financeiscooked.com>',
+          from: 'Finance Is Cooked <admin@agenticledger.ai>',
           to: [input.to],
           subject: input.subject,
           html: input.body.includes('<') ? input.body : input.body.replace(/\n/g, '<br>'),
