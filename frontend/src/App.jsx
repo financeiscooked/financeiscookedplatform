@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, FileText, Sun, Moon, Shield, GraduationCap, Hammer, Share2, Newspaper, Flame } from 'lucide-react'
+import { Home as HomeIcon, Tv, Volume2, Image, BookOpen, FileText, Sun, Moon, Shield, GraduationCap, Hammer, Share2, Newspaper, Flame, Briefcase } from 'lucide-react'
 import { useTheme } from './context/ThemeContext'
 import Home from './components/Home'
 import SoundBoard from './components/SoundBoard'
@@ -8,6 +8,7 @@ import EpisodeBoard from './components/EpisodeBoard'
 import McpDocs from './components/McpDocs'
 import NewsPage from './components/learn/NewsPage'
 import TheGrill from './components/share/TheGrill'
+import JobBoard from './components/JobBoard'
 import Toast from './components/Toast'
 import AgentChatButton from './components/agent/AgentChatButton'
 import AdminPanel from './components/admin/AdminPanel'
@@ -18,6 +19,7 @@ const MAIN_TABS = [
   { id: 'learn', label: 'Learn', icon: GraduationCap },
   { id: 'build', label: 'Build', icon: Hammer },
   { id: 'share', label: 'Share', icon: Share2 },
+  { id: 'jobs', label: 'Jobs', icon: Briefcase },
 ]
 
 const SHOW_TABS = [
@@ -234,6 +236,7 @@ export default function App() {
           />
         )}
         {mainTab === 'share' && shareTab === 'grill' && <TheGrill />}
+        {mainTab === 'jobs' && <JobBoard />}
       </div>
 
       {/* Bottom bar — Docs, Admin, Theme toggle (left side) */}

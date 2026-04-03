@@ -374,3 +374,22 @@ model PlatformSetting {
 
   @@map("platform_settings")
 }
+
+model Job {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String   @db.VarChar(255)
+  company     String   @db.VarChar(255)
+  location    String?  @db.VarChar(255)
+  jobType     String   @default("full-time") @map("job_type") @db.VarChar(50)
+  tags        Json     @default("[]")
+  salary      String?  @db.VarChar(100)
+  url         String   @db.Text
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  featured    Boolean  @default(false)
+  postedAt    DateTime @default(now()) @map("posted_at") @db.Timestamptz()
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("jobs")
+}

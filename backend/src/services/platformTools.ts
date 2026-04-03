@@ -311,6 +311,50 @@ export const PLATFORM_TOOLS: Tool[] = [
     },
   },
 
+  // ── Job Board Tools ─────────────────────────────────────────────
+
+  {
+    name: 'platform__jobs_list',
+    description: 'List Finance/AI jobs on the job board. Optionally filter by tag (e.g. "Finance", "AI", "Accounting") or jobType (e.g. "remote", "full-time", "contract").',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tag: { type: 'string', description: 'Filter by tag (optional)' },
+        jobType: { type: 'string', description: 'Filter by job type: full-time, part-time, contract, remote (optional)' },
+      },
+    },
+  },
+  {
+    name: 'platform__job_create',
+    description: '[Admin] Add a new job to the Finance/AI job board. Use this when the user asks to post a job or add a job listing.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Job title' },
+        company: { type: 'string', description: 'Company name' },
+        location: { type: 'string', description: 'Location (e.g. "New York, NY" or "Remote")' },
+        jobType: { type: 'string', description: 'Job type: full-time, part-time, contract, remote' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Tags e.g. ["Finance", "AI", "Accounting"]' },
+        salary: { type: 'string', description: 'Salary range e.g. "$120K-$160K" (optional)' },
+        url: { type: 'string', description: 'URL to the job posting' },
+        description: { type: 'string', description: 'Short job description (optional)' },
+        featured: { type: 'boolean', description: 'Pin to top as featured (optional)' },
+      },
+      required: ['title', 'company', 'url'],
+    },
+  },
+  {
+    name: 'platform__job_delete',
+    description: '[Admin] Remove a job from the job board by ID.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Job ID to delete' },
+      },
+      required: ['id'],
+    },
+  },
+
   // ── Email Tool ──────────────────────────────────────────────────
 
   {
@@ -766,6 +810,53 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
 
       await prisma.slideDocument.delete({ where: { id: input.documentId } });
       return JSON.stringify({ success: true, deleted: input.documentId });
+    }
+
+    case 'platform__jobs_list': {
+      const where: any = { isActive: true };
+      if (input.jobType) where.jobType = input.jobType;
+
+      const jobs = await prisma.job.findMany({
+        where,
+        orderBy: [{ featured: 'desc' }, { postedAt: 'desc' }],
+      });
+
+      const filtered = input.tag
+        ? jobs.filter((j) => {
+            const tags = Array.isArray(j.tags) ? j.tags : [];
+            return tags.some((t: any) => t.toLowerCase() === input.tag.toLowerCase());
+          })
+        : jobs;
+
+      return JSON.stringify({ count: filtered.length, jobs: filtered });
+    }
+
+    case 'platform__job_create': {
+      if (!input.title || !input.company || !input.url) {
+        return JSON.stringify({ error: 'title, company, and url are required' });
+      }
+      const job = await prisma.job.create({
+        data: {
+          title: input.title,
+          company: input.company,
+          location: input.location || null,
+          jobType: input.jobType || 'full-time',
+          tags: input.tags || [],
+          salary: input.salary || null,
+          url: input.url,
+          description: input.description || null,
+          featured: input.featured || false,
+        },
+      });
+      return JSON.stringify({ success: true, id: job.id, title: job.title, company: job.company });
+    }
+
+    case 'platform__job_delete': {
+      if (!input.id) return JSON.stringify({ error: 'id is required' });
+      const job = await prisma.job.findUnique({ where: { id: input.id } });
+      if (!job) return JSON.stringify({ error: `Job ${input.id} not found` });
+      await prisma.job.delete({ where: { id: input.id } });
+      return JSON.stringify({ success: true, deleted: input.id });
     }
 
     case 'platform__email_send': {
