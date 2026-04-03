@@ -315,12 +315,13 @@ export const PLATFORM_TOOLS: Tool[] = [
 
   {
     name: 'platform__jobs_list',
-    description: 'List Finance/AI jobs on the job board. Optionally filter by tag (e.g. "Finance", "AI", "Accounting") or jobType (e.g. "remote", "full-time", "contract").',
+    description: 'List Finance/AI jobs on the job board. Optionally filter by tag, jobType, or search text.',
     inputSchema: {
       type: 'object',
       properties: {
         tag: { type: 'string', description: 'Filter by tag (optional)' },
         jobType: { type: 'string', description: 'Filter by job type: full-time, part-time, contract, remote (optional)' },
+        search: { type: 'string', description: 'Search jobs by title, company, or description (optional)' },
       },
     },
   },
@@ -334,13 +335,36 @@ export const PLATFORM_TOOLS: Tool[] = [
         company: { type: 'string', description: 'Company name' },
         location: { type: 'string', description: 'Location (e.g. "New York, NY" or "Remote")' },
         jobType: { type: 'string', description: 'Job type: full-time, part-time, contract, remote' },
-        tags: { type: 'array', items: { type: 'string' }, description: 'Tags e.g. ["Finance", "AI", "Accounting"]' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Tags e.g. ["Finance", "AI", "Accounting", "FP&A", "Treasury", "AP", "AR", "Collections", "Strategic Finance", "Payroll", "IT", "Other"]' },
         salary: { type: 'string', description: 'Salary range e.g. "$120K-$160K" (optional)' },
         url: { type: 'string', description: 'URL to the job posting' },
         description: { type: 'string', description: 'Short job description (optional)' },
         featured: { type: 'boolean', description: 'Pin to top as featured (optional)' },
+        openSince: { type: 'string', description: 'Date the job was originally posted at source (ISO date string, optional)' },
       },
       required: ['title', 'company', 'url'],
+    },
+  },
+  {
+    name: 'platform__job_update',
+    description: '[Admin] Update an existing job on the job board. Pass the job ID and any fields to change.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Job ID to update' },
+        title: { type: 'string', description: 'New job title (optional)' },
+        company: { type: 'string', description: 'New company name (optional)' },
+        location: { type: 'string', description: 'New location (optional)' },
+        jobType: { type: 'string', description: 'Job type: full-time, part-time, contract, remote (optional)' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'New tags (optional)' },
+        salary: { type: 'string', description: 'New salary range (optional)' },
+        url: { type: 'string', description: 'New URL (optional)' },
+        description: { type: 'string', description: 'New description (optional)' },
+        featured: { type: 'boolean', description: 'Featured status (optional)' },
+        isActive: { type: 'boolean', description: 'Active status (optional)' },
+        openSince: { type: 'string', description: 'Date the job was originally posted at source (ISO date string, optional)' },
+      },
+      required: ['id'],
     },
   },
   {
@@ -815,16 +839,23 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
     case 'platform__jobs_list': {
       const where: any = { isActive: true };
       if (input.jobType) where.jobType = input.jobType;
+      if (input.search) {
+        where.OR = [
+          { title: { contains: input.search, mode: 'insensitive' } },
+          { company: { contains: input.search, mode: 'insensitive' } },
+          { description: { contains: input.search, mode: 'insensitive' } },
+        ];
+      }
 
       const jobs = await prisma.job.findMany({
         where,
-        orderBy: [{ featured: 'desc' }, { postedAt: 'desc' }],
+        orderBy: [{ featured: 'desc' }, { openSince: { sort: 'desc', nulls: 'last' } }, { postedAt: 'desc' }],
       });
 
       const filtered = input.tag
         ? jobs.filter((j) => {
             const tags = Array.isArray(j.tags) ? j.tags : [];
-            return tags.some((t: any) => t.toLowerCase() === input.tag.toLowerCase());
+            return tags.some((t: any) => String(t).toLowerCase() === input.tag.toLowerCase());
           })
         : jobs;
 
@@ -846,9 +877,30 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
           url: input.url,
           description: input.description || null,
           featured: input.featured || false,
+          openSince: input.openSince ? new Date(input.openSince) : null,
         },
       });
       return JSON.stringify({ success: true, id: job.id, title: job.title, company: job.company });
+    }
+
+    case 'platform__job_update': {
+      if (!input.id) return JSON.stringify({ error: 'id is required' });
+      const existing = await prisma.job.findUnique({ where: { id: input.id } });
+      if (!existing) return JSON.stringify({ error: `Job ${input.id} not found` });
+      const data: any = {};
+      if (input.title !== undefined) data.title = input.title;
+      if (input.company !== undefined) data.company = input.company;
+      if (input.location !== undefined) data.location = input.location;
+      if (input.jobType !== undefined) data.jobType = input.jobType;
+      if (input.tags !== undefined) data.tags = input.tags;
+      if (input.salary !== undefined) data.salary = input.salary;
+      if (input.url !== undefined) data.url = input.url;
+      if (input.description !== undefined) data.description = input.description;
+      if (input.featured !== undefined) data.featured = input.featured;
+      if (input.isActive !== undefined) data.isActive = input.isActive;
+      if (input.openSince !== undefined) data.openSince = input.openSince ? new Date(input.openSince) : null;
+      const updated = await prisma.job.update({ where: { id: input.id }, data });
+      return JSON.stringify({ success: true, id: updated.id, title: updated.title, company: updated.company });
     }
 
     case 'platform__job_delete': {

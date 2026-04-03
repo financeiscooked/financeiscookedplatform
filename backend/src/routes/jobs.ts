@@ -7,22 +7,37 @@ const router = Router();
 // ─── GET /api/jobs — list all active jobs ─────────────────────────────
 router.get('/jobs', async (req, res, next) => {
   try {
-    const { tag, type, featured } = req.query;
+    const { tag, type, featured, search, sort } = req.query;
 
     const where: any = { isActive: true };
     if (type) where.jobType = type as string;
     if (featured === 'true') where.featured = true;
 
-    const jobs = await prisma.job.findMany({
-      where,
-      orderBy: [{ featured: 'desc' }, { postedAt: 'desc' }],
-    });
+    // Text search across title, company, description
+    if (search) {
+      const s = search as string;
+      where.OR = [
+        { title: { contains: s, mode: 'insensitive' } },
+        { company: { contains: s, mode: 'insensitive' } },
+        { description: { contains: s, mode: 'insensitive' } },
+      ];
+    }
+
+    // Sort: default featured first then openSince desc (newest first)
+    const orderBy: any[] = [{ featured: 'desc' }];
+    if (sort === 'oldest') {
+      orderBy.push({ openSince: 'asc' }, { postedAt: 'asc' });
+    } else {
+      orderBy.push({ openSince: { sort: 'desc', nulls: 'last' } }, { postedAt: 'desc' });
+    }
+
+    const jobs = await prisma.job.findMany({ where, orderBy });
 
     // Filter by tag in JS (JSON array field)
     const filtered = tag
       ? jobs.filter((j) => {
           const tags = Array.isArray(j.tags) ? j.tags : [];
-          return tags.some((t: string) => t.toLowerCase() === (tag as string).toLowerCase());
+          return tags.some((t: any) => String(t).toLowerCase() === (tag as string).toLowerCase());
         })
       : jobs;
 
@@ -42,7 +57,7 @@ router.get('/jobs/:id', async (req, res, next) => {
 // ─── POST /api/jobs — create a job (admin) ───────────────────────────
 router.post('/jobs', requireAdmin, async (req, res, next) => {
   try {
-    const { title, company, location, jobType, tags, salary, url, description, featured, postedAt } = req.body;
+    const { title, company, location, jobType, tags, salary, url, description, featured, openSince } = req.body;
     if (!title || !company || !url) {
       res.status(400).json({ ok: false, error: 'title, company, and url are required' });
       return;
@@ -58,7 +73,7 @@ router.post('/jobs', requireAdmin, async (req, res, next) => {
         url,
         description: description || null,
         featured: featured || false,
-        postedAt: postedAt ? new Date(postedAt) : new Date(),
+        openSince: openSince ? new Date(openSince) : null,
       },
     });
     res.status(201).json({ ok: true, data: job });
@@ -72,7 +87,7 @@ router.put('/jobs/:id', requireAdmin, async (req, res, next) => {
     const existing = await prisma.job.findUnique({ where: { id } });
     if (!existing) { res.status(404).json({ ok: false, error: 'Job not found' }); return; }
 
-    const { title, company, location, jobType, tags, salary, url, description, featured, isActive, postedAt } = req.body;
+    const { title, company, location, jobType, tags, salary, url, description, featured, isActive, openSince } = req.body;
     const data: any = {};
     if (title !== undefined) data.title = title;
     if (company !== undefined) data.company = company;
@@ -84,7 +99,7 @@ router.put('/jobs/:id', requireAdmin, async (req, res, next) => {
     if (description !== undefined) data.description = description;
     if (featured !== undefined) data.featured = featured;
     if (isActive !== undefined) data.isActive = isActive;
-    if (postedAt !== undefined) data.postedAt = new Date(postedAt);
+    if (openSince !== undefined) data.openSince = openSince ? new Date(openSince) : null;
 
     const job = await prisma.job.update({ where: { id }, data });
     res.json({ ok: true, data: job });

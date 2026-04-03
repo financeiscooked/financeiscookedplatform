@@ -19,7 +19,6 @@ const MAIN_TABS = [
   { id: 'learn', label: 'Learn', icon: GraduationCap },
   { id: 'build', label: 'Build', icon: Hammer },
   { id: 'share', label: 'Share', icon: Share2 },
-  { id: 'jobs', label: 'Jobs', icon: Briefcase },
 ]
 
 const SHOW_TABS = [
@@ -159,6 +158,20 @@ export default function App() {
                 )
               })}
             </div>
+
+            {/* Job Board — separate from main tabs but in same row */}
+            <div className="hidden sm:block w-px h-6 bg-[var(--divider-px)] shrink-0" />
+            <button
+              onClick={() => setMainTab(mainTab === 'jobs' ? 'home' : 'jobs')}
+              className={`hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-xl text-[10px] font-black tracking-[.15em] uppercase transition-all border shrink-0
+                ${mainTab === 'jobs'
+                  ? 'bg-[#D94E2A] text-white border-[#D94E2A] shadow-lg shadow-[#D94E2A]/25'
+                  : 'bg-[var(--bg-subtle)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-[var(--text-primary)] hover:border-[#D94E2A]/40'
+                }`}
+            >
+              <Briefcase size={13} />
+              Finance / AI Job Board
+            </button>
           </div>
         </div>
 
@@ -209,6 +222,19 @@ export default function App() {
               </React.Fragment>
             )
           })}
+          {/* Job Board — separated on mobile too */}
+          <div className="w-px h-4 bg-[var(--divider-px)] shrink-0 mx-1" />
+          <button
+            onClick={() => setMainTab(mainTab === 'jobs' ? 'home' : 'jobs')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all whitespace-nowrap shrink-0 min-h-[32px]
+              ${mainTab === 'jobs'
+                ? 'bg-[#D94E2A] text-white shadow'
+                : 'text-[var(--text-tertiary)]'
+              }`}
+          >
+            <Briefcase size={12} />
+            Jobs
+          </button>
         </div>
       </header>
 

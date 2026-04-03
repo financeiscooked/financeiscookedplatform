@@ -216,12 +216,13 @@ export class FinanceIsCookedClient {
 
   // ── Jobs ──────────────────────────────────────────────────
 
-  async listJobs(params?: { tag?: string; type?: string; featured?: boolean }) {
+  async listJobs(params?: { tag?: string; type?: string; featured?: boolean; search?: string }) {
     return this.request<any>('/api/jobs', {
       params: {
         tag: params?.tag,
         type: params?.type,
         featured: params?.featured !== undefined ? String(params.featured) : undefined,
+        search: params?.search,
       },
     });
   }
@@ -233,7 +234,7 @@ export class FinanceIsCookedClient {
   async createJob(data: {
     title: string; company: string; url: string;
     location?: string; jobType?: string; tags?: string[];
-    salary?: string; description?: string; isActive?: boolean; featured?: boolean;
+    salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string;
   }) {
     return this.request<any>('/api/jobs', { method: 'POST', body: data, requiresAdmin: true });
   }
@@ -241,7 +242,7 @@ export class FinanceIsCookedClient {
   async updateJob(id: string, data: {
     title?: string; company?: string; url?: string;
     location?: string; jobType?: string; tags?: string[];
-    salary?: string; description?: string; isActive?: boolean; featured?: boolean;
+    salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string;
   }) {
     return this.request<any>(`/api/jobs/${encodeURIComponent(id)}`, { method: 'PUT', body: data, requiresAdmin: true });
   }

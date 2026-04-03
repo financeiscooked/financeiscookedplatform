@@ -242,13 +242,14 @@ export const tools: ToolDef[] = [
 
   {
     name: 'jobs_list',
-    description: 'List active job postings, optionally filtered by tag, type, or featured status',
+    description: 'List active job postings, optionally filtered by tag, type, featured status, or search text',
     inputSchema: z.object({
       tag: z.string().optional().describe('Filter by tag'),
       type: z.enum(['full-time', 'part-time', 'contract', 'remote']).optional().describe('Filter by job type'),
       featured: z.boolean().optional().describe('Filter to featured jobs only'),
+      search: z.string().optional().describe('Search jobs by title, company, or description'),
     }),
-    handler: async (client, args: { tag?: string; type?: string; featured?: boolean }) =>
+    handler: async (client, args: { tag?: string; type?: string; featured?: boolean; search?: string }) =>
       client.listJobs(args),
   },
   {
@@ -268,13 +269,14 @@ export const tools: ToolDef[] = [
       url: z.string().describe('Application URL'),
       location: z.string().optional().describe('Job location'),
       jobType: z.enum(['full-time', 'part-time', 'contract', 'remote']).optional().describe('Job type'),
-      tags: z.array(z.string()).optional().describe('Tags (e.g. ["finance", "crypto"])'),
+      tags: z.array(z.string()).optional().describe('Tags: Finance, Accounting, FP&A, Treasury, AP, AR, Collections, Strategic Finance, Payroll, IT, AI, Other'),
       salary: z.string().optional().describe('Salary range (e.g. "$80k–$120k")'),
       description: z.string().optional().describe('Job description'),
       isActive: z.boolean().optional().describe('Whether the job is active (default true)'),
       featured: z.boolean().optional().describe('Whether the job is featured'),
+      openSince: z.string().optional().describe('Date the job was originally posted at source (ISO date, e.g. "2026-03-15")'),
     }),
-    handler: async (client, args: { title: string; company: string; url: string; location?: string; jobType?: string; tags?: string[]; salary?: string; description?: string; isActive?: boolean; featured?: boolean }) =>
+    handler: async (client, args: { title: string; company: string; url: string; location?: string; jobType?: string; tags?: string[]; salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string }) =>
       client.createJob(args),
   },
   {
@@ -292,8 +294,9 @@ export const tools: ToolDef[] = [
       description: z.string().optional().describe('New description'),
       isActive: z.boolean().optional().describe('Active status'),
       featured: z.boolean().optional().describe('Featured status'),
+      openSince: z.string().optional().describe('Date the job was originally posted at source (ISO date)'),
     }),
-    handler: async (client, args: { id: string; title?: string; company?: string; url?: string; location?: string; jobType?: string; tags?: string[]; salary?: string; description?: string; isActive?: boolean; featured?: boolean }) => {
+    handler: async (client, args: { id: string; title?: string; company?: string; url?: string; location?: string; jobType?: string; tags?: string[]; salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string }) => {
       const { id, ...data } = args;
       return client.updateJob(id, data);
     },
