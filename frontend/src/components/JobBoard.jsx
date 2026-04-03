@@ -362,6 +362,7 @@ function JobCard({ job, isAdmin, adminKey, onDeleted, onEdit }) {
 // ─── Job Row (List View) ──────────────────────────────────────────────
 function JobRow({ job, isAdmin, adminKey, onDeleted, onEdit }) {
   const [deleting, setDeleting] = useState(false)
+  const [expanded, setExpanded] = useState(false)
 
   const handleDelete = async () => {
     if (!confirm(`Remove "${job.title}" at ${job.company}?`)) return
@@ -377,74 +378,107 @@ function JobRow({ job, isAdmin, adminKey, onDeleted, onEdit }) {
   const openLabel = formatOpenSince(job.openSince)
 
   return (
-    <div className={`group flex items-center gap-4 px-4 py-3 rounded-xl border transition-all hover:border-[#D94E2A]/30 hover:bg-[var(--bg-subtle)] ${job.featured ? 'border-[#D94E2A]/40 bg-[var(--bg-subtle)]' : 'border-[var(--border-subtle)] bg-[var(--bg-secondary)]'}`}>
-      {/* Left: title + company */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          {job.featured && <Star size={10} className="text-[#D94E2A] fill-[#D94E2A] shrink-0" />}
-          <h3 className="text-sm font-bold text-[var(--text-primary)] truncate group-hover:text-[#D94E2A] transition-colors">
-            {job.title}
-          </h3>
+    <div className={`rounded-xl border transition-all ${job.featured ? 'border-[#D94E2A]/40 bg-[var(--bg-subtle)]' : 'border-[var(--border-subtle)] bg-[var(--bg-secondary)]'} ${expanded ? 'border-[#D94E2A]/30' : ''}`}>
+      <div
+        className="group flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-[var(--bg-subtle)] rounded-xl transition-all"
+        onClick={() => setExpanded(!expanded)}
+      >
+        {/* Left: title + company */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            {job.featured && <Star size={10} className="text-[#D94E2A] fill-[#D94E2A] shrink-0" />}
+            <h3 className="text-sm font-bold text-[var(--text-primary)] truncate group-hover:text-[#D94E2A] transition-colors">
+              {job.title}
+            </h3>
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-xs text-[var(--text-secondary)] font-medium">{job.company}</span>
+            {job.location && (
+              <span className="flex items-center gap-1 text-[10px] text-[var(--text-tertiary)]">
+                <MapPin size={8} /> {job.location}
+              </span>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs text-[var(--text-secondary)] font-medium">{job.company}</span>
-          {job.location && (
-            <span className="flex items-center gap-1 text-[10px] text-[var(--text-tertiary)]">
-              <MapPin size={8} /> {job.location}
-            </span>
+
+        {/* Middle: tags + type */}
+        <div className="hidden md:flex items-center gap-1.5 flex-wrap shrink-0 max-w-[280px]">
+          <span className={`text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full border ${typeColor}`}>
+            {job.jobType}
+          </span>
+          {tags.slice(0, 3).map(tag => {
+            const s = tagStyle(tag)
+            return (
+              <span key={tag} className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border ${s.bg} ${s.text} ${s.border}`}>
+                {tag}
+              </span>
+            )
+          })}
+          {tags.length > 3 && (
+            <span className="text-[8px] text-[var(--text-muted)]">+{tags.length - 3}</span>
+          )}
+        </div>
+
+        {/* Salary */}
+        {job.salary && (
+          <span className="hidden lg:block text-[10px] font-mono font-bold text-[var(--text-secondary)] shrink-0 w-28 text-right">
+            {job.salary}
+          </span>
+        )}
+
+        {/* Open since */}
+        <div className="hidden sm:flex items-center gap-1 text-[10px] text-[var(--text-muted)] shrink-0 w-20 justify-end">
+          {openLabel && <><Calendar size={8} /> {openLabel}</>}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+          <a href={job.url} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold text-[#D94E2A] hover:bg-[#D94E2A]/10 transition-all">
+            Apply <ExternalLink size={10} />
+          </a>
+          {isAdmin && (
+            <>
+              <button onClick={() => onEdit(job)}
+                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[#D94E2A] hover:bg-[#D94E2A]/10 transition-all">
+                <Pencil size={11} />
+              </button>
+              <button onClick={handleDelete} disabled={deleting}
+                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-all">
+                {deleting ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+              </button>
+            </>
           )}
         </div>
       </div>
 
-      {/* Middle: tags + type */}
-      <div className="hidden md:flex items-center gap-1.5 flex-wrap shrink-0 max-w-[280px]">
-        <span className={`text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full border ${typeColor}`}>
-          {job.jobType}
-        </span>
-        {tags.slice(0, 3).map(tag => {
-          const s = tagStyle(tag)
-          return (
-            <span key={tag} className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border ${s.bg} ${s.text} ${s.border}`}>
-              {tag}
+      {/* Expandable description */}
+      {expanded && (
+        <div className="px-5 pb-4 pt-1 border-t border-[var(--border-subtle)]">
+          {job.description ? (
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">{job.description}</p>
+          ) : (
+            <p className="text-xs text-[var(--text-muted)] italic">No description provided.</p>
+          )}
+          {/* Show tags on mobile when expanded */}
+          <div className="flex md:hidden items-center gap-1.5 flex-wrap mt-3">
+            <span className={`text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full border ${typeColor}`}>
+              {job.jobType}
             </span>
-          )
-        })}
-        {tags.length > 3 && (
-          <span className="text-[8px] text-[var(--text-muted)]">+{tags.length - 3}</span>
-        )}
-      </div>
-
-      {/* Salary */}
-      {job.salary && (
-        <span className="hidden lg:block text-[10px] font-mono font-bold text-[var(--text-secondary)] shrink-0 w-28 text-right">
-          {job.salary}
-        </span>
+            {tags.map(tag => {
+              const s = tagStyle(tag)
+              return (
+                <span key={tag} className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border ${s.bg} ${s.text} ${s.border}`}>
+                  {tag}
+                </span>
+              )
+            })}
+          </div>
+          {job.salary && (
+            <p className="lg:hidden text-[10px] font-mono font-bold text-[var(--text-secondary)] mt-2">{job.salary}</p>
+          )}
+        </div>
       )}
-
-      {/* Open since */}
-      <div className="hidden sm:flex items-center gap-1 text-[10px] text-[var(--text-muted)] shrink-0 w-20 justify-end">
-        {openLabel && <><Calendar size={8} /> {openLabel}</>}
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-2 shrink-0">
-        <a href={job.url} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold text-[#D94E2A] hover:bg-[#D94E2A]/10 transition-all">
-          Apply <ExternalLink size={10} />
-        </a>
-        {isAdmin && (
-          <>
-            <button onClick={() => onEdit(job)}
-              className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[#D94E2A] hover:bg-[#D94E2A]/10 transition-all">
-              <Pencil size={11} />
-            </button>
-            <button onClick={handleDelete} disabled={deleting}
-              className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-all">
-              {deleting ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
-            </button>
-          </>
-        )}
-      </div>
     </div>
   )
 }
