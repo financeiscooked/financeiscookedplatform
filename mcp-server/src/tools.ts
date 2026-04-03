@@ -238,6 +238,75 @@ export const tools: ToolDef[] = [
     handler: async (client, args: { documentId: string }) => client.deleteSlideDocument(args.documentId),
   },
 
+  // ── Jobs ──────────────────────────────────────────────────
+
+  {
+    name: 'jobs_list',
+    description: 'List active job postings, optionally filtered by tag, type, or featured status',
+    inputSchema: z.object({
+      tag: z.string().optional().describe('Filter by tag'),
+      type: z.enum(['full-time', 'part-time', 'contract', 'remote']).optional().describe('Filter by job type'),
+      featured: z.boolean().optional().describe('Filter to featured jobs only'),
+    }),
+    handler: async (client, args: { tag?: string; type?: string; featured?: boolean }) =>
+      client.listJobs(args),
+  },
+  {
+    name: 'job_get',
+    description: 'Get a single job posting by ID',
+    inputSchema: z.object({
+      id: z.string().describe('Job ID (UUID)'),
+    }),
+    handler: async (client, args: { id: string }) => client.getJob(args.id),
+  },
+  {
+    name: 'job_create',
+    description: '[Admin] Create a new job posting',
+    inputSchema: z.object({
+      title: z.string().describe('Job title'),
+      company: z.string().describe('Company name'),
+      url: z.string().describe('Application URL'),
+      location: z.string().optional().describe('Job location'),
+      jobType: z.enum(['full-time', 'part-time', 'contract', 'remote']).optional().describe('Job type'),
+      tags: z.array(z.string()).optional().describe('Tags (e.g. ["finance", "crypto"])'),
+      salary: z.string().optional().describe('Salary range (e.g. "$80k–$120k")'),
+      description: z.string().optional().describe('Job description'),
+      isActive: z.boolean().optional().describe('Whether the job is active (default true)'),
+      featured: z.boolean().optional().describe('Whether the job is featured'),
+    }),
+    handler: async (client, args: { title: string; company: string; url: string; location?: string; jobType?: string; tags?: string[]; salary?: string; description?: string; isActive?: boolean; featured?: boolean }) =>
+      client.createJob(args),
+  },
+  {
+    name: 'job_update',
+    description: '[Admin] Update an existing job posting',
+    inputSchema: z.object({
+      id: z.string().describe('Job ID (UUID)'),
+      title: z.string().optional().describe('New job title'),
+      company: z.string().optional().describe('New company name'),
+      url: z.string().optional().describe('New application URL'),
+      location: z.string().optional().describe('New location'),
+      jobType: z.enum(['full-time', 'part-time', 'contract', 'remote']).optional().describe('New job type'),
+      tags: z.array(z.string()).optional().describe('New tags'),
+      salary: z.string().optional().describe('New salary range'),
+      description: z.string().optional().describe('New description'),
+      isActive: z.boolean().optional().describe('Active status'),
+      featured: z.boolean().optional().describe('Featured status'),
+    }),
+    handler: async (client, args: { id: string; title?: string; company?: string; url?: string; location?: string; jobType?: string; tags?: string[]; salary?: string; description?: string; isActive?: boolean; featured?: boolean }) => {
+      const { id, ...data } = args;
+      return client.updateJob(id, data);
+    },
+  },
+  {
+    name: 'job_delete',
+    description: '[Admin] Delete a job posting by ID',
+    inputSchema: z.object({
+      id: z.string().describe('Job ID (UUID)'),
+    }),
+    handler: async (client, args: { id: string }) => client.deleteJob(args.id),
+  },
+
   // ── Votes ─────────────────────────────────────────────────
 
   {

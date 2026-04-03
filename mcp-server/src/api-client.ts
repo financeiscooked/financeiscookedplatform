@@ -214,6 +214,42 @@ export class FinanceIsCookedClient {
     return this.request<any>(`/api/episodes/${encodeURIComponent(episodeSlug)}/votes`);
   }
 
+  // ── Jobs ──────────────────────────────────────────────────
+
+  async listJobs(params?: { tag?: string; type?: string; featured?: boolean }) {
+    return this.request<any>('/api/jobs', {
+      params: {
+        tag: params?.tag,
+        type: params?.type,
+        featured: params?.featured !== undefined ? String(params.featured) : undefined,
+      },
+    });
+  }
+
+  async getJob(id: string) {
+    return this.request<any>(`/api/jobs/${encodeURIComponent(id)}`);
+  }
+
+  async createJob(data: {
+    title: string; company: string; url: string;
+    location?: string; jobType?: string; tags?: string[];
+    salary?: string; description?: string; isActive?: boolean; featured?: boolean;
+  }) {
+    return this.request<any>('/api/jobs', { method: 'POST', body: data, requiresAdmin: true });
+  }
+
+  async updateJob(id: string, data: {
+    title?: string; company?: string; url?: string;
+    location?: string; jobType?: string; tags?: string[];
+    salary?: string; description?: string; isActive?: boolean; featured?: boolean;
+  }) {
+    return this.request<any>(`/api/jobs/${encodeURIComponent(id)}`, { method: 'PUT', body: data, requiresAdmin: true });
+  }
+
+  async deleteJob(id: string) {
+    return this.request<any>(`/api/jobs/${encodeURIComponent(id)}`, { method: 'DELETE', requiresAdmin: true });
+  }
+
   // ── Admin ─────────────────────────────────────────────────
 
   async seedDatabase() {

@@ -135,6 +135,48 @@ const TOOL_DOCS = [
     ],
   },
   {
+    label: 'Jobs',
+    id: 'jobs',
+    tools: [
+      { name: 'jobs_list', description: 'List active job postings, optionally filtered by tag, type, or featured status.', params: [
+        { name: 'tag', type: 'string', required: false, description: 'Filter by tag' },
+        { name: 'type', type: 'enum', required: false, description: '"full-time" | "part-time" | "contract" | "remote"' },
+        { name: 'featured', type: 'boolean', required: false, description: 'Filter to featured jobs only' },
+      ], example: '// List all jobs\nawait callTool("jobs_list", {})\n\n// Filter by type and featured\nawait callTool("jobs_list", { type: "remote", featured: true })' },
+      { name: 'job_get', description: 'Get a single job posting by ID.', params: [
+        { name: 'id', type: 'string', required: true, description: 'Job ID (UUID)' },
+      ], example: 'await callTool("job_get", {\n  id: "job-uuid"\n})' },
+      { name: 'job_create', description: '[Admin] Create a new job posting. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'title', type: 'string', required: true, description: 'Job title' },
+        { name: 'company', type: 'string', required: true, description: 'Company name' },
+        { name: 'url', type: 'string', required: true, description: 'Application URL' },
+        { name: 'location', type: 'string', required: false, description: 'Job location' },
+        { name: 'jobType', type: 'enum', required: false, description: '"full-time" | "part-time" | "contract" | "remote"' },
+        { name: 'tags', type: 'string[]', required: false, description: 'Tags (e.g. ["finance", "crypto"])' },
+        { name: 'salary', type: 'string', required: false, description: 'Salary range (e.g. "$80k–$120k")' },
+        { name: 'description', type: 'string', required: false, description: 'Job description' },
+        { name: 'isActive', type: 'boolean', required: false, description: 'Whether the job is active (default true)' },
+        { name: 'featured', type: 'boolean', required: false, description: 'Whether the job is featured' },
+      ], example: 'await callTool("job_create", {\n  title: "Senior Analyst",\n  company: "Acme Corp",\n  url: "https://acme.com/jobs/123",\n  jobType: "full-time",\n  tags: ["finance", "analysis"],\n  salary: "$90k–$120k"\n})' },
+      { name: 'job_update', description: '[Admin] Update an existing job posting. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'id', type: 'string', required: true, description: 'Job ID (UUID)' },
+        { name: 'title', type: 'string', required: false, description: 'New job title' },
+        { name: 'company', type: 'string', required: false, description: 'New company name' },
+        { name: 'url', type: 'string', required: false, description: 'New application URL' },
+        { name: 'location', type: 'string', required: false, description: 'New location' },
+        { name: 'jobType', type: 'enum', required: false, description: '"full-time" | "part-time" | "contract" | "remote"' },
+        { name: 'tags', type: 'string[]', required: false, description: 'New tags' },
+        { name: 'salary', type: 'string', required: false, description: 'New salary range' },
+        { name: 'description', type: 'string', required: false, description: 'New description' },
+        { name: 'isActive', type: 'boolean', required: false, description: 'Active status' },
+        { name: 'featured', type: 'boolean', required: false, description: 'Featured status' },
+      ] },
+      { name: 'job_delete', description: '[Admin] Delete a job posting by ID. Requires FINANCEISCOOKED_ADMIN_KEY env var.', params: [
+        { name: 'id', type: 'string', required: true, description: 'Job ID (UUID)' },
+      ] },
+    ],
+  },
+  {
     label: 'Votes',
     id: 'votes',
     tools: [
