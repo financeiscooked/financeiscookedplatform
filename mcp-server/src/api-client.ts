@@ -216,13 +216,14 @@ export class FinanceIsCookedClient {
 
   // ── Jobs ──────────────────────────────────────────────────
 
-  async listJobs(params?: { tag?: string; type?: string; featured?: boolean; search?: string }) {
+  async listJobs(params?: { tag?: string; type?: string; featured?: boolean; search?: string; flag?: string }) {
     return this.request<any>('/api/jobs', {
       params: {
         tag: params?.tag,
         type: params?.type,
         featured: params?.featured !== undefined ? String(params.featured) : undefined,
         search: params?.search,
+        flag: params?.flag,
       },
     });
   }
@@ -234,7 +235,7 @@ export class FinanceIsCookedClient {
   async createJob(data: {
     title: string; company: string; url: string;
     location?: string; jobType?: string; tags?: string[];
-    salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string;
+    salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string; flag?: string;
   }) {
     return this.request<any>('/api/jobs', { method: 'POST', body: data, requiresAdmin: true });
   }
@@ -242,7 +243,7 @@ export class FinanceIsCookedClient {
   async updateJob(id: string, data: {
     title?: string; company?: string; url?: string;
     location?: string; jobType?: string; tags?: string[];
-    salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string;
+    salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string; flag?: string;
   }) {
     return this.request<any>(`/api/jobs/${encodeURIComponent(id)}`, { method: 'PUT', body: data, requiresAdmin: true });
   }

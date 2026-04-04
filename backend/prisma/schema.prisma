@@ -387,6 +387,7 @@ model Job {
   description String?  @db.Text
   isActive    Boolean   @default(true) @map("is_active")
   featured    Boolean   @default(false)
+  flag        String?   @db.VarChar(50)
   openSince   DateTime? @map("open_since") @db.Timestamptz()
   postedAt    DateTime  @default(now()) @map("posted_at") @db.Timestamptz()
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()

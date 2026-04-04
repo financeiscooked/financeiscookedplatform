@@ -322,6 +322,7 @@ export const PLATFORM_TOOLS: Tool[] = [
         tag: { type: 'string', description: 'Filter by tag (optional)' },
         jobType: { type: 'string', description: 'Filter by job type: full-time, part-time, contract, remote (optional)' },
         search: { type: 'string', description: 'Search jobs by title, company, or description (optional)' },
+        flag: { type: 'string', description: 'Filter by category: "finance-ai" (default tab) or "adjacent" (Finance AI Adjacent tab) (optional)' },
       },
     },
   },
@@ -341,6 +342,7 @@ export const PLATFORM_TOOLS: Tool[] = [
         description: { type: 'string', description: 'Short job description (optional)' },
         featured: { type: 'boolean', description: 'Pin to top as featured (optional)' },
         openSince: { type: 'string', description: 'Date the job was originally posted at source (ISO date string, optional)' },
+        flag: { type: 'string', description: 'Category: omit or "finance-ai" for Finance AI tab; "adjacent" for Finance AI Adjacent tab (optional)' },
       },
       required: ['title', 'company', 'url'],
     },
@@ -363,6 +365,7 @@ export const PLATFORM_TOOLS: Tool[] = [
         featured: { type: 'boolean', description: 'Featured status (optional)' },
         isActive: { type: 'boolean', description: 'Active status (optional)' },
         openSince: { type: 'string', description: 'Date the job was originally posted at source (ISO date string, optional)' },
+        flag: { type: 'string', description: 'Category: "finance-ai" for Finance AI tab; "adjacent" for Finance AI Adjacent tab (optional)' },
       },
       required: ['id'],
     },
@@ -839,6 +842,13 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
     case 'platform__jobs_list': {
       const where: any = { isActive: true };
       if (input.jobType) where.jobType = input.jobType;
+      if (input.flag !== undefined) {
+        if (input.flag === 'adjacent') {
+          where.flag = 'adjacent';
+        } else {
+          where.OR = [{ flag: null }, { flag: 'finance-ai' }];
+        }
+      }
       if (input.search) {
         where.OR = [
           { title: { contains: input.search, mode: 'insensitive' } },
@@ -877,6 +887,7 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
           url: input.url,
           description: input.description || null,
           featured: input.featured || false,
+          flag: input.flag || null,
           openSince: input.openSince ? new Date(input.openSince) : null,
         },
       });
@@ -898,6 +909,7 @@ registerToolHandler('platform__', async (toolName, input, _context) => {
       if (input.description !== undefined) data.description = input.description;
       if (input.featured !== undefined) data.featured = input.featured;
       if (input.isActive !== undefined) data.isActive = input.isActive;
+      if (input.flag !== undefined) data.flag = input.flag || null;
       if (input.openSince !== undefined) data.openSince = input.openSince ? new Date(input.openSince) : null;
       const updated = await prisma.job.update({ where: { id: input.id }, data });
       return JSON.stringify({ success: true, id: updated.id, title: updated.title, company: updated.company });

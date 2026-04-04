@@ -248,8 +248,9 @@ export const tools: ToolDef[] = [
       type: z.enum(['full-time', 'part-time', 'contract', 'remote']).optional().describe('Filter by job type'),
       featured: z.boolean().optional().describe('Filter to featured jobs only'),
       search: z.string().optional().describe('Search jobs by title, company, or description'),
+      flag: z.enum(['finance-ai', 'adjacent']).optional().describe('Filter by category: finance-ai (default tab) or adjacent (Finance AI Adjacent tab)'),
     }),
-    handler: async (client, args: { tag?: string; type?: string; featured?: boolean; search?: string }) =>
+    handler: async (client, args: { tag?: string; type?: string; featured?: boolean; search?: string; flag?: string }) =>
       client.listJobs(args),
   },
   {
@@ -275,8 +276,9 @@ export const tools: ToolDef[] = [
       isActive: z.boolean().optional().describe('Whether the job is active (default true)'),
       featured: z.boolean().optional().describe('Whether the job is featured'),
       openSince: z.string().optional().describe('Date the job was originally posted at source (ISO date, e.g. "2026-03-15")'),
+      flag: z.enum(['finance-ai', 'adjacent']).optional().describe('Category: omit or "finance-ai" for Finance AI tab; "adjacent" for Finance AI Adjacent tab'),
     }),
-    handler: async (client, args: { title: string; company: string; url: string; location?: string; jobType?: string; tags?: string[]; salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string }) =>
+    handler: async (client, args: { title: string; company: string; url: string; location?: string; jobType?: string; tags?: string[]; salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string; flag?: string }) =>
       client.createJob(args),
   },
   {
@@ -295,8 +297,9 @@ export const tools: ToolDef[] = [
       isActive: z.boolean().optional().describe('Active status'),
       featured: z.boolean().optional().describe('Featured status'),
       openSince: z.string().optional().describe('Date the job was originally posted at source (ISO date)'),
+      flag: z.enum(['finance-ai', 'adjacent']).optional().describe('Category: "finance-ai" for Finance AI tab; "adjacent" for Finance AI Adjacent tab'),
     }),
-    handler: async (client, args: { id: string; title?: string; company?: string; url?: string; location?: string; jobType?: string; tags?: string[]; salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string }) => {
+    handler: async (client, args: { id: string; title?: string; company?: string; url?: string; location?: string; jobType?: string; tags?: string[]; salary?: string; description?: string; isActive?: boolean; featured?: boolean; openSince?: string; flag?: string }) => {
       const { id, ...data } = args;
       return client.updateJob(id, data);
     },

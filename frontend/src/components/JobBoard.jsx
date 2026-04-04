@@ -51,7 +51,7 @@ function formatOpenSince(dateStr) {
 function AddJobModal({ adminKey, onSaved, onClose }) {
   const [form, setForm] = useState({
     title: '', company: '', location: '', jobType: 'full-time',
-    tags: [], salary: '', url: '', description: '', featured: false, openSince: '',
+    tags: [], salary: '', url: '', description: '', featured: false, openSince: '', flag: null,
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -136,6 +136,19 @@ function AddJobModal({ adminKey, onSaved, onClose }) {
             <textarea rows={3} value={form.description} onChange={e => set('description', e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]/50 resize-none" />
           </div>
+          <div>
+            <label className="block text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1">Category</label>
+            <div className="flex gap-2">
+              <button onClick={() => set('flag', null)}
+                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${!form.flag || form.flag === 'finance-ai' ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' : 'border-[var(--border-subtle)] text-[var(--text-muted)]'}`}>
+                Finance AI
+              </button>
+              <button onClick={() => set('flag', 'adjacent')}
+                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${form.flag === 'adjacent' ? 'bg-violet-500/15 text-violet-400 border-violet-500/30' : 'border-[var(--border-subtle)] text-[var(--text-muted)]'}`}>
+                Finance AI Adjacent
+              </button>
+            </div>
+          </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)} className="rounded" />
             <span className="text-xs font-bold text-[var(--text-secondary)]">Featured (pin to top)</span>
@@ -162,6 +175,7 @@ function EditJobModal({ job, adminKey, onSaved, onClose }) {
     salary: job.salary || '', url: job.url || '', description: job.description || '',
     featured: job.featured || false, isActive: job.isActive !== false,
     openSince: job.openSince ? new Date(job.openSince).toISOString().split('T')[0] : '',
+    flag: job.flag || null,
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -245,6 +259,19 @@ function EditJobModal({ job, adminKey, onSaved, onClose }) {
             <label className="block text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1">Description (optional)</label>
             <textarea rows={3} value={form.description} onChange={e => set('description', e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#D94E2A]/50 resize-none" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1">Category</label>
+            <div className="flex gap-2">
+              <button onClick={() => set('flag', null)}
+                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${!form.flag || form.flag === 'finance-ai' ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' : 'border-[var(--border-subtle)] text-[var(--text-muted)]'}`}>
+                Finance AI
+              </button>
+              <button onClick={() => set('flag', 'adjacent')}
+                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${form.flag === 'adjacent' ? 'bg-violet-500/15 text-violet-400 border-violet-500/30' : 'border-[var(--border-subtle)] text-[var(--text-muted)]'}`}>
+                Finance AI Adjacent
+              </button>
+            </div>
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)} className="rounded" />
@@ -491,6 +518,7 @@ export default function JobBoard() {
   const [filterType, setFilterType] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState('list')
+  const [activeTab, setActiveTab] = useState('finance-ai')
   const [showModal, setShowModal] = useState(false)
   const [editingJob, setEditingJob] = useState(null)
   const adminKey = typeof window !== 'undefined' ? localStorage.getItem('admin-key') : null
@@ -508,6 +536,12 @@ export default function JobBoard() {
   useEffect(() => { load() }, [load])
 
   const filtered = jobs.filter(j => {
+    // Tab filter
+    if (activeTab === 'adjacent') {
+      if (j.flag !== 'adjacent') return false
+    } else {
+      if (j.flag === 'adjacent') return false
+    }
     const tags = Array.isArray(j.tags) ? j.tags : []
     if (filterTag && !tags.some(t => t.toLowerCase() === filterTag.toLowerCase())) return false
     if (filterType && j.jobType !== filterType) return false
@@ -544,6 +578,20 @@ export default function JobBoard() {
               <Plus size={13} /> Post a Job
             </button>
           )}
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 border-b border-[var(--border-subtle)]">
+          <button
+            onClick={() => setActiveTab('finance-ai')}
+            className={`px-4 py-2.5 text-xs font-black tracking-wide transition-all border-b-2 -mb-px ${activeTab === 'finance-ai' ? 'border-[#D94E2A] text-[#D94E2A]' : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
+            Finance AI
+          </button>
+          <button
+            onClick={() => setActiveTab('adjacent')}
+            className={`px-4 py-2.5 text-xs font-black tracking-wide transition-all border-b-2 -mb-px ${activeTab === 'adjacent' ? 'border-violet-400 text-violet-400' : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
+            Finance AI Adjacent
+          </button>
         </div>
 
         {/* Search + View Toggle */}

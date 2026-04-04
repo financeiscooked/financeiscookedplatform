@@ -7,11 +7,19 @@ const router = Router();
 // ─── GET /api/jobs — list all active jobs ─────────────────────────────
 router.get('/jobs', async (req, res, next) => {
   try {
-    const { tag, type, featured, search, sort } = req.query;
+    const { tag, type, featured, search, sort, flag } = req.query;
 
     const where: any = { isActive: true };
     if (type) where.jobType = type as string;
     if (featured === 'true') where.featured = true;
+    if (flag !== undefined) {
+      // flag=adjacent filters to adjacent; flag=finance-ai or flag='' returns null/finance-ai
+      if (flag === 'adjacent') {
+        where.flag = 'adjacent';
+      } else {
+        where.OR = [{ flag: null }, { flag: 'finance-ai' }];
+      }
+    }
 
     // Text search across title, company, description
     if (search) {
@@ -57,7 +65,7 @@ router.get('/jobs/:id', async (req, res, next) => {
 // ─── POST /api/jobs — create a job (admin) ───────────────────────────
 router.post('/jobs', requireAdmin, async (req, res, next) => {
   try {
-    const { title, company, location, jobType, tags, salary, url, description, featured, openSince } = req.body;
+    const { title, company, location, jobType, tags, salary, url, description, featured, openSince, flag } = req.body;
     if (!title || !company || !url) {
       res.status(400).json({ ok: false, error: 'title, company, and url are required' });
       return;
@@ -73,6 +81,7 @@ router.post('/jobs', requireAdmin, async (req, res, next) => {
         url,
         description: description || null,
         featured: featured || false,
+        flag: flag || null,
         openSince: openSince ? new Date(openSince) : null,
       },
     });
@@ -87,7 +96,7 @@ router.put('/jobs/:id', requireAdmin, async (req, res, next) => {
     const existing = await prisma.job.findUnique({ where: { id } });
     if (!existing) { res.status(404).json({ ok: false, error: 'Job not found' }); return; }
 
-    const { title, company, location, jobType, tags, salary, url, description, featured, isActive, openSince } = req.body;
+    const { title, company, location, jobType, tags, salary, url, description, featured, isActive, openSince, flag } = req.body;
     const data: any = {};
     if (title !== undefined) data.title = title;
     if (company !== undefined) data.company = company;
@@ -99,6 +108,7 @@ router.put('/jobs/:id', requireAdmin, async (req, res, next) => {
     if (description !== undefined) data.description = description;
     if (featured !== undefined) data.featured = featured;
     if (isActive !== undefined) data.isActive = isActive;
+    if (flag !== undefined) data.flag = flag || null;
     if (openSince !== undefined) data.openSince = openSince ? new Date(openSince) : null;
 
     const job = await prisma.job.update({ where: { id }, data });
