@@ -79,6 +79,8 @@ router.get('/episodes/:slug', async (req, res, next) => {
           images: slide.images.map(img => ({
             src: img.src,
             alt: img.alt,
+            filename: img.filename,
+            mimeType: img.mimeType,
           })),
         })),
       })),

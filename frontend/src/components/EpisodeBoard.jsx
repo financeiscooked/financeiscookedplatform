@@ -32,6 +32,74 @@ import {
   Plus,
 } from 'lucide-react'
 
+/* ── Lightbox modal for click-to-enlarge images ── */
+function ImageLightbox({ src, alt, onClose }) {
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm cursor-zoom-out"
+      onClick={onClose}
+    >
+      <img
+        src={src}
+        alt={alt || ''}
+        className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        draggable={false}
+      />
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/40 rounded-full p-2 transition-colors"
+      >
+        <X size={20} />
+      </button>
+    </div>
+  )
+}
+
+/* ── Clickable image thumbnail that opens lightbox ── */
+function ClickableImage({ src, alt, className, draggable = false }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <img
+        src={src}
+        alt={alt || ''}
+        className={`${className} cursor-zoom-in`}
+        draggable={draggable}
+        onClick={() => setOpen(true)}
+      />
+      {open && <ImageLightbox src={src} alt={alt} onClose={() => setOpen(false)} />}
+    </>
+  )
+}
+
+/* ── Render an HTML attachment as a button to open it ── */
+function HtmlFileButton({ img }) {
+  const src = resolveImgSrc(img.src)
+  return (
+    <button
+      onClick={() => window.open(src, '_blank')}
+      className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all text-sm font-medium"
+    >
+      <ExternalLink size={14} />
+      {img.alt || img.filename || 'Open HTML'}
+    </button>
+  )
+}
+
+/* ── Smart image/html renderer — picks lightbox or html button ── */
+function SmartAttachment({ img, alt, className, draggable = false }) {
+  const isHtml = img.mimeType === 'text/html' || img.filename?.endsWith('.html') || img.alt?.endsWith('.html')
+  if (isHtml) return <HtmlFileButton img={img} />
+  return <ClickableImage src={resolveImgSrc(img.src)} alt={img.alt || alt || ''} className={className} draggable={draggable} />
+}
+
 function DetailsExpander({ details }) {
   const [open, setOpen] = useState(false)
   if (!details) return null
@@ -455,7 +523,7 @@ function ImageUploadButton({ slideId, onRefresh }) {
 
   return (
     <>
-      <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+      <input ref={fileRef} type="file" accept="image/*,.html,.htm,text/html" onChange={handleUpload} className="hidden" />
       <button
         onClick={() => fileRef.current?.click()}
         disabled={uploading}
@@ -484,8 +552,8 @@ function SlideRenderer({ slide, isAdmin, onRefresh }) {
               key={i}
               className="rounded-xl overflow-hidden border border-[var(--border-default)] shadow-lg bg-[var(--img-border-bg)]"
             >
-              <img
-                src={resolveImgSrc(img.src)}
+              <SmartAttachment
+                img={img}
                 alt={img.alt || slide.title}
                 className="w-full h-full object-contain max-h-[35vh]"
                 draggable={false}
@@ -508,12 +576,21 @@ function SlideRenderer({ slide, isAdmin, onRefresh }) {
       <div className="flex flex-col items-center gap-4 w-full">
         {imgSrc ? (
           <div className="max-h-[60vh] rounded-xl overflow-hidden border border-[var(--border-default)] shadow-2xl">
-            <img
-              src={resolveImgSrc(imgSrc)}
-              alt={slide.title}
-              className="max-h-[60vh] max-w-full object-contain"
-              draggable={false}
-            />
+            {slide.images?.[0] ? (
+              <SmartAttachment
+                img={slide.images[0]}
+                alt={slide.title}
+                className="max-h-[60vh] max-w-full object-contain"
+                draggable={false}
+              />
+            ) : (
+              <ClickableImage
+                src={resolveImgSrc(imgSrc)}
+                alt={slide.title}
+                className="max-h-[60vh] max-w-full object-contain"
+                draggable={false}
+              />
+            )}
           </div>
         ) : (
           <div className="flex items-center justify-center w-full h-48 rounded-xl border-2 border-dashed border-[var(--border-default)] text-[var(--text-hint)] text-sm">
@@ -550,7 +627,7 @@ function SlideRenderer({ slide, isAdmin, onRefresh }) {
           {slide.images?.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4 pl-8">
               {slide.images.map((img, i) => (
-                <img key={i} src={resolveImgSrc(img.src)} alt={img.alt || ''} className="max-h-32 rounded-lg border border-[var(--border-default)]" />
+                <SmartAttachment key={i} img={img} alt={img.alt || ''} className="max-h-32 rounded-lg border border-[var(--border-default)]" />
               ))}
             </div>
           )}
@@ -580,7 +657,7 @@ function SlideRenderer({ slide, isAdmin, onRefresh }) {
           {slide.images?.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4">
               {slide.images.map((img, i) => (
-                <img key={i} src={resolveImgSrc(img.src)} alt={img.alt || ''} className="max-h-32 rounded-lg border border-[var(--border-default)]" />
+                <SmartAttachment key={i} img={img} alt={img.alt || ''} className="max-h-32 rounded-lg border border-[var(--border-default)]" />
               ))}
             </div>
           )}
